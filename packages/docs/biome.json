@@ -10,7 +10,8 @@
     "includes": [
       "**",
       "!node_modules",
-      "!.source"
+      "!.source",
+      "!.react-router"
     ]
   },
   "formatter": {
