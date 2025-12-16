@@ -37,8 +37,6 @@ jobs:
 
       - name: Build docs
         run: pnpm --filter @cuttledoc/docs build
-        env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -46,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/docs/dist
+          path: packages/docs/build/client
 
   deploy:
     environment:
