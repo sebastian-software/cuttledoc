@@ -11,13 +11,18 @@
   },
   "files": [
     "dist",
-    "build"
+    "build",
+    "binding.gyp",
+    "src/backends/apple/native"
   ],
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:ts",
+    "build:ts": "tsc",
+    "build:native": "node-gyp rebuild",
+    "build:all": "npm run build:native && npm run build:ts",
     "dev": "tsc --watch",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -25,7 +30,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist build",
-    "prepublishOnly": "npm run clean && npm run build"
+    "install": "node-gyp rebuild || echo 'Native build failed, continuing...'",
+    "prepublishOnly": "npm run clean && npm run build:all"
   },
   "keywords": [
     "speech-recognition",
@@ -39,6 +45,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^8.3.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.2",
@@ -46,10 +55,10 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import-x": "^4.5.0",
     "globals": "^15.14.0",
+    "node-gyp": "^10.2.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1",
     "vitest": "^2.1.8"
-  },
-  "dependencies": {}
+  }
 }
