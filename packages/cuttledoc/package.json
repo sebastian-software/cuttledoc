@@ -20,7 +20,7 @@
     "src/backends/apple/native"
   ],
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "tsup",
@@ -42,7 +42,11 @@
     "local",
     "offline"
   ],
-  "author": "",
+  "author": {
+    "name": "Sebastian Werner",
+    "email": "s.werner@sebastian-software.de",
+    "url": "https://sebastian-software.de"
+  },
   "license": "MIT",
   "dependencies": {
     "@mmomtchev/ffmpeg": "^2.0.1",

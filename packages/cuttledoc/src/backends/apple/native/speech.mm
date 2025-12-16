@@ -3,6 +3,10 @@
  *
  * Uses SFSpeechRecognizer for on-device speech recognition.
  * Requires macOS 12.0+ and speech recognition permissions.
+ *
+ * @copyright 2024 Sebastian Werner, Sebastian Software GmbH
+ * @license MIT
+ * @author Sebastian Werner <s.werner@sebastian-software.de>
  */
 
 #import <Speech/Speech.h>

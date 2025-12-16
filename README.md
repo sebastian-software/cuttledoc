@@ -8,23 +8,24 @@
 
 ## Features
 
-- 🎤 **Multiple Backends**: Apple Speech (macOS), Whisper, Parakeet
+- 🎤 **Multiple Backends**: Apple Speech (macOS only), Whisper, Parakeet
 - 🚀 **Native Performance**: No Python, no subprocess overhead
 - 📱 **Offline**: All processing happens locally
 - 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
-- 🤖 **LLM Enhancement**: Auto-correct and format transcripts with Gemma 3n
+- 🤖 **LLM Enhancement**: Auto-correct and format transcripts (using Gemma 3n)
 - 📊 **Detailed Stats**: Processing time, word count, confidence scores
 
 ## Installation
 
 ```bash
+npm add cuttledoc
+# or
 pnpm add cuttledoc
 ```
 
 ### Requirements
 
 - Node.js 24+
-- macOS 14+ (for Apple Speech backend)
 - ~2GB disk space for models
 
 ## Quick Start
@@ -74,11 +75,6 @@ const enhanced = await enhanceTranscript(result.text, {
 });
 
 console.log(enhanced.markdown);
-// ## TLDR
-// Brief summary of the content...
-//
-// ## Main Content
-// **Important point** discussed here...
 ```
 
 ## CLI Reference
@@ -161,47 +157,9 @@ Typical processing speed on M1 MacBook Pro:
 | 10 min audio | Whisper | 45s | - | 45s |
 | 10 min audio | Apple + LLM | 15s | 20s | 35s |
 
-## API Reference
+## Documentation
 
-### `transcribe(audioPath, options?)`
-
-```typescript
-interface TranscribeOptions {
-  language?: string;      // e.g., "en", "de-DE"
-  backend?: BackendType;  // "auto" | "apple" | "whisper" | "parakeet"
-  onProgress?: (partial: PartialResult) => void;
-}
-
-interface TranscriptionResult {
-  text: string;
-  segments: TranscriptionSegment[];
-  durationSeconds: number;
-  backend: string;
-  language?: string;
-  confidence?: number;
-}
-```
-
-### `enhanceTranscript(text, options?)`
-
-```typescript
-interface LLMProcessOptions {
-  model?: LLMModelId;     // "gemma3n:e4b" | "gemma3:4b" | ...
-  mode?: "enhance" | "correct";
-  temperature?: number;
-  chunkSize?: number;
-}
-
-interface LLMProcessResult {
-  markdown: string;
-  plainText: string;
-  stats: {
-    correctionsCount: number;
-    paragraphCount: number;
-    processingTimeMs: number;
-  };
-}
-```
+For detailed API reference, see the [documentation](https://cuttledoc.dev).
 
 ## Development
 
@@ -254,7 +212,7 @@ pnpm lint
 
 ## License
 
-MIT © [Your Name]
+MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 
 ## Acknowledgments
 

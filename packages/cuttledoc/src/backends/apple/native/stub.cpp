@@ -2,6 +2,10 @@
  * Stub implementation for non-macOS platforms
  *
  * All functions throw an error indicating Apple Speech is not available.
+ *
+ * @copyright 2024 Sebastian Werner, Sebastian Software GmbH
+ * @license MIT
+ * @author Sebastian Werner <s.werner@sebastian-software.de>
  */
 
 #include <napi.h>

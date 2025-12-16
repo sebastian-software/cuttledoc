@@ -10,7 +10,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "tsup",
@@ -25,7 +25,11 @@
     "cli",
     "transcription"
   ],
-  "author": "",
+  "author": {
+    "name": "Sebastian Werner",
+    "email": "s.werner@sebastian-software.de",
+    "url": "https://sebastian-software.de"
+  },
   "license": "MIT",
   "dependencies": {
     "cuttledoc": "workspace:*"

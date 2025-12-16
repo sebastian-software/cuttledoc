@@ -2,8 +2,17 @@
   "name": "@cuttledoc/docs",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Sebastian Werner",
+    "email": "s.werner@sebastian-software.de",
+    "url": "https://sebastian-software.de"
+  },
+  "license": "MIT",
   "description": "Documentation for cuttledoc",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "pnpm run typedoc && vite build",
