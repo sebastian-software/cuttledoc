@@ -1,66 +1,22 @@
 {
-  "name": "local-transcribe",
+  "name": "@cuttledoc/monorepo",
   "version": "0.1.0",
-  "description": "Multi-backend local speech recognition for Node.js",
+  "private": true,
+  "description": "Fast offline video-to-document transcription with AI enhancement",
   "type": "module",
-  "bin": {
-    "local-transcribe": "./dist/cli/index.js"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./llm": {
-      "import": "./dist/llm/index.js",
-      "types": "./dist/llm/index.d.ts"
-    }
-  },
-  "files": [
-    "dist",
-    "build",
-    "binding.gyp",
-    "src/backends/apple/native"
-  ],
   "engines": {
     "node": ">=24.0.0"
   },
   "scripts": {
-    "build": "npm run build:ts",
-    "build:ts": "tsc",
-    "build:native": "node-gyp rebuild",
-    "build:all": "npm run build:native && npm run build:ts",
-    "dev": "tsc --watch",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "clean": "rm -rf dist build",
-    "install": "node-gyp rebuild || echo 'Native build failed, continuing...'",
-    "prepublishOnly": "npm run clean && npm run build:all",
-    "download:parakeet": "node -e \"import('./dist/backends/sherpa/download.js').then(m => m.downloadSherpaModel('parakeet-tdt-0.6b-v3'))\"",
-    "download:whisper": "node -e \"import('./dist/backends/sherpa/download.js').then(m => m.downloadSherpaModel('whisper-small'))\""
-  },
-  "keywords": [
-    "speech-recognition",
-    "transcription",
-    "whisper",
-    "apple-speech",
-    "parakeet",
-    "sherpa-onnx",
-    "local",
-    "offline"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@mmomtchev/ffmpeg": "^2.0.1",
-    "node-addon-api": "^8.3.0",
-    "node-llama-cpp": "^3.14.5"
-  },
-  "optionalDependencies": {
-    "sherpa-onnx-node": "^1.12.19"
+    "build": "pnpm -r run build",
+    "dev": "pnpm -r run dev",
+    "lint": "eslint packages --ext .ts,.tsx",
+    "lint:fix": "eslint packages --ext .ts,.tsx --fix",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "clean": "pnpm -r run clean",
+    "docs:dev": "pnpm --filter @cuttledoc/docs run dev",
+    "docs:build": "pnpm --filter @cuttledoc/docs run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -69,10 +25,8 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import-x": "^4.5.0",
     "globals": "^15.14.0",
-    "node-gyp": "^10.2.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.1",
-    "vitest": "^2.1.8"
+    "typescript-eslint": "^8.18.1"
   }
 }

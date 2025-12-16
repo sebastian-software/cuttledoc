@@ -8,11 +8,11 @@
  */
 export function printHelp(): void {
   console.log(`
-local-transcribe - Local speech-to-text transcription
+cuttledoc - Video to document transcription with AI
 
 USAGE:
-  local-transcribe <audio-file> [options]
-  local-transcribe models [list|download <model>]
+  cuttledoc <audio-file> [options]
+  cuttledoc models [list|download <model>]
 
 ARGUMENTS:
   <audio-file>      Audio or video file to transcribe (mp3, m4a, mp4, wav, etc.)
@@ -32,19 +32,19 @@ OPTIONS:
 
 EXAMPLES:
   # Basic transcription
-  local-transcribe podcast.mp3
+  cuttledoc podcast.mp3
 
   # Transcribe with Apple backend and German language
-  local-transcribe meeting.m4a -b apple -l de
+  cuttledoc meeting.m4a -b apple -l de
 
   # Transcribe and enhance with LLM
-  local-transcribe video.mp4 -e -o transcript.md
+  cuttledoc video.mp4 -e -o transcript.md
 
   # Download a speech model
-  local-transcribe models download parakeet-tdt-0.6b-v3
+  cuttledoc models download parakeet-tdt-0.6b-v3
 
   # List available models
-  local-transcribe models list
+  cuttledoc models list
 `);
 }
 
@@ -52,8 +52,7 @@ EXAMPLES:
  * Print version
  */
 export function printVersion(): void {
-  // Read from package.json
-  console.log("local-transcribe v0.1.0");
+  console.log("cuttledoc v0.1.0");
 }
 
 /**
@@ -85,7 +84,7 @@ export function printModels(
   }
 
   console.log("\nTo download a model:");
-  console.log("  local-transcribe models download <model-id>\n");
+  console.log("  cuttledoc models download <model-id>\n");
 }
 
 /**

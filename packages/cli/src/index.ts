@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 /**
- * local-transcribe CLI
+ * cuttledoc CLI
  *
  * Usage:
- *   npx local-transcribe <audio-file> [options]
- *   npx local-transcribe models list
- *   npx local-transcribe models download <model>
+ *   npx cuttledoc <audio-file> [options]
+ *   npx cuttledoc models list
+ *   npx cuttledoc models download <model>
  */
 
 import { existsSync } from "node:fs";
@@ -44,10 +44,7 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
   const subcommand = args.positional[0];
 
   if (subcommand === "list" || subcommand === undefined) {
-    const { LLM_MODELS } = await import("../llm/types.js");
-    const { SHERPA_MODELS } = await import("../backends/sherpa/types.js");
-    const { isModelDownloaded: isLLMDownloaded } = await import("../llm/processor.js");
-    const { isModelDownloaded: isSherpaDownloaded } = await import("../backends/sherpa/download.js");
+    const { LLM_MODELS, SHERPA_MODELS, isLLMModelDownloaded, isSherpaModelDownloaded } = await import("cuttledoc");
 
     // Convert to simpler format for printModels
     const sherpaModelsSimple: Record<string, { description?: string }> = {};
@@ -58,8 +55,8 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     printModels(
       sherpaModelsSimple,
       LLM_MODELS,
-      (id) => isSherpaDownloaded(id as keyof typeof SHERPA_MODELS),
-      (id) => isLLMDownloaded(id as keyof typeof LLM_MODELS)
+      (id) => isSherpaModelDownloaded(id as keyof typeof SHERPA_MODELS),
+      (id) => isLLMModelDownloaded(id as keyof typeof LLM_MODELS)
     );
     return;
   }
@@ -68,16 +65,15 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     const modelId = args.positional[1];
     if (modelId === undefined) {
       console.error("Error: Please specify a model to download");
-      console.error("Usage: local-transcribe models download <model-id>");
+      console.error("Usage: cuttledoc models download <model-id>");
       process.exit(1);
     }
 
     // Try LLM models first
-    const { LLM_MODELS } = await import("../llm/types.js");
+    const { LLM_MODELS, downloadLLMModel, SHERPA_MODELS, downloadSherpaModel } = await import("cuttledoc");
     if (modelId in LLM_MODELS) {
-      const { downloadModel } = await import("../llm/processor.js");
       console.log(`Downloading LLM model: ${modelId}...`);
-      await downloadModel(modelId as keyof typeof LLM_MODELS, {
+      await downloadLLMModel(modelId as keyof typeof LLM_MODELS, {
         onProgress: (p) => {
           process.stdout.write(`\rProgress: ${(p * 100).toFixed(1)}%`);
         },
@@ -87,9 +83,7 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     }
 
     // Try Sherpa models
-    const { SHERPA_MODELS } = await import("../backends/sherpa/types.js");
     if (modelId in SHERPA_MODELS) {
-      const { downloadSherpaModel } = await import("../backends/sherpa/download.js");
       console.log(`Downloading speech model: ${modelId}...`);
       await downloadSherpaModel(modelId, {
         onProgress: ({ downloaded, total }) => {
@@ -102,12 +96,12 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     }
 
     console.error(`Unknown model: ${modelId}`);
-    console.error("Run 'local-transcribe models list' to see available models");
+    console.error("Run 'cuttledoc models list' to see available models");
     process.exit(1);
   }
 
   console.error(`Unknown subcommand: ${subcommand}`);
-  console.error("Usage: local-transcribe models [list|download <model>]");
+  console.error("Usage: cuttledoc models [list|download <model>]");
   process.exit(1);
 }
 
@@ -116,8 +110,8 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
 
   if (inputFile === undefined) {
     console.error("Error: Please specify an audio/video file to transcribe");
-    console.error("Usage: local-transcribe <file> [options]");
-    console.error("Run 'local-transcribe --help' for more options");
+    console.error("Usage: cuttledoc <file> [options]");
+    console.error("Run 'cuttledoc --help' for more options");
     process.exit(1);
   }
 
@@ -127,14 +121,12 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   }
 
   // Import transcribe function
-  const { transcribe } = await import("../index.js");
+  const { transcribe, BACKEND_TYPES } = await import("cuttledoc");
   const startTime = performance.now();
 
   console.log(`Transcribing: ${basename(inputFile)}`);
   console.log(`Backend: ${args.backend ?? "auto"}`);
 
-  // Import types
-  const { BACKEND_TYPES } = await import("../types.js");
   type BackendType = keyof typeof BACKEND_TYPES;
 
   // Validate backend
@@ -158,8 +150,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
     const llmModel = args.llmModel ?? "gemma3n:e4b";
     console.log(`Enhancing with LLM: ${llmModel}`);
 
-    const { enhanceTranscript } = await import("../llm/processor.js");
-    const { LLM_MODELS } = await import("../llm/types.js");
+    const { enhanceTranscript, LLM_MODELS } = await import("cuttledoc/llm");
 
     // Validate model
     const modelId = llmModel in LLM_MODELS
@@ -212,4 +203,3 @@ main().catch((error: unknown) => {
   console.error("Error:", error instanceof Error ? error.message : String(error));
   process.exit(1);
 });
-

@@ -1,4 +1,4 @@
-# RFC: local-transcribe
+# RFC: cuttledoc
 
 > Multi-backend local speech recognition for Node.js
 
@@ -64,11 +64,11 @@ From [NVIDIA's August 2025 release](https://blogs.nvidia.com/blog/speech-ai-data
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                         local-transcribe                              │
+│                         cuttledoc                              │
 ├──────────────────────────────────────────────────────────────────────┤
 │  Unified TypeScript API                                               │
 │  ┌──────────────────────────────────────────────────────────────────┐│
-│  │ import { transcribe, setBackend } from 'local-transcribe';       ││
+│  │ import { transcribe, setBackend } from 'cuttledoc';       ││
 │  │                                                                   ││
 │  │ // Auto-select best backend                                       ││
 │  │ const result = await transcribe('audio.wav', { language: 'de' });││
@@ -102,7 +102,7 @@ From [NVIDIA's August 2025 release](https://blogs.nvidia.com/blog/speech-ai-data
 ### Project Structure
 
 ```
-local-transcribe/
+cuttledoc/
 ├── package.json
 ├── tsconfig.json
 ├── binding.gyp                    # Node-gyp build config
@@ -734,7 +734,7 @@ export * from './types.js';
 ## Installation
 
 ```bash
-npm install local-transcribe
+npm install cuttledoc
 ```
 
 The package will:
@@ -746,13 +746,13 @@ The package will:
 
 ```bash
 # Download Parakeet model (recommended for German)
-npx local-transcribe download parakeet
+npx cuttledoc download parakeet
 
 # Download Canary model (for translation)
-npx local-transcribe download canary
+npx cuttledoc download canary
 
 # Download Whisper model
-npx local-transcribe download whisper --model small
+npx cuttledoc download whisper --model small
 ```
 
 ## Usage Examples
@@ -760,7 +760,7 @@ npx local-transcribe download whisper --model small
 ### Basic Transcription (Auto Backend)
 
 ```typescript
-import { transcribe } from 'local-transcribe';
+import { transcribe } from 'cuttledoc';
 
 // Automatically selects best backend for your system
 const result = await transcribe('./recording.wav', {
@@ -774,7 +774,7 @@ console.log(`Transcribed in ${result.processingTime}s using ${result.backend}`);
 ### Explicit Backend Selection
 
 ```typescript
-import { transcribe, setBackend, downloadModel } from 'local-transcribe';
+import { transcribe, setBackend, downloadModel } from 'cuttledoc';
 
 // Use Parakeet for German (fastest for EU languages)
 await downloadModel('parakeet');
@@ -788,7 +788,7 @@ console.log(result.words); // Word-level timestamps!
 ### Apple Speech on macOS
 
 ```typescript
-import { transcribe, getAvailableBackends } from 'local-transcribe';
+import { transcribe, getAvailableBackends } from 'cuttledoc';
 
 const backends = getAvailableBackends();
 const appleAvailable = backends.find(b => b.name === 'apple')?.available;
@@ -803,7 +803,7 @@ if (appleAvailable) {
 ### With Progress Callback
 
 ```typescript
-import { transcribe } from 'local-transcribe';
+import { transcribe } from 'cuttledoc';
 
 const result = await transcribe('./long-recording.wav', {
   language: 'de',
@@ -819,7 +819,7 @@ const result = await transcribe('./long-recording.wav', {
 
 ```typescript
 // In course-grab enrichment pipeline
-import { transcribe, getAvailableBackends } from 'local-transcribe';
+import { transcribe, getAvailableBackends } from 'cuttledoc';
 
 export async function transcribeLesson(videoPath: string): Promise<string> {
   // Extract audio from video

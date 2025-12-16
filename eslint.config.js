@@ -13,6 +13,7 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         ...globals.node,
+        ...globals.browser,
       },
       parserOptions: {
         projectService: true,
@@ -114,7 +115,12 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist/**", "build/**", "node_modules/**", "*.config.js"],
+    ignores: [
+      "**/dist/**",
+      "**/build/**",
+      "**/node_modules/**",
+      "**/*.config.js",
+      "**/*.config.ts",
+    ],
   }
 );
-

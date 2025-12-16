@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This document captures key architectural decisions for `local-transcribe`.
+This document captures key architectural decisions for `cuttledoc`.
 
 ---
 

@@ -8,6 +8,9 @@ build/
 # Models (large files)
 models/
 
+# pnpm
+.pnpm-store/
+
 # IDE
 .idea/
 .vscode/
@@ -18,6 +21,7 @@ models/
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
 # Test coverage
 coverage/
@@ -27,3 +31,5 @@ coverage/
 .env.local
 .env.*.local
 
+# TypeDoc generated
+packages/docs/src/content/api/

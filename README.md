@@ -1,9 +1,9 @@
-# local-transcribe
+# cuttledoc
 
 > Fast, offline speech-to-text transcription for Node.js with multiple backend support.
 
-[![CI](https://github.com/your-username/local-transcribe/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/local-transcribe/actions/workflows/ci.yml)
-[![npm version](https://badge.fury.io/js/local-transcribe.svg)](https://www.npmjs.com/package/local-transcribe)
+[![CI](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -18,7 +18,7 @@
 ## Installation
 
 ```bash
-npm install local-transcribe
+npm install cuttledoc
 ```
 
 ### Requirements
@@ -33,22 +33,22 @@ npm install local-transcribe
 
 ```bash
 # Basic transcription
-npx local-transcribe video.mp4
+npx cuttledoc video.mp4
 
 # With LLM enhancement (adds formatting, TLDR, corrections)
-npx local-transcribe podcast.mp3 --enhance -o transcript.md
+npx cuttledoc podcast.mp3 --enhance -o transcript.md
 
 # Use specific backend and language
-npx local-transcribe meeting.m4a -b apple -l de
+npx cuttledoc meeting.m4a -b apple -l de
 
 # Show processing statistics
-npx local-transcribe audio.wav --stats
+npx cuttledoc audio.wav --stats
 ```
 
 ### API
 
 ```typescript
-import { transcribe } from "local-transcribe";
+import { transcribe } from "cuttledoc";
 
 const result = await transcribe("audio.mp3", {
   language: "en",
@@ -63,8 +63,8 @@ console.log(`Confidence: ${result.confidence}`);
 ### With LLM Enhancement
 
 ```typescript
-import { transcribe } from "local-transcribe";
-import { enhanceTranscript } from "local-transcribe/llm";
+import { transcribe } from "cuttledoc";
+import { enhanceTranscript } from "cuttledoc/llm";
 
 const result = await transcribe("podcast.mp3");
 
@@ -84,8 +84,8 @@ console.log(enhanced.markdown);
 ## CLI Reference
 
 ```
-local-transcribe <audio-file> [options]
-local-transcribe models [list|download <model>]
+cuttledoc <audio-file> [options]
+cuttledoc models [list|download <model>]
 
 Options:
   -b, --backend <name>    Backend: auto, apple, whisper, parakeet (default: auto)
@@ -104,14 +104,14 @@ Options:
 
 ```bash
 # List available models
-local-transcribe models list
+cuttledoc models list
 
 # Download a speech model
-local-transcribe models download whisper-medium
-local-transcribe models download parakeet-tdt-0.6b-v3
+cuttledoc models download whisper-medium
+cuttledoc models download parakeet-tdt-0.6b-v3
 
 # Download LLM model
-local-transcribe models download gemma3n:e4b
+cuttledoc models download gemma3n:e4b
 ```
 
 ## Backends
@@ -131,7 +131,7 @@ local-transcribe models download gemma3n:e4b
 
 ## Supported Formats
 
-**Audio**: WAV, MP3, M4A, AAC, FLAC, OGG, OPUS  
+**Audio**: WAV, MP3, M4A, AAC, FLAC, OGG, OPUS
 **Video**: MP4, WebM, MKV, MOV, AVI
 
 Audio is automatically extracted and resampled to 16kHz mono.
@@ -207,8 +207,8 @@ interface LLMProcessResult {
 
 ```bash
 # Clone
-git clone https://github.com/your-username/local-transcribe
-cd local-transcribe
+git clone https://github.com/your-username/cuttledoc
+cd cuttledoc
 
 # Install
 npm install
@@ -226,7 +226,7 @@ npm run lint
 ## Architecture
 
 ```
-local-transcribe
+cuttledoc
 ├── src/
 │   ├── index.ts          # Main API entry point
 │   ├── backend.ts        # Backend selection logic

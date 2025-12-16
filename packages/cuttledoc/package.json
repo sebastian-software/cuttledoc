@@ -1,0 +1,61 @@
+{
+  "name": "cuttledoc",
+  "version": "0.1.0",
+  "description": "Fast offline video-to-document transcription with AI enhancement",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./llm": {
+      "import": "./dist/llm/index.js",
+      "types": "./dist/llm/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "build",
+    "binding.gyp",
+    "src/backends/apple/native"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "build:native": "node-gyp rebuild",
+    "build:all": "pnpm run build:native && pnpm run build",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist build"
+  },
+  "keywords": [
+    "speech-recognition",
+    "transcription",
+    "whisper",
+    "apple-speech",
+    "parakeet",
+    "sherpa-onnx",
+    "local",
+    "offline"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@mmomtchev/ffmpeg": "^2.0.1",
+    "node-addon-api": "^8.3.0",
+    "node-llama-cpp": "^3.14.5"
+  },
+  "optionalDependencies": {
+    "sherpa-onnx-node": "^1.12.19"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
+

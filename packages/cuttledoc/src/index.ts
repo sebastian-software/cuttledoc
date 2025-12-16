@@ -20,7 +20,7 @@ import {
 
 import type { SherpaBackend } from "./backends/sherpa/index.js";
 
-// Re-export everything
+// Re-export core types and functions
 export { getAvailableBackends, getBackend, selectBestBackend, setBackend };
 export { BACKEND_TYPES, CANARY_MODELS, PARAKEET_MODELS, WHISPER_MODELS };
 export type {
@@ -37,6 +37,21 @@ export type {
   WhisperModel,
   WordTimestamp,
 };
+
+// Re-export sherpa types and functions for CLI
+export { SHERPA_MODELS, SHERPA_MODEL_TYPES, type SherpaModelType, type SherpaModelInfo } from "./backends/sherpa/types.js";
+export {
+  downloadSherpaModel,
+  isModelDownloaded as isSherpaModelDownloaded,
+  getAvailableModels as getAvailableSherpaModels,
+} from "./backends/sherpa/download.js";
+
+// Re-export LLM types for CLI
+export { LLM_MODELS, type LLMModelId } from "./llm/types.js";
+export {
+  downloadModel as downloadLLMModel,
+  isModelDownloaded as isLLMModelDownloaded,
+} from "./llm/processor.js";
 
 // Cached backend instances for reuse
 let sherpaBackendInstance: SherpaBackend | null = null;
