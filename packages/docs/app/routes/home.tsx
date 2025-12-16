@@ -4,7 +4,12 @@ import { Link } from 'react-router'
 
 import type { Route } from './+types/home'
 
-import { asset } from '@/lib/assets'
+import logoSvg from '/logo.svg'
+import nvidiaLogo from '/logos/nvidia.svg'
+import openaiLogo from '/logos/openai.svg'
+import geminiLogo from '/logos/gemini.svg'
+import appleLogo from '/logos/apple.svg'
+import onnxLogo from '/logos/onnx.svg'
 import { baseOptions } from '@/lib/layout.shared'
 
 export function meta(_args: Route.MetaArgs) {
@@ -34,7 +39,7 @@ export default function Home() {
           {/* Glow effect behind logo */}
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500/30 to-amber-500/30 blur-3xl scale-150 animate-pulse" />
           <img
-            src={asset('logo.svg')}
+            src={logoSvg}
             alt="cuttledoc"
             className="relative w-[180px] h-[180px] mb-8 drop-shadow-2xl hover:scale-105 transition-transform duration-300"
           />
@@ -187,7 +192,7 @@ export default function Home() {
                 title="NVIDIA Parakeet"
               >
                 <img
-                  src={asset('logos/nvidia.svg')}
+                  src={nvidiaLogo}
                   alt="NVIDIA"
                   className="h-7 w-7 dark:invert opacity-80 hover:opacity-100 transition-opacity"
                 />
@@ -202,7 +207,7 @@ export default function Home() {
                 title="OpenAI Whisper"
               >
                 <img
-                  src={asset('logos/openai.svg')}
+                  src={openaiLogo}
                   alt="OpenAI"
                   className="h-6 w-6 dark:invert opacity-80 hover:opacity-100 transition-opacity"
                 />
@@ -217,7 +222,7 @@ export default function Home() {
                 title="Google Gemma"
               >
                 <img
-                  src={asset('logos/gemini.svg')}
+                  src={geminiLogo}
                   alt="Gemini"
                   className="h-6 w-6 opacity-80 hover:opacity-100 transition-opacity"
                 />
@@ -232,7 +237,7 @@ export default function Home() {
                 title="Apple Speech"
               >
                 <img
-                  src={asset('logos/apple.svg')}
+                  src={appleLogo}
                   alt="Apple"
                   className="h-6 w-6 dark:invert opacity-80 hover:opacity-100 transition-opacity"
                 />
@@ -247,7 +252,7 @@ export default function Home() {
                 title="ONNX Runtime"
               >
                 <img
-                  src={asset('logos/onnx.svg')}
+                  src={onnxLogo}
                   alt="ONNX"
                   className="h-6 w-6 opacity-80 hover:opacity-100 transition-opacity"
                 />

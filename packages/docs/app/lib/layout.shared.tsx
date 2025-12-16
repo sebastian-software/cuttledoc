@@ -1,13 +1,13 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared'
 
-import { asset } from './assets'
+import logoSvg from '/logo.svg'
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: (
         <>
-          <img src={asset('logo.svg')} alt="cuttledoc" className="h-7 w-7" />
+          <img src={logoSvg} alt="cuttledoc" className="h-7 w-7" />
           <span className="font-semibold">cuttledoc</span>
         </>
       )
