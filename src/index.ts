@@ -91,7 +91,7 @@ export async function transcribe(
     case BACKEND_TYPES.whisper: {
       const { SherpaBackend } = await import("./backends/sherpa/index.js");
       // Create a new instance for whisper with different model
-      const whisperBackend = new SherpaBackend({ model: "whisper-small" });
+      const whisperBackend = new SherpaBackend({ model: "whisper-medium" });
       await whisperBackend.initialize();
       try {
         return await whisperBackend.transcribe(audioPath, options);

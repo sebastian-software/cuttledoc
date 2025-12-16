@@ -6,7 +6,7 @@ This document captures key architectural decisions for `local-transcribe`.
 
 ## ADR-001: Multi-Backend Architecture
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -25,7 +25,7 @@ Local speech-to-text has multiple viable approaches, each with trade-offs:
 Implement a **unified API with pluggable backends**:
 
 ```typescript
-const result = await transcribe("audio.wav", { 
+const result = await transcribe("audio.wav", {
   language: "de",
   backend: "auto" // or "apple", "sherpa"
 });
@@ -46,7 +46,7 @@ Backend selection:
 
 ## ADR-002: sherpa-onnx over Raw ONNX Runtime
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -84,7 +84,7 @@ Reasons:
 
 ## ADR-003: Parakeet v3 INT8 as Default for EU Languages
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -121,7 +121,7 @@ return "whisper-small"; // fallback
 
 ## ADR-004: Native Addon for Apple Speech
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -163,7 +163,7 @@ Reasons:
 
 ## ADR-005: ESM-Only Package
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -203,7 +203,7 @@ Reasons:
 
 ## ADR-006: Lazy Backend Loading
 
-**Status:** Accepted  
+**Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
@@ -217,7 +217,7 @@ Loading all backends at startup wastes resources if user only needs one.
 ```typescript
 export async function transcribe(audioPath: string, options: TranscribeOptions) {
   const backend = options.backend ?? selectBestBackend();
-  
+
   switch (backend) {
     case "apple": {
       // Only import when needed
