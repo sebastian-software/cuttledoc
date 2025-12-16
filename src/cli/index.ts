@@ -136,10 +136,10 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   // Import types
   const { BACKEND_TYPES } = await import("../types.js");
   type BackendType = keyof typeof BACKEND_TYPES;
-  
+
   // Validate backend
   const backendArg = args.backend ?? "auto";
-  const backend = backendArg in BACKEND_TYPES 
+  const backend = backendArg in BACKEND_TYPES
     ? (backendArg as BackendType)
     : "auto";
 
@@ -160,12 +160,12 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
 
     const { enhanceTranscript } = await import("../llm/processor.js");
     const { LLM_MODELS } = await import("../llm/types.js");
-    
+
     // Validate model
-    const modelId = llmModel in LLM_MODELS 
+    const modelId = llmModel in LLM_MODELS
       ? (llmModel as keyof typeof LLM_MODELS)
       : "gemma3n:e4b";
-    
+
     const enhanced = await enhanceTranscript(result.text, {
       model: modelId,
       mode: args.correctOnly ? "correct" : "enhance",
