@@ -241,14 +241,97 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
 
 ---
 
+## ADR-007: Native FFmpeg Bindings for Audio Preprocessing
+
+**Status:** Accepted
+**Date:** 2024-12-16
+
+### Context
+
+Speech recognition models typically require 16kHz mono WAV input. Users have audio in various formats (mp3, m4a, flac, etc.).
+
+| Option | Approach | Streaming | Binary Size |
+|--------|----------|-----------|-------------|
+| `ffmpeg` CLI | Subprocess | No (wait for file) | External dep |
+| `fluent-ffmpeg` | Subprocess wrapper | Partial | External dep |
+| `@mmomtchev/ffmpeg` | Native bindings | Yes (streams) | ~50MB bundled |
+| `@ffprobe-installer` | Download binary | No | ~30MB download |
+
+### Decision
+
+Use **@mmomtchev/ffmpeg** native bindings:
+
+```typescript
+import { Demuxer, AudioDecoder, AudioTransform } from "@mmomtchev/ffmpeg/stream";
+
+async function* streamAudioSamples(path: string) {
+  const demuxer = new Demuxer({ inputFile: path });
+  const decoder = new AudioDecoder({ stream: demuxer.audio[0] });
+  const resampler = new AudioTransform({
+    input: decoder.definition(),
+    output: { sampleRate: 16000, channels: 1, format: "flt" }
+  });
+  
+  decoder.pipe(resampler);
+  
+  for await (const frame of resampler) {
+    yield frame.data as Float32Array;
+  }
+}
+```
+
+Reasons:
+1. **True streaming** - Transcription can start before file is fully decoded
+2. **No external dependency** - FFmpeg bundled as native addon
+3. **Async, multi-threaded** - Leverages Node.js worker pool
+4. **Format coverage** - All FFmpeg codecs (mp3, aac, flac, opus, etc.)
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Input: podcast.mp3                                      │
+│           │                                              │
+│           ▼                                              │
+│  ┌─────────────────┐                                    │
+│  │ Demuxer         │  ← Native ffmpeg, async            │
+│  └────────┬────────┘                                    │
+│           │ Readable stream                              │
+│           ▼                                              │
+│  ┌─────────────────┐                                    │
+│  │ AudioDecoder    │  ← Compressed → Raw samples        │
+│  └────────┬────────┘                                    │
+│           │                                              │
+│           ▼                                              │
+│  ┌─────────────────┐                                    │
+│  │ AudioTransform  │  ← Resample to 16kHz mono float32  │
+│  └────────┬────────┘                                    │
+│           │ AsyncGenerator<Float32Array>                 │
+│           ▼                                              │
+│  ┌─────────────────┐                                    │
+│  │ sherpa-onnx     │  ← acceptWaveform() with chunks    │
+│  └─────────────────┘                                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Consequences
+
+- ✅ Streaming pipeline - no waiting for full decode
+- ✅ Self-contained - no ffmpeg install required
+- ✅ Consistent behavior across platforms
+- ⚠️ ~50MB added to package size
+- ⚠️ ESLint strict rules require some `any` type annotations
+
+---
+
 ## Future Considerations
 
 ### Potential ADRs
 
-- **ADR-007**: Streaming transcription API design
 - **ADR-008**: Model caching and download strategy
 - **ADR-009**: Worker thread isolation for heavy processing
 - **ADR-010**: Browser/WebAssembly support
+- **ADR-011**: Streaming transcription API design
 
 ---
 
