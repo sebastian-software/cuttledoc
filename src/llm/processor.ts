@@ -198,10 +198,10 @@ export class LLMProcessor {
 
     // Select prompt based on mode
     const mode = options.mode ?? "enhance";
-    const systemPrompt = mode === "correct" 
-      ? TRANSCRIPT_CORRECTION_PROMPT 
+    const systemPrompt = mode === "correct"
+      ? TRANSCRIPT_CORRECTION_PROMPT
       : TRANSCRIPT_ENHANCEMENT_PROMPT;
-    
+
     const prompt = `${systemPrompt}\n\n---\n\n${rawTranscript}`;
 
     // Generate enhanced text
