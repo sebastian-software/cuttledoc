@@ -7,105 +7,54 @@ on:
     branches: [main]
 
 jobs:
-  lint:
-    name: Lint
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
-      - name: Type check
-        run: npm run typecheck
+      - name: Typecheck
+        run: pnpm typecheck
 
-  test:
-    name: Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        node: ["24"]
+      - name: Test
+        run: pnpm test
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Run tests
-        run: npm test
-
-  build:
-    name: Build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        node: ["24"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build TypeScript
-        run: npm run build:ts
-
-      - name: Build native addon (macOS only)
-        if: runner.os == 'macOS'
-        run: npm run build:native
-
-  # Smoke test the CLI
-  smoke-test:
-    name: Smoke Test
+  build-macos:
     runs-on: macos-latest
-    needs: [build]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: npm run build
+      - name: Build with native addon
+        run: pnpm --filter cuttledoc build:all
 
-      - name: CLI help
-        run: node dist/cli/index.js --help
-
-      - name: CLI version
-        run: node dist/cli/index.js --version
-
-      - name: List models
-        run: node dist/cli/index.js models list
-
+      - name: Test
+        run: pnpm --filter cuttledoc test

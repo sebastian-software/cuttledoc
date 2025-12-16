@@ -10,9 +10,12 @@ if (root === null) {
   throw new Error("Root element not found");
 }
 
+// Remove trailing slash for basename (React Router requirement)
+const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 createRoot(root).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
   </StrictMode>

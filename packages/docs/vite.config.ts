@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
+  base: process.env.VITE_BASE_PATH ?? "/",
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
@@ -14,4 +15,3 @@ export default defineConfig({
     sourcemap: true,
   },
 });
-
