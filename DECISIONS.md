@@ -271,9 +271,9 @@ async function* streamAudioSamples(path: string) {
     input: decoder.definition(),
     output: { sampleRate: 16000, channels: 1, format: "flt" }
   });
-  
+
   decoder.pipe(resampler);
-  
+
   for await (const frame of resampler) {
     yield frame.data as Float32Array;
   }
