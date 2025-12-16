@@ -48,6 +48,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@mmomtchev/ffmpeg": "^2.0.1",
     "node-addon-api": "^8.3.0"
   },
   "optionalDependencies": {
