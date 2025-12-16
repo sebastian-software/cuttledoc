@@ -6,7 +6,7 @@ import type { Route } from './+types/home'
 
 import { baseOptions } from '@/lib/layout.shared'
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_args: Route.MetaArgs) {
   return [
     { title: 'cuttledoc - Fast Offline Speech-to-Text for Node.js' },
     {

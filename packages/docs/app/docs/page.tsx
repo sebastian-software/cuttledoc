@@ -13,6 +13,8 @@ export async function loader({ params }: Route.LoaderArgs) {
   const slugs = params['*'].split('/').filter((v) => v.length > 0)
   const page = source.getPage(slugs)
   if (!page) {
+    // React Router convention for 404 responses
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw new Response('Not found', { status: 404 })
   }
 
