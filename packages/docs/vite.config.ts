@@ -6,6 +6,7 @@ import mdx from 'fumadocs-mdx/vite'
 import * as MdxConfig from './source.config'
 
 export default defineConfig({
+  base: process.env.BASE_PATH || '/',
   plugins: [
     mdx(MdxConfig),
     tailwindcss(),

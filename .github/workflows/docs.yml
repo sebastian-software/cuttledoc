@@ -37,6 +37,8 @@ jobs:
 
       - name: Build docs
         run: pnpm --filter @cuttledoc/docs build
+        env:
+          BASE_PATH: /cuttledoc
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
