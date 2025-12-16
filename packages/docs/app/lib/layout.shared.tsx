@@ -1,4 +1,4 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared'
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -8,20 +8,20 @@ export function baseOptions(): BaseLayoutProps {
           <img src="/logo.svg" alt="cuttledoc" className="h-7 w-7" />
           <span className="font-semibold">cuttledoc</span>
         </>
-      ),
+      )
     },
     links: [
       {
         text: 'Documentation',
         url: '/docs',
-        active: 'nested-url',
+        active: 'nested-url'
       },
       {
         text: 'GitHub',
         url: 'https://github.com/sebastian-software/cuttledoc',
-        external: true,
-      },
+        external: true
+      }
     ],
-    githubUrl: 'https://github.com/sebastian-software/cuttledoc',
-  };
+    githubUrl: 'https://github.com/sebastian-software/cuttledoc'
+  }
 }

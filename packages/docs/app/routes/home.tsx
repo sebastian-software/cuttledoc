@@ -1,11 +1,10 @@
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { Zap, Layers, Sparkles, Mic, Bot } from 'lucide-react';
-import { Link } from 'react-router';
+import { HomeLayout } from 'fumadocs-ui/layouts/home'
+import { Zap, Layers, Sparkles, Mic, Bot } from 'lucide-react'
+import { Link } from 'react-router'
 
-import type { Route } from './+types/home';
+import type { Route } from './+types/home'
 
-import { baseOptions } from '@/lib/layout.shared';
-
+import { baseOptions } from '@/lib/layout.shared'
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,9 +12,9 @@ export function meta({}: Route.MetaArgs) {
     {
       name: 'description',
       content:
-        'Fast, offline speech-to-text transcription library for Node.js with multiple backends and LLM enhancement.',
-    },
-  ];
+        'Fast, offline speech-to-text transcription library for Node.js with multiple backends and LLM enhancement.'
+    }
+  ]
 }
 
 export default function Home() {
@@ -48,14 +47,8 @@ export default function Home() {
           Fast, offline speech-to-text transcription for{' '}
           <span className="text-fd-foreground font-semibold">Node.js</span>.
           <br />
-          <span className="text-orange-500 dark:text-orange-400">
-            Multiple backends
-          </span>
-          . Optional{' '}
-          <span className="text-amber-500 dark:text-amber-400">
-            LLM enhancement
-          </span>
-          .
+          <span className="text-orange-500 dark:text-orange-400">Multiple backends</span>. Optional{' '}
+          <span className="text-amber-500 dark:text-amber-400">LLM enhancement</span>.
         </p>
 
         {/* CTA Buttons */}
@@ -74,9 +67,7 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             View on GitHub
-            <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">
-              →
-            </span>
+            <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
           </a>
         </div>
 
@@ -86,36 +77,27 @@ export default function Home() {
             <div className="mb-4 p-3 w-fit rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 group-hover:scale-110 transition-transform">
               <Zap className="w-8 h-8 text-orange-500" />
             </div>
-            <h3 className="font-bold text-lg mb-3 text-fd-foreground">
-              Fast & Offline
-            </h3>
+            <h3 className="font-bold text-lg mb-3 text-fd-foreground">Fast & Offline</h3>
             <p className="text-fd-muted-foreground">
-              Runs entirely locally. No internet required. Native performance
-              with GPU acceleration.
+              Runs entirely locally. No internet required. Native performance with GPU acceleration.
             </p>
           </div>
           <div className="group p-8 rounded-2xl bg-gradient-to-br from-fd-card to-fd-card/50 border border-fd-border hover:border-amber-500/30 shadow-lg hover:shadow-amber-500/10 transition-all duration-300 hover:-translate-y-1">
             <div className="mb-4 p-3 w-fit rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:scale-110 transition-transform">
               <Layers className="w-8 h-8 text-amber-500" />
             </div>
-            <h3 className="font-bold text-lg mb-3 text-fd-foreground">
-              Multiple Backends
-            </h3>
+            <h3 className="font-bold text-lg mb-3 text-fd-foreground">Multiple Backends</h3>
             <p className="text-fd-muted-foreground">
-              Apple Speech, Parakeet, Whisper. Choose the best backend for your
-              language and quality needs.
+              Apple Speech, Parakeet, Whisper. Choose the best backend for your language and quality needs.
             </p>
           </div>
           <div className="group p-8 rounded-2xl bg-gradient-to-br from-fd-card to-fd-card/50 border border-fd-border hover:border-orange-500/30 shadow-lg hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1">
             <div className="mb-4 p-3 w-fit rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 group-hover:scale-110 transition-transform">
               <Sparkles className="w-8 h-8 text-orange-500" />
             </div>
-            <h3 className="font-bold text-lg mb-3 text-fd-foreground">
-              LLM Enhancement
-            </h3>
+            <h3 className="font-bold text-lg mb-3 text-fd-foreground">LLM Enhancement</h3>
             <p className="text-fd-muted-foreground">
-              Optional AI enhancement for punctuation, formatting, and
-              intelligent corrections.
+              Optional AI enhancement for punctuation, formatting, and intelligent corrections.
             </p>
           </div>
         </div>
@@ -129,21 +111,17 @@ export default function Home() {
                 <span className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50" />
                 <span className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
-                <span className="ml-3 text-xs text-zinc-400 font-mono">
-                  transcribe.ts
-                </span>
+                <span className="ml-3 text-xs text-zinc-400 font-mono">transcribe.ts</span>
               </div>
               <pre className="p-6 text-left text-sm overflow-x-auto bg-gradient-to-br from-zinc-900 to-zinc-950">
                 <code className="text-zinc-100 font-mono leading-relaxed">
                   <span className="text-pink-400">import</span>
                   {' { transcribe } '}
-                  <span className="text-pink-400">from</span>{' '}
-                  <span className="text-emerald-400">"cuttledoc"</span>
+                  <span className="text-pink-400">from</span> <span className="text-emerald-400">"cuttledoc"</span>
                   {`;\n\n`}
                   <span className="text-pink-400">const</span>
                   {' result = '}
-                  <span className="text-pink-400">await</span>{' '}
-                  <span className="text-sky-400">transcribe</span>
+                  <span className="text-pink-400">await</span> <span className="text-sky-400">transcribe</span>
                   {'('}
                   <span className="text-emerald-400">"audio.mp3"</span>
                   {`);\n`}
@@ -167,21 +145,17 @@ export default function Home() {
                 <span className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50" />
                 <span className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
-                <span className="ml-3 text-xs text-zinc-400 font-mono">
-                  enhance.ts
-                </span>
+                <span className="ml-3 text-xs text-zinc-400 font-mono">enhance.ts</span>
               </div>
               <pre className="p-6 text-left text-sm overflow-x-auto bg-gradient-to-br from-zinc-900 to-zinc-950">
                 <code className="text-zinc-100 font-mono leading-relaxed">
                   <span className="text-pink-400">import</span>
                   {' { enhanceTranscript } '}
-                  <span className="text-pink-400">from</span>{' '}
-                  <span className="text-emerald-400">"cuttledoc/llm"</span>
+                  <span className="text-pink-400">from</span> <span className="text-emerald-400">"cuttledoc/llm"</span>
                   {`;\n\n`}
                   <span className="text-pink-400">const</span>
                   {' enhanced = '}
-                  <span className="text-pink-400">await</span>{' '}
-                  <span className="text-sky-400">enhanceTranscript</span>
+                  <span className="text-pink-400">await</span> <span className="text-sky-400">enhanceTranscript</span>
                   {'(text);'}
                   {`\n`}
                   <span className="text-zinc-500">console</span>
@@ -286,9 +260,7 @@ export default function Home() {
 
         {/* Bottom CTA */}
         <div className="mt-20 text-center">
-          <p className="text-fd-muted-foreground mb-6">
-            Ready to transcribe? Get started in under a minute.
-          </p>
+          <p className="text-fd-muted-foreground mb-6">Ready to transcribe? Get started in under a minute.</p>
           <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-fd-muted font-mono text-sm">
             <span className="text-orange-500">$</span>
             <span>pnpm add cuttledoc</span>
@@ -296,5 +268,5 @@ export default function Home() {
         </div>
       </div>
     </HomeLayout>
-  );
+  )
 }

@@ -8,8 +8,8 @@
     "start": "serve ./build/client",
     "types:check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
-    "lint": "biome check",
-    "format": "biome format --write"
+    "lint": "prettier --check .",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@orama/orama": "^3.1.16",
@@ -24,13 +24,13 @@
     "react-router": "^7.10.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
     "@react-router/dev": "^7.10.1",
     "@tailwindcss/vite": "^4.1.17",
     "@types/mdx": "^2.0.13",
     "@types/node": "^24.10.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "prettier": "^3.7.4",
     "react-router-devtools": "^6.0.0",
     "serve": "^14.2.5",
     "tailwindcss": "^4.1.17",

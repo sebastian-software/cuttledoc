@@ -111,9 +111,6 @@ importers:
         specifier: ^7.10.1
         version: 7.10.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.3.8
-        version: 2.3.9
       '@react-router/dev':
         specifier: ^7.10.1
         version: 7.10.1(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(react-router@7.10.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.9.3)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))(yaml@2.8.2)
@@ -132,6 +129,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.7)
+      prettier:
+        specifier: ^3.7.4
+        version: 3.7.4
       react-router-devtools:
         specifier: ^6.0.0
         version: 6.0.0(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(csstype@3.2.3)(react-dom@19.2.3(react@19.2.3))(react-router@7.10.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(solid-js@1.9.10)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))

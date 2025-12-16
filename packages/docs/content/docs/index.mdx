@@ -17,9 +17,7 @@ pnpm add cuttledoc
 - Node.js 22+
 - ~2GB disk space for models
 
-<Callout type="info">
-The Apple Speech backend requires macOS 14+. Whisper and Parakeet work on all platforms.
-</Callout>
+<Callout type="info">The Apple Speech backend requires macOS 14+. Whisper and Parakeet work on all platforms.</Callout>
 
 ## CLI Usage
 
@@ -40,38 +38,38 @@ cuttledoc audio.wav --stats
 ## API Usage
 
 ```typescript
-import { transcribe } from "cuttledoc";
+import { transcribe } from 'cuttledoc'
 
-const result = await transcribe("audio.mp3", {
-  language: "en",
-  backend: "auto",
-});
+const result = await transcribe('audio.mp3', {
+  language: 'en',
+  backend: 'auto'
+})
 
-console.log(result.text);
-console.log(`Duration: ${result.durationSeconds}s`);
+console.log(result.text)
+console.log(`Duration: ${result.durationSeconds}s`)
 ```
 
 ## With LLM Enhancement
 
 ```typescript
-import { transcribe } from "cuttledoc";
-import { enhanceTranscript } from "cuttledoc/llm";
+import { transcribe } from 'cuttledoc'
+import { enhanceTranscript } from 'cuttledoc/llm'
 
-const result = await transcribe("podcast.mp3");
-const enhanced = await enhanceTranscript(result.text);
+const result = await transcribe('podcast.mp3')
+const enhanced = await enhanceTranscript(result.text)
 
-console.log(enhanced.markdown);
+console.log(enhanced.markdown)
 ```
 
 ## Available Backends
 
-| Backend          | Platform  | Speed  | Quality  | Languages |
-| ---------------- | --------- | ------ | -------- | --------- |
-| Apple Speech     | macOS 14+ | ⚡⚡⚡  | ★★★★     | 60+       |
-| Parakeet v3      | All       | ⚡⚡⚡  | ★★★★     | 26 (EU)   |
-| Whisper Small    | All       | ⚡⚡    | ★★★      | 99        |
-| Whisper Medium   | All       | ⚡     | ★★★★     | 99        |
-| Whisper Large v3 | All       | 🐢     | ★★★★★    | 99        |
+| Backend          | Platform  | Speed  | Quality | Languages |
+| ---------------- | --------- | ------ | ------- | --------- |
+| Apple Speech     | macOS 14+ | ⚡⚡⚡ | ★★★★    | 60+       |
+| Parakeet v3      | All       | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
+| Whisper Small    | All       | ⚡⚡   | ★★★     | 99        |
+| Whisper Medium   | All       | ⚡     | ★★★★    | 99        |
+| Whisper Large v3 | All       | 🐢     | ★★★★★   | 99        |
 
 ## Model Management
 
