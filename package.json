@@ -17,7 +17,6 @@
     "clean": "pnpm -r run clean",
     "docs:dev": "pnpm --filter @cuttledoc/docs run dev",
     "docs:build": "pnpm --filter @cuttledoc/docs run build",
-    "sync-versions": "node scripts/sync-versions.js",
     "release": "release-it",
     "release:dry": "release-it --dry-run"
   },

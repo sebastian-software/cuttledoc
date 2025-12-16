@@ -15,8 +15,7 @@
     "publish": false
   },
   "hooks": {
-    "before:init": ["pnpm lint", "pnpm test"],
-    "after:bump": "pnpm run sync-versions"
+    "before:init": ["pnpm lint", "pnpm test"]
   },
   "plugins": {
     "@release-it/conventional-changelog": {

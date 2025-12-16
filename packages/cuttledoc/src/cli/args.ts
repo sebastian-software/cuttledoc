@@ -5,25 +5,25 @@
 
 export interface CLIArgs {
   // Flags
-  help: boolean;
-  version: boolean;
-  quiet: boolean;
-  stats: boolean;
-  enhance: boolean;
-  correctOnly: boolean;
+  help: boolean
+  version: boolean
+  quiet: boolean
+  stats: boolean
+  enhance: boolean
+  correctOnly: boolean
 
   // Options
-  backend: string | undefined;
-  model: string | undefined;
-  language: string | undefined;
-  output: string | undefined;
-  llmModel: string | undefined;
+  backend: string | undefined
+  model: string | undefined
+  language: string | undefined
+  output: string | undefined
+  llmModel: string | undefined
 
   // Subcommand
-  command: string | undefined;
+  command: string | undefined
 
   // Positional arguments
-  positional: string[];
+  positional: string[]
 }
 
 /**
@@ -43,62 +43,62 @@ export function parseArgs(argv: string[]): CLIArgs {
     output: undefined,
     llmModel: undefined,
     command: undefined,
-    positional: [],
-  };
+    positional: []
+  }
 
-  let i = 0;
+  let i = 0
   while (i < argv.length) {
-    const arg = argv[i];
+    const arg = argv[i]
     if (arg === undefined) {
-      i++;
-      continue;
+      i++
+      continue
     }
 
     // Flags
     if (arg === "-h" || arg === "--help") {
-      args.help = true;
+      args.help = true
     } else if (arg === "-v" || arg === "--version") {
-      args.version = true;
+      args.version = true
     } else if (arg === "-q" || arg === "--quiet") {
-      args.quiet = true;
+      args.quiet = true
     } else if (arg === "-s" || arg === "--stats") {
-      args.stats = true;
+      args.stats = true
     } else if (arg === "-e" || arg === "--enhance") {
-      args.enhance = true;
+      args.enhance = true
     } else if (arg === "--correct-only") {
-      args.correctOnly = true;
-      args.enhance = true; // Correction implies enhance
+      args.correctOnly = true
+      args.enhance = true // Correction implies enhance
     }
     // Options with values
     else if (arg === "-b" || arg === "--backend") {
-      args.backend = argv[++i];
+      args.backend = argv[++i]
     } else if (arg === "-m" || arg === "--model") {
-      args.model = argv[++i];
+      args.model = argv[++i]
     } else if (arg === "-l" || arg === "--language") {
-      args.language = argv[++i];
+      args.language = argv[++i]
     } else if (arg === "-o" || arg === "--output") {
-      args.output = argv[++i];
+      args.output = argv[++i]
     } else if (arg === "--llm-model") {
-      args.llmModel = argv[++i];
+      args.llmModel = argv[++i]
     }
     // Subcommands
     else if (arg === "models") {
-      args.command = "models";
-      args.positional = argv.slice(i + 1);
-      break;
+      args.command = "models"
+      args.positional = argv.slice(i + 1)
+      break
     }
     // Positional arguments
     else if (!arg.startsWith("-")) {
-      args.positional.push(arg);
+      args.positional.push(arg)
     }
     // Unknown option
     else {
-      console.warn(`Unknown option: ${arg}`);
+      console.warn(`Unknown option: ${arg}`)
     }
 
-    i++;
+    i++
   }
 
-  return args;
+  return args
 }
 

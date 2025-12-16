@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Fast offline video-to-document transcription with AI enhancement",
   "type": "module",
+  "bin": {
+    "cuttledoc": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",

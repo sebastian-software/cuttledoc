@@ -45,14 +45,14 @@ EXAMPLES:
 
   # List available models
   cuttledoc models list
-`);
+`)
 }
 
 /**
  * Print version
  */
 export function printVersion(): void {
-  console.log("cuttledoc v0.1.0");
+  console.log("cuttledoc v0.1.0")
 }
 
 /**
@@ -64,67 +64,67 @@ export function printModels(
   isSherpaDownloaded: (id: string) => boolean,
   isLLMDownloaded: (id: string) => boolean
 ): void {
-  console.log("\n📢 SPEECH MODELS (sherpa-onnx)\n");
-  console.log("  ID                           Downloaded   Description");
-  console.log(`  ${  "─".repeat(70)}`);
+  console.log("\n📢 SPEECH MODELS (sherpa-onnx)\n")
+  console.log("  ID                           Downloaded   Description")
+  console.log(`  ${"─".repeat(70)}`)
 
   for (const [id, info] of Object.entries(sherpaModels)) {
-    const downloaded = isSherpaDownloaded(id) ? "✅" : "  ";
-    const desc = info.description ?? "";
-    console.log(`  ${id.padEnd(28)} ${downloaded}           ${desc}`);
+    const downloaded = isSherpaDownloaded(id) ? "✅" : "  "
+    const desc = info.description ?? ""
+    console.log(`  ${id.padEnd(28)} ${downloaded}           ${desc}`)
   }
 
-  console.log("\n🤖 LLM MODELS (for enhancement)\n");
-  console.log("  ID                           Downloaded   Description");
-  console.log(`  ${  "─".repeat(70)}`);
+  console.log("\n🤖 LLM MODELS (for enhancement)\n")
+  console.log("  ID                           Downloaded   Description")
+  console.log(`  ${"─".repeat(70)}`)
 
   for (const [id, info] of Object.entries(llmModels)) {
-    const downloaded = isLLMDownloaded(id) ? "✅" : "  ";
-    console.log(`  ${id.padEnd(28)} ${downloaded}           ${info.description}`);
+    const downloaded = isLLMDownloaded(id) ? "✅" : "  "
+    console.log(`  ${id.padEnd(28)} ${downloaded}           ${info.description}`)
   }
 
-  console.log("\nTo download a model:");
-  console.log("  cuttledoc models download <model-id>\n");
+  console.log("\nTo download a model:")
+  console.log("  cuttledoc models download <model-id>\n")
 }
 
 /**
  * Print transcription statistics
  */
 export function printStats(stats: {
-  inputFile: string;
-  durationSeconds: number;
-  transcribeTimeSeconds: number;
-  totalTimeSeconds: number;
-  backend: string;
-  wordCount: number;
-  enhanced: boolean;
+  inputFile: string
+  durationSeconds: number
+  transcribeTimeSeconds: number
+  totalTimeSeconds: number
+  backend: string
+  wordCount: number
+  enhanced: boolean
 }): void {
-  const rtf = stats.durationSeconds / stats.transcribeTimeSeconds;
+  const rtf = stats.durationSeconds / stats.transcribeTimeSeconds
 
-  console.log("\n📊 STATISTICS\n");
-  console.log(`  File:           ${stats.inputFile}`);
-  console.log(`  Duration:       ${formatDuration(stats.durationSeconds)}`);
-  console.log(`  Backend:        ${stats.backend}`);
-  console.log(`  Words:          ${stats.wordCount.toString()}`);
-  console.log(`  Processing:     ${stats.transcribeTimeSeconds.toFixed(1)}s`);
-  console.log(`  Speed:          ${rtf.toFixed(1)}x realtime`);
+  console.log("\n📊 STATISTICS\n")
+  console.log(`  File:           ${stats.inputFile}`)
+  console.log(`  Duration:       ${formatDuration(stats.durationSeconds)}`)
+  console.log(`  Backend:        ${stats.backend}`)
+  console.log(`  Words:          ${stats.wordCount.toString()}`)
+  console.log(`  Processing:     ${stats.transcribeTimeSeconds.toFixed(1)}s`)
+  console.log(`  Speed:          ${rtf.toFixed(1)}x realtime`)
   if (stats.enhanced) {
-    console.log(`  Total time:     ${stats.totalTimeSeconds.toFixed(1)}s (with LLM)`);
+    console.log(`  Total time:     ${stats.totalTimeSeconds.toFixed(1)}s (with LLM)`)
   }
-  console.log();
+  console.log()
 }
 
 /**
  * Format seconds as HH:MM:SS
  */
 function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
 
   if (h > 0) {
-    return `${h.toString()}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${h.toString()}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
   }
-  return `${m.toString()}:${s.toString().padStart(2, "0")}`;
+  return `${m.toString()}:${s.toString().padStart(2, "0")}`
 }
 
