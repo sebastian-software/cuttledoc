@@ -3,9 +3,11 @@ import { glob } from 'node:fs/promises'
 import { createGetUrl, getSlugs } from 'fumadocs-core/source'
 
 const getUrl = createGetUrl('/docs')
+const basename = process.env.BASE_PATH?.replace(/\/$/, '') || ''
 
 export default {
   ssr: true,
+  basename,
   async prerender({ getStaticPaths }) {
     const paths: string[] = []
     const excluded: string[] = []
