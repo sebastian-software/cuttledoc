@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff8c42"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="headphoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="earpadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <linearGradient id="inkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Body/Head -->
+  <ellipse cx="100" cy="70" rx="55" ry="50" fill="url(#bodyGrad)" stroke="#c2410c" stroke-width="2"/>
+
+  <!-- Body spots -->
+  <circle cx="70" cy="58" r="5" fill="#ea580c" opacity="0.4"/>
+  <circle cx="128" cy="55" r="4" fill="#ea580c" opacity="0.4"/>
+  <circle cx="85" cy="88" r="3" fill="#ea580c" opacity="0.4"/>
+  <circle cx="118" cy="85" r="3" fill="#ea580c" opacity="0.4"/>
+
+  <!-- Tentacles - hanging down from body with playful curves -->
+  <g fill="url(#bodyGrad)" stroke="#c2410c" stroke-width="1.5">
+    <!-- Far left tentacle -->
+    <path d="M52 105
+             Q40 120 35 140
+             Q30 160 38 175
+             Q45 185 48 178
+             Q50 168 48 155
+             Q48 135 55 118
+             Q58 110 52 105" />
+
+    <!-- Left tentacle -->
+    <path d="M65 112
+             Q55 130 50 150
+             Q45 175 55 188
+             Q65 195 68 185
+             Q70 172 68 155
+             Q68 135 72 120
+             Q75 114 65 112" />
+
+    <!-- Left-center tentacle -->
+    <path d="M80 116
+             Q72 140 70 160
+             Q68 182 78 195
+             Q88 202 90 190
+             Q92 175 88 158
+             Q86 138 85 125
+             Q86 118 80 116" />
+
+    <!-- Center-left tentacle -->
+    <path d="M92 118
+             Q88 145 90 168
+             Q92 188 100 198
+             Q108 202 108 190
+             Q106 172 102 155
+             Q98 135 96 125
+             Q95 120 92 118" />
+
+    <!-- Center-right tentacle (with ink!) -->
+    <path d="M108 118
+             Q112 145 110 168
+             Q108 188 100 198
+             Q92 202 92 190
+             Q94 172 98 155
+             Q102 135 104 125
+             Q105 120 108 118" />
+
+    <!-- Right-center tentacle -->
+    <path d="M120 116
+             Q128 140 130 160
+             Q132 182 122 195
+             Q112 202 110 190
+             Q108 175 112 158
+             Q114 138 115 125
+             Q114 118 120 116" />
+
+    <!-- Right tentacle -->
+    <path d="M135 112
+             Q145 130 150 150
+             Q155 175 145 188
+             Q135 195 132 185
+             Q130 172 132 155
+             Q132 135 128 120
+             Q125 114 135 112" />
+
+    <!-- Far right tentacle -->
+    <path d="M148 105
+             Q160 120 165 140
+             Q170 160 162 175
+             Q155 185 152 178
+             Q150 168 152 155
+             Q152 135 145 118
+             Q142 110 148 105" />
+  </g>
+
+  <!-- Ink drops from one tentacle -->
+  <g fill="url(#inkGrad)">
+    <ellipse cx="100" cy="202" rx="8" ry="5" opacity="0.9"/>
+    <circle cx="92" cy="196" r="3" opacity="0.7"/>
+    <circle cx="108" cy="194" r="2.5" opacity="0.6"/>
+    <circle cx="96" cy="188" r="2" opacity="0.5"/>
+    <circle cx="104" cy="186" r="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- Headphone band -->
+  <path d="M45 58 Q45 15 100 8 Q155 15 155 58"
+        fill="none" stroke="url(#headphoneGrad)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Left earpad -->
+  <ellipse cx="43" cy="68" rx="15" ry="20" fill="url(#earpadGrad)" stroke="#475569" stroke-width="1.5"/>
+  <ellipse cx="43" cy="68" rx="10" ry="14" fill="#334155"/>
+
+  <!-- Right earpad -->
+  <ellipse cx="157" cy="68" rx="15" ry="20" fill="url(#earpadGrad)" stroke="#475569" stroke-width="1.5"/>
+  <ellipse cx="157" cy="68" rx="10" ry="14" fill="#334155"/>
+
+  <!-- Eyes -->
+  <ellipse cx="78" cy="70" rx="12" ry="14" fill="white" stroke="#c2410c" stroke-width="1"/>
+  <ellipse cx="122" cy="70" rx="12" ry="14" fill="white" stroke="#c2410c" stroke-width="1"/>
+  <circle cx="80" cy="72" r="6" fill="#1e293b"/>
+  <circle cx="124" cy="72" r="6" fill="#1e293b"/>
+  <circle cx="82" cy="70" r="2.5" fill="white"/>
+  <circle cx="126" cy="70" r="2.5" fill="white"/>
+
+  <!-- Cute little smile -->
+  <path d="M90 92 Q100 100 110 92" stroke="#c2410c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Audio waves -->
+  <g stroke="#f97316" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8">
+    <path d="M172 45 Q178 45 178 38 Q178 31 172 31"/>
+    <path d="M176 50 Q186 50 186 38 Q186 26 176 26"/>
+    <path d="M180 55 Q192 55 192 38 Q192 21 180 21"/>
+  </g>
+</svg>
