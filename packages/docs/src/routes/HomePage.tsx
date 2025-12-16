@@ -141,7 +141,7 @@ export function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container max-w-screen-xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>MIT License © cuttledoc contributors</p>
+          <p>MIT License © Sebastian Werner, Sebastian Software GmbH</p>
         </div>
       </footer>
     </div>
