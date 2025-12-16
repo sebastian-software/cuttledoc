@@ -2,12 +2,10 @@ import type { Config } from '@react-router/dev/config'
 import { glob } from 'node:fs/promises'
 import { createGetUrl, getSlugs } from 'fumadocs-core/source'
 
-const basePath = process.env.BASE_PATH || ''
 const getUrl = createGetUrl('/docs')
 
 export default {
   ssr: true,
-  basename: basePath,
   async prerender({ getStaticPaths }) {
     const paths: string[] = []
     const excluded: string[] = []
