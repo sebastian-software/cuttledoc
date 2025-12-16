@@ -6,11 +6,25 @@
  * Supported LLM models for transcript processing
  */
 export const LLM_MODELS = {
+  // Gemma 3n - Newest, optimized for edge devices (July 2025)
+  "gemma3n:e4b": {
+    ggufRepo: "bartowski/gemma-3n-E4B-it-GGUF",
+    ggufFile: "gemma-3n-E4B-it-Q4_K_M.gguf",
+    contextSize: 32768,
+    description: "Google Gemma 3n E4B - Best quality/size ratio, >1300 LMArena, 3GB RAM",
+  },
+  "gemma3n:e2b": {
+    ggufRepo: "bartowski/gemma-3n-E2B-it-GGUF",
+    ggufFile: "gemma-3n-E2B-it-Q4_K_M.gguf",
+    contextSize: 32768,
+    description: "Google Gemma 3n E2B - Ultra-efficient, 2GB RAM",
+  },
+  // Gemma 3 - Stable, well-tested
   "gemma3:4b": {
     ggufRepo: "bartowski/gemma-3-4b-it-GGUF",
     ggufFile: "gemma-3-4b-it-Q4_K_M.gguf",
     contextSize: 8192,
-    description: "Google Gemma 3 4B - Best for multilingual, 140 languages",
+    description: "Google Gemma 3 4B - Stable, 140 languages",
   },
   "gemma3:12b": {
     ggufRepo: "bartowski/gemma-3-12b-it-GGUF",
@@ -18,6 +32,7 @@ export const LLM_MODELS = {
     contextSize: 8192,
     description: "Google Gemma 3 12B - Higher quality, needs 8GB+ RAM",
   },
+  // Other models
   "deepseek-r1:1.5b": {
     ggufRepo: "bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF",
     ggufFile: "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
@@ -38,7 +53,7 @@ export type LLMModelId = keyof typeof LLM_MODELS;
  * LLM processing options
  */
 export interface LLMProcessOptions {
-  /** Model to use. Built-in: gemma3:4b, gemma3:12b, deepseek-r1:1.5b, qwen2.5:3b */
+  /** Model to use (default: gemma3n:e4b). Built-in: gemma3n:e4b, gemma3n:e2b, gemma3:4b, gemma3:12b, deepseek-r1:1.5b, qwen2.5:3b */
   model?: LLMModelId;
 
   /** Custom GGUF file path (overrides model selection) */

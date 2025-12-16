@@ -131,7 +131,7 @@ export class LLMProcessor {
   private readonly contextSize: number;
 
   constructor(options: LLMProcessOptions = {}) {
-    this.modelId = options.model ?? "gemma3:4b";
+    this.modelId = options.model ?? "gemma3n:e4b";
     this.modelPath = options.modelPath;
     this.gpuLayers = options.gpuLayers ?? -1; // All layers on GPU by default
     const modelInfo = LLM_MODELS[this.modelId];
