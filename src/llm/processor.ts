@@ -12,10 +12,12 @@ import {
   findCorrections,
   LLM_MODELS,
   stripMarkdown,
+  TRANSCRIPT_CORRECTION_PROMPT,
   TRANSCRIPT_ENHANCEMENT_PROMPT,
   type LLMModelId,
   type LLMProcessOptions,
   type LLMProcessResult,
+  type ProcessMode,
 } from "./types.js";
 
 import type {
@@ -173,7 +175,10 @@ export class LLMProcessor {
    */
   async enhance(
     rawTranscript: string,
-    options: { language?: string | undefined; temperature?: number | undefined } = {}
+    options: {
+      mode?: ProcessMode | undefined;
+      temperature?: number | undefined;
+    } = {}
   ): Promise<LLMProcessResult> {
     if (!this.isInitialized || this.context === null || this.model === null) {
       await this.initialize();
@@ -191,9 +196,13 @@ export class LLMProcessor {
       contextSequence: this.context.getSequence(),
     });
 
-    // Build prompt with language hint
-    const langHint = options.language !== undefined ? ` (Sprache: ${options.language})` : "";
-    const prompt = `${TRANSCRIPT_ENHANCEMENT_PROMPT}${langHint}\n\n---\n\n${rawTranscript}`;
+    // Select prompt based on mode
+    const mode = options.mode ?? "enhance";
+    const systemPrompt = mode === "correct" 
+      ? TRANSCRIPT_CORRECTION_PROMPT 
+      : TRANSCRIPT_ENHANCEMENT_PROMPT;
+    
+    const prompt = `${systemPrompt}\n\n---\n\n${rawTranscript}`;
 
     // Generate enhanced text
     const response = await session.prompt(prompt, {
@@ -233,7 +242,7 @@ export class LLMProcessor {
   async enhanceChunked(
     rawTranscript: string,
     options: {
-      language?: string | undefined;
+      mode?: ProcessMode | undefined;
       temperature?: number | undefined;
       chunkSize?: number | undefined;
       onChunk?: ((chunk: string, index: number, total: number) => void) | undefined;
@@ -244,7 +253,10 @@ export class LLMProcessor {
 
     // If small enough, process directly
     if (words.length <= chunkSize) {
-      return await this.enhance(rawTranscript, options);
+      return await this.enhance(rawTranscript, {
+        mode: options.mode,
+        temperature: options.temperature,
+      });
     }
 
     // Split into chunks at sentence boundaries
@@ -282,7 +294,7 @@ export class LLMProcessor {
       }
 
       const result = await this.enhance(chunk, {
-        language: options.language,
+        mode: options.mode,
         temperature: options.temperature,
       });
 
@@ -331,14 +343,14 @@ export class LLMProcessor {
  */
 export async function enhanceTranscript(
   rawTranscript: string,
-  options: LLMProcessOptions & { language?: string } = {}
+  options: LLMProcessOptions = {}
 ): Promise<LLMProcessResult> {
   const processor = new LLMProcessor(options);
 
   try {
     await processor.initialize();
     return await processor.enhanceChunked(rawTranscript, {
-      language: options.language,
+      mode: options.mode,
     });
   } finally {
     await processor.dispose();

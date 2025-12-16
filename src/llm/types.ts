@@ -50,6 +50,18 @@ export const LLM_MODELS = {
 export type LLMModelId = keyof typeof LLM_MODELS;
 
 /**
+ * Processing mode
+ */
+export const PROCESS_MODES = {
+  /** Full enhancement: TLDR, headings, formatting, corrections */
+  enhance: "enhance",
+  /** Correction only: Fix transcription errors, no restructuring */
+  correct: "correct",
+} as const;
+
+export type ProcessMode = keyof typeof PROCESS_MODES;
+
+/**
  * LLM processing options
  */
 export interface LLMProcessOptions {
@@ -68,8 +80,8 @@ export interface LLMProcessOptions {
   /** Temperature for generation (default: 0.3 for correction) */
   temperature?: number;
 
-  /** Language hint for better formatting */
-  language?: string;
+  /** Processing mode: "enhance" (full formatting) or "correct" (fixes only) */
+  mode?: ProcessMode;
 }
 
 /**
@@ -108,23 +120,41 @@ export interface LLMProcessResult {
 /**
  * System prompt for transcript enhancement
  */
-export const TRANSCRIPT_ENHANCEMENT_PROMPT = `Du bist ein Experte für Transkript-Formatierung und -Korrektur.
+export const TRANSCRIPT_ENHANCEMENT_PROMPT = `You are an expert at formatting and enhancing video transcripts.
 
-Deine Aufgaben:
-1. **Korrektur**: Behebe offensichtliche Transkriptionsfehler (falsch erkannte Wörter, Homophone)
-2. **Absätze**: Füge sinnvolle Absätze ein (bei Themenwechsel, Sprecherwechsel, Pausen)
-3. **Betonung**: Markiere wichtige Begriffe und Kernaussagen **fett**
-4. **Eigennamen**: Setze Eigennamen, Fachbegriffe und fremdsprachige Ausdrücke in *kursiv*
-5. **Lesbarkeit**: Verbessere Interpunktion und Satzstruktur wo nötig
+Your task:
+1. **TLDR**: Start with a brief summary (2-3 sentences) under a "## TLDR" heading
+2. **Structure**: Organize the text into logical paragraphs at natural speech pauses
+3. **Headings**: Add ## or ### headings for clear topic changes
+4. **Formatting**:
+   - **Bold** for key terms and important statements
+   - *Italic* for emphasis and proper nouns
+   - Bullet lists where appropriate (e.g., when speaker lists items)
+5. **Corrections**: Fix only obvious transcription errors (misheard words, homophones)
 
-Regeln:
-- Ändere NICHT den Inhalt oder die Bedeutung
-- Füge KEINE neuen Informationen hinzu
-- Entferne KEINE Aussagen
-- Behalte den Stil des Sprechers bei
-- Ausgabe NUR als Markdown, keine Erklärungen
+Rules:
+- KEEP the original language of the transcript (do not translate)
+- PRESERVE the original wording - do not rephrase or paraphrase
+- DO NOT add information that wasn't spoken
+- DO NOT remove any statements
+- MAINTAIN the speaker's voice and style
+- Output ONLY the formatted markdown, no meta-commentary
 
-Formatiere den folgenden Transkript-Text:`;
+Format the following transcript:`;
+
+/**
+ * Minimal prompt for correction-only mode (no restructuring)
+ */
+export const TRANSCRIPT_CORRECTION_PROMPT = `You are a transcript correction specialist.
+
+Your task:
+- Fix obvious transcription errors (misheard words, homophones)
+- Correct punctuation and capitalization
+- DO NOT change the structure or add formatting
+- DO NOT add or remove content
+- KEEP the original language
+
+Correct the following transcript:`;
 
 /**
  * Extract plain text from markdown
