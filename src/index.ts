@@ -18,6 +18,8 @@ import {
   type WordTimestamp,
 } from "./types.js";
 
+import type { SherpaBackend } from "./backends/sherpa/index.js";
+
 // Re-export everything
 export { getAvailableBackends, getBackend, selectBestBackend, setBackend };
 export { BACKEND_TYPES, CANARY_MODELS, PARAKEET_MODELS, WHISPER_MODELS };
@@ -35,6 +37,9 @@ export type {
   WhisperModel,
   WordTimestamp,
 };
+
+// Cached backend instances for reuse
+let sherpaBackendInstance: SherpaBackend | null = null;
 
 /**
  * Transcribe an audio file using the configured or best available backend
@@ -63,15 +68,36 @@ export async function transcribe(
       }
     }
 
-    case BACKEND_TYPES.parakeet:
+    case BACKEND_TYPES.parakeet: {
+      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      if (sherpaBackendInstance === null) {
+        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" });
+        await sherpaBackendInstance.initialize();
+      }
+      return sherpaBackendInstance.transcribe(audioPath, options);
+    }
+
     case BACKEND_TYPES.canary: {
-      // TODO: Implement Parakeet/Canary backend
-      throw new Error(`Backend "${backend}" is not yet implemented`);
+      // Canary uses the same sherpa backend with a different model
+      // For now, fall back to parakeet v3
+      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      if (sherpaBackendInstance === null) {
+        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" });
+        await sherpaBackendInstance.initialize();
+      }
+      return sherpaBackendInstance.transcribe(audioPath, options);
     }
 
     case BACKEND_TYPES.whisper: {
-      // TODO: Implement Whisper backend
-      throw new Error(`Backend "${backend}" is not yet implemented`);
+      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      // Create a new instance for whisper with different model
+      const whisperBackend = new SherpaBackend({ model: "whisper-small" });
+      await whisperBackend.initialize();
+      try {
+        return await whisperBackend.transcribe(audioPath, options);
+      } finally {
+        await whisperBackend.dispose();
+      }
     }
 
     case BACKEND_TYPES.auto: {
@@ -87,25 +113,33 @@ export async function transcribe(
  * @param backend - Backend to download model for
  * @param model - Specific model variant to download
  */
-export function downloadModel(backend: BackendType, model?: string): Promise<void> {
+export async function downloadModel(backend: BackendType, model?: string): Promise<void> {
   switch (backend) {
     case BACKEND_TYPES.apple: {
       // Apple Speech uses built-in models, no download needed
-      return Promise.resolve();
+      return;
     }
 
     case BACKEND_TYPES.parakeet:
     case BACKEND_TYPES.canary:
     case BACKEND_TYPES.whisper: {
-      // TODO: Implement model download
-      const modelInfo = model ?? "default";
-      return Promise.reject(
-        new Error(`Model download for "${backend}" is not yet implemented (model: ${modelInfo})`)
-      );
+      const { downloadSherpaModel } = await import("./backends/sherpa/download.js");
+      await downloadSherpaModel(model ?? "parakeet-tdt-0.6b-v3");
+      return;
     }
 
     case BACKEND_TYPES.auto: {
-      return Promise.reject(new Error("Cannot download model for 'auto' backend"));
+      throw new Error("Cannot download model for 'auto' backend");
     }
+  }
+}
+
+/**
+ * Clean up all cached backend instances
+ */
+export async function cleanup(): Promise<void> {
+  if (sherpaBackendInstance !== null) {
+    await sherpaBackendInstance.dispose();
+    sherpaBackendInstance = null;
   }
 }

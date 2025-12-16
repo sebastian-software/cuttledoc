@@ -31,7 +31,9 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist build",
     "install": "node-gyp rebuild || echo 'Native build failed, continuing...'",
-    "prepublishOnly": "npm run clean && npm run build:all"
+    "prepublishOnly": "npm run clean && npm run build:all",
+    "download:parakeet": "node -e \"import('./dist/backends/sherpa/download.js').then(m => m.downloadSherpaModel('parakeet-tdt-0.6b-v3'))\"",
+    "download:whisper": "node -e \"import('./dist/backends/sherpa/download.js').then(m => m.downloadSherpaModel('whisper-small'))\""
   },
   "keywords": [
     "speech-recognition",
@@ -39,7 +41,7 @@
     "whisper",
     "apple-speech",
     "parakeet",
-    "onnx",
+    "sherpa-onnx",
     "local",
     "offline"
   ],
@@ -47,6 +49,9 @@
   "license": "MIT",
   "dependencies": {
     "node-addon-api": "^8.3.0"
+  },
+  "optionalDependencies": {
+    "sherpa-onnx-node": "^1.12.19"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
