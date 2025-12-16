@@ -1,6 +1,12 @@
-# cuttledoc
+<p align="center">
+  <img src="packages/docs/public/logo.svg" width="150" height="150" alt="cuttledoc logo">
+</p>
 
-> Fast, offline speech-to-text transcription for Node.js with multiple backend support.
+<h1 align="center">cuttledoc</h1>
+
+<p align="center">
+  <strong>Fast, offline speech-to-text transcription for Node.js with multiple backend support.</strong>
+</p>
 
 [![CI](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml)
 [![npm version](https://badge.fury.io/js/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
@@ -116,14 +122,14 @@ cuttledoc models download gemma3n:e4b
 |---------|----------|-------|---------|-----------|
 | Apple Speech | macOS 14+ | ⚡⚡⚡ | ★★★★ | 60+ |
 | Whisper (medium) | All | ⚡⚡ | ★★★★★ | 99 |
-| Parakeet v3 | All | ⚡⚡⚡ | ★★★★ | EN |
+| Parakeet v3 | All | ⚡⚡⚡ | ★★★★ | 26 (EU) |
 
 ### Backend Selection
 
 - **`auto`** (default): Apple Speech on macOS, Whisper elsewhere
 - **`apple`**: Native macOS Speech Framework, fastest, on-device
 - **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual
-- **`parakeet`**: NVIDIA Parakeet, fast and accurate for English
+- **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 26 EU languages
 
 ## Supported Formats
 
