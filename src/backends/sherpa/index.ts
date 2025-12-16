@@ -7,6 +7,7 @@ import {
   type TranscriptionResult,
   type TranscriptionSegment,
 } from "../../types.js";
+import { isFFmpegAvailable, preprocessAudio } from "../../utils/audio.js";
 
 import {
   SHERPA_MODELS,
@@ -145,6 +146,9 @@ export class SherpaBackend implements Backend {
 
   /**
    * Transcribe an audio file
+   *
+   * Supports any audio format when @mmomtchev/ffmpeg is installed.
+   * Falls back to WAV-only support without ffmpeg.
    */
   async transcribe(
     audioPath: string,
@@ -161,15 +165,37 @@ export class SherpaBackend implements Backend {
 
     const startTime = performance.now();
 
-    // Read the audio file
-    const wave = this.sherpa.readWave(audioPath);
-    const durationSeconds = wave.samples.length / wave.sampleRate;
+    // Determine if we need to preprocess the audio
+    const isWavFile = audioPath.toLowerCase().endsWith(".wav");
+    let samples: Float32Array;
+    let sampleRate: number;
+    let durationSeconds: number;
+
+    if (isWavFile) {
+      // Fast path: Use sherpa's native WAV reader
+      const wave = this.sherpa.readWave(audioPath);
+      samples = wave.samples;
+      sampleRate = wave.sampleRate;
+      durationSeconds = samples.length / sampleRate;
+    } else if (isFFmpegAvailable()) {
+      // Use ffmpeg for other formats
+      const audio = await preprocessAudio(audioPath);
+      samples = audio.samples;
+      sampleRate = audio.sampleRate;
+      durationSeconds = audio.durationSeconds;
+    } else {
+      throw new Error(
+        `Unsupported audio format: ${audioPath}. ` +
+        "Install @mmomtchev/ffmpeg for mp3, m4a, and other formats, " +
+        "or convert to WAV (16kHz mono)."
+      );
+    }
 
     // Create stream and feed audio
     const stream = this.recognizer.createStream();
     stream.acceptWaveform({
-      sampleRate: wave.sampleRate,
-      samples: wave.samples,
+      sampleRate,
+      samples,
     });
 
     // Decode
