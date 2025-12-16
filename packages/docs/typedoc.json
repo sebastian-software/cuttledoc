@@ -1,15 +1,11 @@
 {
   "entryPoints": ["../cuttledoc/src/index.ts"],
+  "tsconfig": "../cuttledoc/tsconfig.json",
   "out": "./src/content/api",
   "plugin": ["typedoc-plugin-markdown"],
-  "outputFileStrategy": "members",
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeInternal": true,
   "readme": "none",
-  "hideGenerator": true,
-  "hideBreadcrumbs": true,
-  "hidePageHeader": true,
-  "useCodeBlocks": true
+  "hideGenerator": true
 }
-

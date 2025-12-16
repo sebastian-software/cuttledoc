@@ -18,7 +18,7 @@
 ## Installation
 
 ```bash
-npm install cuttledoc
+pnpm add cuttledoc
 ```
 
 ### Requirements
@@ -205,43 +205,51 @@ interface LLMProcessResult {
 
 ## Development
 
+This is a pnpm monorepo with the following packages:
+
+```
+cuttledoc/
+├── packages/
+│   ├── cuttledoc/     # Core transcription library
+│   ├── cli/           # CLI tool (@cuttledoc/cli)
+│   └── docs/          # Documentation site
+├── pnpm-workspace.yaml
+└── tsconfig.base.json
+```
+
+### Setup
+
 ```bash
 # Clone
 git clone https://github.com/your-username/cuttledoc
 cd cuttledoc
 
-# Install
-npm install
+# Install (uses pnpm)
+pnpm install
 
-# Build
-npm run build
+# Build all packages
+pnpm build
 
-# Test
-npm test
+# Run tests
+pnpm test
+
+# Start docs dev server
+pnpm docs:dev
+```
+
+### Package Scripts
+
+```bash
+# Build specific package
+pnpm --filter cuttledoc build
+pnpm --filter @cuttledoc/cli build
+pnpm --filter @cuttledoc/docs build
+
+# Run tests in specific package
+pnpm --filter cuttledoc test
 
 # Lint
-npm run lint
-```
-
-## Architecture
-
-```
-cuttledoc
-├── src/
-│   ├── index.ts          # Main API entry point
-│   ├── backend.ts        # Backend selection logic
-│   ├── types.ts          # Core TypeScript types
-│   ├── backends/
-│   │   ├── apple/        # macOS Speech Framework (N-API)
-│   │   └── sherpa/       # sherpa-onnx (Whisper, Parakeet)
-│   ├── llm/
-│   │   ├── processor.ts  # LLM enhancement (node-llama-cpp)
-│   │   └── types.ts      # LLM types and prompts
-│   ├── utils/
-│   │   └── audio.ts      # FFmpeg audio preprocessing
-│   └── cli/
-│       └── index.ts      # CLI entry point
-└── DECISIONS.md          # Architecture Decision Records
+pnpm lint
 ```
 
 ## License
@@ -255,4 +263,3 @@ MIT © [Your Name]
 - [@mmomtchev/ffmpeg](https://github.com/mmomtchev/ffmpeg) - Native FFmpeg bindings
 - [Whisper](https://github.com/openai/whisper) - OpenAI's speech recognition model
 - [Gemma](https://ai.google.dev/gemma) - Google's open-weight LLM
-
