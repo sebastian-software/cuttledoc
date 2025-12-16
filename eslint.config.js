@@ -75,6 +75,8 @@ export default tseslint.config(
       "**/.source/**",
       "**/*.config.js",
       "**/*.config.ts",
+      // Fumadocs uses generated types that conflict with strict type checking
+      "packages/docs/**",
     ],
   }
 );
