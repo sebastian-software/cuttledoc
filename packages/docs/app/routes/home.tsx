@@ -4,12 +4,12 @@ import { Link } from 'react-router'
 
 import type { Route } from './+types/home'
 
-import logoSvg from '/logo.svg'
-import nvidiaLogo from '/logos/nvidia.svg'
-import openaiLogo from '/logos/openai.svg'
-import geminiLogo from '/logos/gemini.svg'
-import appleLogo from '/logos/apple.svg'
-import onnxLogo from '/logos/onnx.svg'
+import logoSvg from '@/assets/logo.svg'
+import nvidiaLogo from '@/assets/logos/nvidia.svg'
+import openaiLogo from '@/assets/logos/openai.svg'
+import geminiLogo from '@/assets/logos/gemini.svg'
+import appleLogo from '@/assets/logos/apple.svg'
+import onnxLogo from '@/assets/logos/onnx.svg'
 import { baseOptions } from '@/lib/layout.shared'
 
 export function meta(_args: Route.MetaArgs) {

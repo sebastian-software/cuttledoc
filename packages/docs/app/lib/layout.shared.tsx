@@ -1,6 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared'
 
-import logoSvg from '/logo.svg'
+import logoSvg from '@/assets/logo.svg'
 
 export function baseOptions(): BaseLayoutProps {
   return {
