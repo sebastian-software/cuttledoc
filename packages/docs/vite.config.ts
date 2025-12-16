@@ -8,11 +8,9 @@ import * as MdxConfig from './source.config'
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [
+    tsconfigPaths(),
     mdx(MdxConfig),
     tailwindcss(),
-    reactRouter(),
-    tsconfigPaths({
-      root: __dirname
-    })
+    reactRouter()
   ]
 })
