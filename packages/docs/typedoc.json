@@ -1,11 +1,20 @@
 {
-  "entryPoints": ["../cuttledoc/src/index.ts"],
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["../cuttledoc/src/index.ts", "../cuttledoc/src/llm/index.ts"],
   "tsconfig": "../cuttledoc/tsconfig.json",
-  "out": "./src/content/api",
+  "out": "./content/docs/api",
   "plugin": ["typedoc-plugin-markdown"],
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeInternal": true,
   "readme": "none",
-  "hideGenerator": true
+  "hideGenerator": true,
+  "outputFileStrategy": "modules",
+  "flattenOutputFiles": false,
+  "entryFileName": "index",
+  "useCodeBlocks": true,
+  "expandParameters": true,
+  "parametersFormat": "table",
+  "fileExtension": ".mdx"
 }
+

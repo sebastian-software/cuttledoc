@@ -1,0 +1,279 @@
+---
+title: API Reference
+description: Complete API documentation for cuttledoc
+---
+
+The cuttledoc API provides functions for speech-to-text transcription with multiple backends and optional LLM enhancement.
+
+## Core Functions
+
+### transcribe()
+
+The main transcription function. Transcribes audio files to text.
+
+```typescript
+import { transcribe } from "cuttledoc";
+
+const result = await transcribe("audio.mp3", {
+  language: "en",
+  backend: "auto",
+});
+
+console.log(result.text);
+console.log(`Duration: ${result.durationSeconds}s`);
+```
+
+#### Parameters
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `audioPath` | `string` | Path to the audio file |
+| `options?` | `TranscribeOptions` | Optional transcription settings |
+
+#### Returns
+
+`Promise<TranscriptionResult>` - The transcription result with text, segments, and metadata.
+
+---
+
+### getAvailableBackends()
+
+Returns information about all available backends on the current system.
+
+```typescript
+import { getAvailableBackends } from "cuttledoc";
+
+const backends = getAvailableBackends();
+for (const backend of backends) {
+  console.log(`${backend.name}: ${backend.isAvailable ? "✓" : "✗"}`);
+}
+```
+
+---
+
+### setBackend() / getBackend()
+
+Set or get the default transcription backend.
+
+```typescript
+import { setBackend, getBackend } from "cuttledoc";
+
+setBackend("apple"); // Use Apple Speech
+console.log(getBackend()); // "apple"
+```
+
+---
+
+### selectBestBackend()
+
+Auto-select the best available backend for a given language.
+
+```typescript
+import { selectBestBackend } from "cuttledoc";
+
+const best = selectBestBackend("de"); // Returns best backend for German
+```
+
+---
+
+### downloadModel()
+
+Download models for a specific backend.
+
+```typescript
+import { downloadModel } from "cuttledoc";
+
+await downloadModel("parakeet", "parakeet-tdt-0.6b-v3");
+```
+
+---
+
+### cleanup()
+
+Clean up all cached backend instances and free resources.
+
+```typescript
+import { cleanup } from "cuttledoc";
+
+await cleanup();
+```
+
+## LLM Enhancement
+
+### enhanceTranscript()
+
+Enhance raw transcripts with formatting, corrections, and structure.
+
+```typescript
+import { enhanceTranscript } from "cuttledoc/llm";
+
+const result = await transcribe("podcast.mp3");
+const enhanced = await enhanceTranscript(result.text);
+
+console.log(enhanced.markdown);
+console.log(`Corrections: ${enhanced.stats.correctionsCount}`);
+```
+
+#### Options
+
+| Option | Type | Default | Description |
+| ------ | ---- | ------- | ----------- |
+| `model` | `LLMModelId` | `"gemma3n:e4b"` | Model to use |
+| `mode` | `"enhance" \| "correct"` | `"enhance"` | Processing mode |
+| `temperature` | `number` | `0.3` | Generation temperature |
+| `gpuLayers` | `number` | `-1` | GPU layers (-1 = all) |
+
+---
+
+### LLMProcessor
+
+Class for more control over LLM processing.
+
+```typescript
+import { LLMProcessor } from "cuttledoc/llm";
+
+const processor = new LLMProcessor({
+  model: "gemma3n:e4b",
+  gpuLayers: -1,
+});
+
+await processor.initialize();
+const result = await processor.enhance(rawText);
+await processor.dispose();
+```
+
+---
+
+### downloadLLMModel()
+
+Download an LLM model.
+
+```typescript
+import { downloadLLMModel } from "cuttledoc/llm";
+
+await downloadLLMModel("gemma3n:e4b", {
+  onProgress: (progress) => console.log(`${progress}%`),
+});
+```
+
+---
+
+### isLLMModelDownloaded()
+
+Check if an LLM model is already downloaded.
+
+```typescript
+import { isLLMModelDownloaded } from "cuttledoc/llm";
+
+if (!isLLMModelDownloaded("gemma3n:e4b")) {
+  await downloadLLMModel("gemma3n:e4b");
+}
+```
+
+## Types
+
+### TranscribeOptions
+
+```typescript
+interface TranscribeOptions {
+  language?: string;          // Language code (e.g., 'de', 'en-US')
+  backend?: BackendType;      // Override default backend
+  onProgress?: (partial: PartialResult) => void;
+}
+```
+
+### TranscriptionResult
+
+```typescript
+interface TranscriptionResult {
+  text: string;                        // Full transcribed text
+  segments: readonly TranscriptionSegment[];
+  words?: readonly WordTimestamp[];    // Parakeet/Canary only
+  durationSeconds: number;
+  processingTimeSeconds: number;
+  language: string;
+  backend: BackendType;
+}
+```
+
+### TranscriptionSegment
+
+```typescript
+interface TranscriptionSegment {
+  text: string;
+  startSeconds: number;
+  endSeconds: number;
+  confidence?: number;
+}
+```
+
+### BackendType
+
+```typescript
+type BackendType = "auto" | "apple" | "parakeet" | "whisper" | "canary";
+```
+
+### LLMProcessResult
+
+```typescript
+interface LLMProcessResult {
+  markdown: string;        // Formatted markdown
+  plainText: string;       // Plain text version
+  corrections: Array<{
+    original: string;
+    corrected: string;
+  }>;
+  stats: {
+    inputTokens: number;
+    outputTokens: number;
+    tokensPerSecond: number;
+    processingTimeSeconds: number;
+    paragraphCount: number;
+    correctionsCount: number;
+  };
+}
+```
+
+## Constants
+
+### BACKEND_TYPES
+
+Available backend types.
+
+```typescript
+const BACKEND_TYPES = {
+  auto: "auto",
+  apple: "apple",
+  parakeet: "parakeet",
+  whisper: "whisper",
+  canary: "canary",
+} as const;
+```
+
+### WHISPER_MODELS
+
+Whisper model variants.
+
+```typescript
+const WHISPER_MODELS = {
+  tiny: "tiny",
+  base: "base",
+  small: "small",
+  medium: "medium",
+  large: "large",
+} as const;
+```
+
+### LLM_MODELS
+
+Available LLM models for transcript enhancement.
+
+| Model | RAM | Description |
+| ----- | --- | ----------- |
+| `gemma3n:e4b` | 3GB | Best quality/size ratio |
+| `gemma3n:e2b` | 2GB | Ultra-efficient |
+| `gemma3:4b` | 4GB | Stable, 140 languages |
+| `gemma3:12b` | 8GB+ | Higher quality |
+| `qwen2.5:3b` | 3GB | Excellent for German |
+| `deepseek-r1:1.5b` | 2GB | Fast reasoning |
+

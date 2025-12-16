@@ -1,0 +1,94 @@
+---
+title: Getting Started
+description: Fast, offline speech-to-text transcription library for Node.js
+---
+
+cuttledoc is a fast, offline speech-to-text transcription library for Node.js.
+It supports multiple backends and optional LLM enhancement for formatting transcripts.
+
+## Installation
+
+```bash
+pnpm add cuttledoc
+```
+
+### Requirements
+
+- Node.js 22+
+- ~2GB disk space for models
+
+<Callout type="info">
+The Apple Speech backend requires macOS 14+. Whisper and Parakeet work on all platforms.
+</Callout>
+
+## CLI Usage
+
+```bash
+# Basic transcription
+cuttledoc video.mp4
+
+# With LLM enhancement
+cuttledoc podcast.mp3 --enhance -o transcript.md
+
+# Use specific backend
+cuttledoc meeting.m4a -b apple -l de
+
+# Show stats
+cuttledoc audio.wav --stats
+```
+
+## API Usage
+
+```typescript
+import { transcribe } from "cuttledoc";
+
+const result = await transcribe("audio.mp3", {
+  language: "en",
+  backend: "auto",
+});
+
+console.log(result.text);
+console.log(`Duration: ${result.durationSeconds}s`);
+```
+
+## With LLM Enhancement
+
+```typescript
+import { transcribe } from "cuttledoc";
+import { enhanceTranscript } from "cuttledoc/llm";
+
+const result = await transcribe("podcast.mp3");
+const enhanced = await enhanceTranscript(result.text);
+
+console.log(enhanced.markdown);
+```
+
+## Available Backends
+
+| Backend          | Platform  | Speed  | Quality  | Languages |
+| ---------------- | --------- | ------ | -------- | --------- |
+| Apple Speech     | macOS 14+ | ⚡⚡⚡  | ★★★★     | 60+       |
+| Parakeet v3      | All       | ⚡⚡⚡  | ★★★★     | 26 (EU)   |
+| Whisper Small    | All       | ⚡⚡    | ★★★      | 99        |
+| Whisper Medium   | All       | ⚡     | ★★★★     | 99        |
+| Whisper Large v3 | All       | 🐢     | ★★★★★    | 99        |
+
+## Model Management
+
+```bash
+# List available models
+cuttledoc models list
+
+# Download speech model
+cuttledoc models download parakeet-tdt-0.6b-v3
+
+# Download LLM model
+cuttledoc models download gemma3n:e4b
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="API Reference" href="/docs/api" />
+  <Card title="GitHub" href="https://github.com/sebastian-software/cuttledoc" />
+</Cards>
