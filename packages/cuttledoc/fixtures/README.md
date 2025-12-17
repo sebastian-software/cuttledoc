@@ -4,10 +4,10 @@ Audio files for testing speech recognition backends.
 
 ## Files
 
-| File            | Language | Duration | Description                             |
-| --------------- | -------- | -------- | --------------------------------------- |
-| `beamen-de.ogg` | German   | ~5 min   | Philosophical essay about teleportation |
-| `beamen-en.ogg` | English  | ~5 min   | Same essay, English version             |
+| File                   | Language | Duration | Description                             |
+| ---------------------- | -------- | -------- | --------------------------------------- |
+| `teleportation-de.ogg` | German   | ~5 min   | Philosophical essay about teleportation |
+| `teleportation-en.ogg` | English  | ~5 min   | Same essay, English version             |
 
 The `.md` files contain the original text transcripts.
 
