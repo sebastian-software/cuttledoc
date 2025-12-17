@@ -6,8 +6,8 @@ import defaultMdxComponents from 'fumadocs-ui/mdx'
 
 import type { Route } from './+types/page'
 
-import { baseOptions } from '@/lib/layout.shared'
-import { source } from '@/lib/source'
+import { baseOptions } from '../lib/layout.shared'
+import { source } from '../lib/source'
 
 export async function loader({ params }: Route.LoaderArgs) {
   const slugs = params['*'].split('/').filter((v) => v.length > 0)

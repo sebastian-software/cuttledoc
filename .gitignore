@@ -33,3 +33,4 @@ coverage/
 
 # TypeDoc generated
 packages/docs/src/content/api/
+tsconfig.tsbuildinfo
