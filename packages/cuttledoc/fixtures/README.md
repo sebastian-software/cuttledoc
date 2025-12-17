@@ -6,6 +6,8 @@ Audio files for testing speech recognition backends.
 
 | File                   | Language | Duration | Description                             |
 | ---------------------- | -------- | -------- | --------------------------------------- |
+| `fairytale-de.ogg`     | German   | ~1.5 min | Children's story (Leni & Tapp)          |
+| `fairytale-en.ogg`     | English  | ~1.5 min | Same story, English version             |
 | `teleportation-de.ogg` | German   | ~5 min   | Philosophical essay about teleportation |
 | `teleportation-en.ogg` | English  | ~5 min   | Same essay, English version             |
 

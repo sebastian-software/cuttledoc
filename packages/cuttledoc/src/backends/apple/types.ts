@@ -23,6 +23,11 @@ export interface AppleNativeBindings {
   getSupportedLocales(): string[]
 
   /**
+   * Get current authorization status (synchronous)
+   */
+  getAuthorizationStatus(): AuthorizationStatus
+
+  /**
    * Request speech recognition authorization
    */
   requestAuthorization(): Promise<AuthorizationStatus>
@@ -63,4 +68,4 @@ export interface AppleNativeSegment {
 /**
  * Authorization status for speech recognition
  */
-export type AuthorizationStatus = "authorized" | "denied" | "restricted" | "notDetermined"
+export type AuthorizationStatus = "authorized" | "denied" | "restricted" | "notDetermined" | "timeout"
