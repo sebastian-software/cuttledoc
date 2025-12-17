@@ -1,10 +1,5 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true,
-    "noEmit": true
-  },
-  "references": [{ "path": "./packages/cuttledoc" }, { "path": "./packages/cli" }, { "path": "./packages/docs" }],
   "include": [],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }
