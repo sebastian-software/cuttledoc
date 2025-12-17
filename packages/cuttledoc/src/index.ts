@@ -53,7 +53,7 @@ export {
 
 // Re-export LLM types for CLI
 export { LLM_MODELS, type LLMModelId } from "./llm/types.js"
-export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "./llm/processor.js"
+export { downloadModel as downloadLLMModel, hasModelsDirectory as hasLLMModelsDirectory } from "./llm/processor.js"
 
 // Cached backend instances for reuse
 let sherpaBackendInstance: SherpaBackend | null = null

@@ -111,7 +111,7 @@ export class OllamaProcessor {
 
     const prompt = `${systemPrompt}\n\n---\n\n${rawTranscript}`
 
-    // Call Ollama API
+    // Call Ollama API (5 minute timeout for large models)
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -122,7 +122,8 @@ export class OllamaProcessor {
         options: {
           temperature: options.temperature ?? 0.3
         }
-      })
+      }),
+      signal: AbortSignal.timeout(300_000)
     })
 
     if (!response.ok) {
@@ -175,6 +176,6 @@ export async function enhanceWithOllama(
   transcript: string,
   options: { model?: string; mode?: ProcessMode } = {}
 ): Promise<LLMProcessResult> {
-  const processor = new OllamaProcessor({ model: options.model })
-  return processor.enhance(transcript, { mode: options.mode })
+  const processor = new OllamaProcessor(options.model ? { model: options.model } : {})
+  return processor.enhance(transcript, options.mode ? { mode: options.mode } : {})
 }

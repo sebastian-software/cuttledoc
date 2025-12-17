@@ -145,16 +145,17 @@ Format the following transcript:`
 /**
  * Minimal prompt for correction-only mode (no restructuring)
  */
-export const TRANSCRIPT_CORRECTION_PROMPT = `You are a transcript correction specialist.
+export const TRANSCRIPT_CORRECTION_PROMPT = `Fix this speech-to-text transcript in three steps:
 
-Your task:
-- Fix obvious transcription errors (misheard words, homophones)
-- Correct punctuation and capitalization
-- DO NOT change the structure or add formatting
-- DO NOT add or remove content
-- KEEP the original language
+1. GRAMMAR: Check if sentences are grammatically correct. Fix word boundaries by splitting or merging words/word parts where needed.
 
-Correct the following transcript:`
+2. PUNCTUATION: Fix commas, periods, and other punctuation marks.
+
+3. CAPITALIZATION: Apply correct capitalization rules for the target language.
+
+Output ONLY the corrected text, nothing else.
+
+Transcript:`
 
 /**
  * Extract plain text from markdown

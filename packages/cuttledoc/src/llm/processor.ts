@@ -4,7 +4,7 @@
  * Native Node.js bindings - no external processes or CLI tools
  */
 
-import { existsSync, mkdirSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 
 import {
@@ -69,6 +69,34 @@ function getModelsDir(): string {
  */
 export function hasModelsDirectory(): boolean {
   return existsSync(getModelsDir())
+}
+
+/**
+ * Check if a specific LLM model is downloaded
+ * node-llama-cpp uses prefixed filenames like "hf_Qwen_qwen2.5-3b-instruct-q4_k_m.gguf"
+ */
+export function isModelDownloaded(modelId: LLMModelId): boolean {
+  const modelInfo = LLM_MODELS[modelId]
+  const modelsDir = getModelsDir()
+
+  if (!existsSync(modelsDir)) {
+    return false
+  }
+
+  // Check for the exact filename or prefixed version
+  const exactPath = join(modelsDir, modelInfo.ggufFile)
+  if (existsSync(exactPath)) {
+    return true
+  }
+
+  // Check for node-llama-cpp's prefixed version (e.g., "hf_Qwen_...")
+  try {
+    const files = readdirSync(modelsDir)
+    const baseFilename = modelInfo.ggufFile.toLowerCase()
+    return files.some((f) => f.toLowerCase().includes(baseFilename.replace(".gguf", "")))
+  } catch {
+    return false
+  }
 }
 
 /**

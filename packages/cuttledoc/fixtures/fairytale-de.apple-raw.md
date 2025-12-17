@@ -1,0 +1,7 @@
+# Apple Speech (On-Device)
+
+Words: 241
+
+---
+
+Im Dorf hinter den Apfelwiesen lebte Leni, ein Mädchen mit roten wilden locken, die in der Sonne funkelten wie Kupferfäden. Wenn der Wind durch ihr Haar strich, sah es aus, als würde ein kleines Feuerfreundlich lachen. Ihr bester Freund war tap, eine winzige haarige Ameise mit einem Mut, der größer war als jeder Schuh. Er wohnte in einer Teetasse aus Moos, direkt neben Lenis Fensterbrett und hielt stets Ausschau nach Aben. Eines Morgens fanden sie eine Karte gemalt, auf einem vergessenen Blatt Papier zum flüster Berg, wo Wünsche lernen zu laufen. Leni packte eine Rosine, ein Stück Brot und ein Glas voller Morgenlicht tap, nahm eine Nadel als Degen und eine Schneckenhaus spitze als Helm. Sie reiten über die Brücke aus Birkenrinde durch das Pfefferminz wäldchen, indem die Blätter kitzel, und überquerten einen Bach auf dem Rücken einer gemütlichen Li. Als ein Regen rieselt, drohte sie vor zu spülen, stellte sich tapfer hin, sträubte seine Haare wie ein kleiner Blitz und rief hier entlang. Leni lachte, hielt ihre Hand wie ein Dach, und gemeinsam fanden sie Unterschlupf unter einer großen, warmen Kastanie. Am Abend erreichen Sie den Flüsterer Er sprach nicht laut, nur leise in den Herzen. Leni wünschte sich keinen Schatz, sondern Wege, die nie enden tap, wünschte sich, dass Len Lachen immer Heimweg bleibt, und als sie zurück gingen, war die Welt nicht größer geworden. Nur ihre Freundschaft und die trug sie Schritt für Schritt weiter als jede Karte.
