@@ -20,17 +20,22 @@ import {
   type ProcessMode
 } from "./types.js"
 
-import type { getLlama, Llama, LlamaChatSession, LlamaContext, LlamaModel } from "node-llama-cpp"
+import type {
+  getLlama,
+  Llama,
+  LlamaChatSession,
+  LlamaContext,
+  LlamaModel,
+  createModelDownloader,
+  resolveModelFile
+} from "node-llama-cpp"
 
 // Type definitions
 interface LlamaModule {
   getLlama: typeof getLlama
   LlamaChatSession: typeof LlamaChatSession
-  createModelDownloader: (options: {
-    modelUri: string
-    dirPath: string
-    onProgress?: (status: { downloadedSize: number; totalSize: number }) => void
-  }) => { download: () => Promise<string> }
+  createModelDownloader: typeof createModelDownloader
+  resolveModelFile: typeof resolveModelFile
 }
 
 // Lazy-loaded node-llama-cpp module
@@ -59,17 +64,16 @@ function getModelsDir(): string {
 }
 
 /**
- * Check if a model is downloaded
+ * Check if models directory exists (rough check)
+ * Note: node-llama-cpp handles actual model caching with prefixed filenames
  */
-export function isModelDownloaded(modelId: LLMModelId): boolean {
-  const modelInfo = LLM_MODELS[modelId]
-  const modelsDir = getModelsDir()
-  const modelPath = join(modelsDir, modelInfo.ggufFile)
-  return existsSync(modelPath)
+export function hasModelsDirectory(): boolean {
+  return existsSync(getModelsDir())
 }
 
 /**
- * Download a model from Hugging Face
+ * Download a model from Hugging Face (or return cached path)
+ * Uses node-llama-cpp's resolveModelFile which handles caching automatically
  */
 export async function downloadModel(
   modelId: LLMModelId,
@@ -77,38 +81,27 @@ export async function downloadModel(
 ): Promise<string> {
   const modelInfo = LLM_MODELS[modelId]
   const modelsDir = getModelsDir()
-  const modelPath = join(modelsDir, modelInfo.ggufFile)
 
-  // Already downloaded?
-  if (existsSync(modelPath)) {
-    return modelPath
-  }
-
-  // Create directory
+  // Create directory if needed
   if (!existsSync(modelsDir)) {
     mkdirSync(modelsDir, { recursive: true })
   }
 
-  // Use node-llama-cpp's built-in downloader
+  // Use node-llama-cpp's resolveModelFile (handles download + caching)
   const llama = await loadLlamaModule()
 
   // eslint-disable-next-line no-console
-  console.log(`Downloading ${modelId} from ${modelInfo.ggufRepo}...`)
+  console.log(`Resolving ${modelId} from ${modelInfo.ggufRepo}...`)
 
-  const downloadedPath = await llama
-    .createModelDownloader({
-      modelUri: `hf:${modelInfo.ggufRepo}/${modelInfo.ggufFile}`,
-      dirPath: modelsDir,
-      onProgress: (status) => {
-        if (options.onProgress !== undefined && status.totalSize > 0) {
-          options.onProgress(status.downloadedSize / status.totalSize)
-        }
+  const downloadedPath = await llama.resolveModelFile(`hf:${modelInfo.ggufRepo}/${modelInfo.ggufFile}`, {
+    directory: modelsDir,
+    onProgress: (status) => {
+      if (options.onProgress !== undefined && status.totalSize > 0) {
+        options.onProgress(status.downloadedSize / status.totalSize)
       }
-    })
-    .download()
+    }
+  })
 
-  // eslint-disable-next-line no-console
-  console.log(`Downloaded to: ${downloadedPath}`)
   return downloadedPath
 }
 
@@ -185,9 +178,10 @@ export class LLMProcessor {
     const llamaModule = await loadLlamaModule()
     const startTime = performance.now()
 
-    // Create chat session
+    // Create chat session with a fresh sequence
+    const sequence = this.context.getSequence()
     const session = new llamaModule.LlamaChatSession({
-      contextSequence: this.context.getSequence()
+      contextSequence: sequence
     })
 
     // Select prompt based on mode
@@ -197,10 +191,16 @@ export class LLMProcessor {
     const prompt = `${systemPrompt}\n\n---\n\n${rawTranscript}`
 
     // Generate enhanced text
-    const response = await session.prompt(prompt, {
-      temperature: options.temperature ?? 0.3,
-      maxTokens: this.contextSize - 1000 // Leave room for prompt
-    })
+    let response: string
+    try {
+      response = await session.prompt(prompt, {
+        temperature: options.temperature ?? 0.3,
+        maxTokens: this.contextSize - 1000 // Leave room for prompt
+      })
+    } finally {
+      // Release sequence for reuse
+      sequence.dispose()
+    }
 
     const processingTime = (performance.now() - startTime) / 1000
 
