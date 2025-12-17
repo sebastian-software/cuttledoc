@@ -19,7 +19,8 @@
     "docs:build": "pnpm --filter @cuttledoc/docs run build",
     "format": "prettier --write .",
     "release": "release-it",
-    "release:dry": "release-it --dry-run"
+    "release:dry": "release-it --dry-run",
+    "prepare": "husky"
   },
   "author": {
     "name": "Sebastian Werner",
@@ -28,16 +29,19 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@eslint/js": "^9.39.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "@release-it/conventional-changelog": "^10.0.4",
-    "@types/node": "^22.10.2",
-    "eslint": "^9.17.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import-x": "^4.5.0",
-    "globals": "^15.14.0",
-    "prettier": "^3.4.2",
+    "@types/node": "^25.0.3",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import-x": "^4.16.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
     "release-it": "^19.1.0",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.1"
-  }
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.50.0"
+  },
+  "packageManager": "pnpm@10.26.0+sha512.3b3f6c725ebe712506c0ab1ad4133cf86b1f4b687effce62a9b38b4d72e3954242e643190fc51fa1642949c735f403debd44f5cb0edd657abe63a8b6a7e1e402"
 }
