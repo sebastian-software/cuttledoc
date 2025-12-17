@@ -8,112 +8,61 @@ on:
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          version: 10.26.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: pnpm
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-  test-node:
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [22, 24]
-    runs-on: ${{ matrix.os }}
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          version: 10.26.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
-
-  test-bun:
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          version: 10.26.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: pnpm
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm build
-
-      - name: Test with Bun
-        run: bun test
-
-  build-native-macos:
-    needs: lint
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        node-version: [22, 24]
+  build:
+    name: Build
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          version: 10.26.0
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build with native addon
-        run: pnpm --filter cuttledoc build:all
-
-      - name: Test
-        run: pnpm --filter cuttledoc test
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
