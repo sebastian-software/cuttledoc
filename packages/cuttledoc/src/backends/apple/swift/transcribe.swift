@@ -111,7 +111,9 @@ func transcribe(audioPath: String, language: String) {
 
     // Create recognition request
     let request = SFSpeechURLRecognitionRequest(url: fileURL)
-    request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
+    // Note: On-device recognition has ~1 minute limit, so we don't force it
+    // Apple will automatically use on-device when available for short audio
+    request.requiresOnDeviceRecognition = false
     request.shouldReportPartialResults = false
 
     if #available(macOS 13.0, *) {
@@ -303,7 +305,8 @@ class TranscriptionServer {
         }
 
         let request = SFSpeechURLRecognitionRequest(url: fileURL)
-        request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
+        // Note: On-device recognition has ~1 minute limit, so we don't force it
+        request.requiresOnDeviceRecognition = false
         request.shouldReportPartialResults = false
         if #available(macOS 13.0, *) { request.addsPunctuation = true }
 
