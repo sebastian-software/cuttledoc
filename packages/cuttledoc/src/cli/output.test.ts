@@ -5,6 +5,11 @@ import { printHelp, printModels, printStats, printVersion } from "./output.js"
 // Mock console.log
 const mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => undefined)
 
+/** Helper to collect all console.log output as a single string */
+function getAllConsoleOutput(): string {
+  return mockConsoleLog.mock.calls.map((c: unknown[]) => String(c[0])).join("\n")
+}
+
 describe("cli output", () => {
   beforeEach(() => {
     mockConsoleLog.mockClear()
@@ -83,7 +88,7 @@ describe("cli output", () => {
 
       // Should have multiple log calls for different sections
       expect(mockConsoleLog).toHaveBeenCalled()
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("SPEECH MODELS")
       expect(allCalls).toContain("LLM MODELS")
       expect(allCalls).toContain("model-1")
@@ -108,7 +113,7 @@ describe("cli output", () => {
         (id) => id === "llm-downloaded"
       )
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("✅")
     })
 
@@ -120,7 +125,7 @@ describe("cli output", () => {
         () => false
       )
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("To download a model")
       expect(allCalls).toContain("cuttledoc models download")
     })
@@ -138,7 +143,7 @@ describe("cli output", () => {
         enhanced: false
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("STATISTICS")
       expect(allCalls).toContain("test.mp3")
       expect(allCalls).toContain("apple")
@@ -156,7 +161,7 @@ describe("cli output", () => {
         enhanced: false
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("10.0x realtime") // 60/6 = 10
     })
 
@@ -171,7 +176,7 @@ describe("cli output", () => {
         enhanced: true
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("15.0s (with LLM)")
     })
 
@@ -186,7 +191,7 @@ describe("cli output", () => {
         enhanced: false
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).not.toContain("with LLM")
     })
 
@@ -201,7 +206,7 @@ describe("cli output", () => {
         enhanced: false
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("1:01:01")
     })
 
@@ -216,7 +221,7 @@ describe("cli output", () => {
         enhanced: false
       })
 
-      const allCalls = mockConsoleLog.mock.calls.map((c) => c[0]).join("\n")
+      const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("1:05")
     })
   })

@@ -182,6 +182,7 @@ describe("parseArgs", () => {
 
     it("should warn on unknown option", () => {
       parseArgs(["--unknown-flag"])
+      // eslint-disable-next-line no-console
       expect(console.warn).toHaveBeenCalledWith("Unknown option: --unknown-flag")
     })
   })

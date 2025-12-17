@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import type { TranscriptionJobStats } from "./stats.js"
-import { calculateWordChanges, createSummaryReport, formatBytes, formatDuration } from "./stats.js"
+import {
+  calculateWordChanges,
+  createSummaryReport,
+  formatBytes,
+  formatDuration,
+  type TranscriptionJobStats
+} from "./stats.js"
 
 describe("stats utils", () => {
   describe("formatBytes", () => {
