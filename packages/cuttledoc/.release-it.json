@@ -12,10 +12,12 @@
     "releaseName": "v${version}"
   },
   "npm": {
-    "publish": false
+    "publish": true,
+    "publishArgs": ["--access", "public"]
   },
   "hooks": {
-    "before:init": ["pnpm lint", "pnpm test"]
+    "before:init": ["pnpm lint", "pnpm test"],
+    "before:release": ["pnpm run build:all"]
   },
   "plugins": {
     "@release-it/conventional-changelog": {

@@ -6,22 +6,21 @@
   "bin": {
     "cuttledoc": "./dist/cli.js"
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
     "./llm": {
       "import": "./dist/llm/index.js",
+      "require": "./dist/llm/index.cjs",
       "types": "./dist/llm/index.d.ts"
     }
   },
-  "files": [
-    "dist",
-    "build",
-    "binding.gyp",
-    "src/backends/apple/native"
-  ],
   "engines": {
     "node": ">=22.0.0"
   },
@@ -29,13 +28,17 @@
     "build": "tsup",
     "build:native": "node-gyp rebuild",
     "build:all": "pnpm run build:native && pnpm run build",
+    "install": "node-gyp rebuild || echo 'Native module build skipped (not on macOS or node-gyp not available)'",
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rm -rf dist build"
+    "clean": "rm -rf dist build",
+    "release": "release-it",
+    "release:auto": "release-it --ci",
+    "release:dry": "release-it --dry-run"
   },
   "keywords": [
     "speech-recognition",
@@ -59,9 +62,12 @@
     "node-llama-cpp": "^3.14.5"
   },
   "optionalDependencies": {
-    "sherpa-onnx-node": "^1.12.19"
+    "sherpa-onnx-node": "^1.12.19",
+    "node-gyp": "^10.0.0"
   },
   "devDependencies": {
+    "@release-it/conventional-changelog": "^10.0.4",
+    "release-it": "^19.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
