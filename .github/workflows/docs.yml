@@ -34,12 +34,6 @@ jobs:
         env:
           BASE_PATH: /cuttledoc/
 
-      - name: Prepare deployment
-        run: |
-          # React Router prerenders to basename subfolder, move to root for GitHub Pages
-          cp -r packages/docs/build/client/cuttledoc/* packages/docs/build/client/
-          rm -rf packages/docs/build/client/cuttledoc
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
