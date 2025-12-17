@@ -21,10 +21,11 @@ jobs:
       - run: pnpm lint
 
   typecheck:
-    name: Type Check (Node.js ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+    name: Type Check (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
@@ -37,10 +38,11 @@ jobs:
       - run: pnpm typecheck
 
   test:
-    name: Test (Node.js ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
@@ -53,10 +55,11 @@ jobs:
       - run: pnpm test
 
   build:
-    name: Build (Node.js ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
+    name: Build (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
@@ -66,4 +69,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - name: Build native module (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: pnpm --filter cuttledoc run build:native
       - run: pnpm build
