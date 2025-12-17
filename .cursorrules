@@ -1,0 +1,7 @@
+# Cursor Rules for cuttledoc
+
+## Commits
+- Commit automatically when a meaningful chunk/work package is cleanly completed, without waiting for explicit user request
+- This includes completing a logical unit of work, fixing a bug, implementing a feature, or making related configuration changes
+- Always write clear, descriptive commit messages following Conventional Commits format
+
