@@ -3,6 +3,9 @@
  *
  * Communicates with the Swift-based speech recognition server
  * over a Unix domain socket.
+ *
+ * Automatically chunks long audio files to stay within Apple's
+ * on-device recognition limit (~1 minute).
  */
 
 import { Socket, createConnection } from "node:net"
@@ -10,6 +13,8 @@ import { spawn, type ChildProcess } from "node:child_process"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import { cleanupChunks, prepareAudioChunks } from "./chunker.js"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 
@@ -152,15 +157,72 @@ export class SpeechServerClient {
 
   /**
    * Transcribe an audio file
+   *
+   * Automatically chunks long audio files to stay within Apple's
+   * on-device recognition limit. Chunks are split at natural speech pauses.
    */
   async transcribe(audioPath: string, language: string = "en-US"): Promise<ServerResponse> {
     await this.ensureServerRunning()
 
-    return this.sendRequest({
-      action: "transcribe",
-      audioPath,
-      language
-    })
+    // Prepare chunks (may return single chunk for short audio)
+    const chunks = await prepareAudioChunks(audioPath)
+
+    try {
+      if (chunks.length === 1) {
+        // Short audio - transcribe directly
+        return this.sendRequest({
+          action: "transcribe",
+          audioPath: chunks[0].path,
+          language
+        })
+      }
+
+      // Long audio - transcribe each chunk and merge results
+      const allSegments: ServerResponse["segments"] = []
+      const textParts: string[] = []
+      let totalDuration = 0
+
+      for (const chunk of chunks) {
+        const result = await this.sendRequest({
+          action: "transcribe",
+          audioPath: chunk.path,
+          language
+        })
+
+        if (!result.success) {
+          // Return error from first failing chunk
+          return result
+        }
+
+        if (result.text) {
+          textParts.push(result.text)
+        }
+
+        // Adjust segment timestamps to account for chunk offset
+        if (result.segments) {
+          for (const seg of result.segments) {
+            allSegments.push({
+              text: seg.text,
+              startSeconds: seg.startSeconds + chunk.startTime,
+              endSeconds: seg.endSeconds + chunk.startTime,
+              confidence: seg.confidence
+            })
+          }
+        }
+
+        totalDuration = Math.max(totalDuration, chunk.endTime)
+      }
+
+      return {
+        success: true,
+        text: textParts.join(" "),
+        segments: allSegments,
+        durationSeconds: totalDuration
+      }
+    } finally {
+      // Clean up temporary chunk files
+      await cleanupChunks(chunks)
+    }
   }
 
   /**
