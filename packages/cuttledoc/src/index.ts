@@ -53,7 +53,7 @@ export {
 
 // Re-export LLM types for CLI
 export { LLM_MODELS, type LLMModelId } from "./llm/types.js"
-export { downloadModel as downloadLLMModel, hasModelsDirectory as hasLLMModelsDirectory } from "./llm/processor.js"
+export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "./llm/processor.js"
 
 // Cached backend instances for reuse
 let sherpaBackendInstance: SherpaBackend | null = null
@@ -71,16 +71,6 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
     options.backend ?? (currentBackend === BACKEND_TYPES.auto ? selectBestBackend(options.language) : currentBackend)
 
   switch (backend) {
-    case BACKEND_TYPES.apple: {
-      const { AppleBackend } = await import("./backends/apple/index.js")
-      const appleBackend = new AppleBackend()
-      try {
-        return await appleBackend.transcribe(audioPath, options)
-      } finally {
-        await appleBackend.dispose()
-      }
-    }
-
     case BACKEND_TYPES.parakeet: {
       const { SherpaBackend } = await import("./backends/sherpa/index.js")
       if (sherpaBackendInstance === null) {
@@ -128,11 +118,6 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
  */
 export async function downloadModel(backend: BackendType, model?: string): Promise<void> {
   switch (backend) {
-    case BACKEND_TYPES.apple: {
-      // Apple Speech uses built-in models, no download needed
-      return
-    }
-
     case BACKEND_TYPES.parakeet:
     case BACKEND_TYPES.canary:
     case BACKEND_TYPES.whisper: {

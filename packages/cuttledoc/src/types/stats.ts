@@ -52,7 +52,7 @@ export interface PreprocessingStats {
  * Transcription engine statistics
  */
 export interface TranscriptionStats {
-  /** Backend used (apple, sherpa, remote) */
+  /** Backend used (parakeet, whisper, canary) */
   backend: string
   /** Specific model used */
   model: string

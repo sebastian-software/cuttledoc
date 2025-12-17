@@ -66,8 +66,8 @@ describe("parseArgs", () => {
 
   describe("options with values", () => {
     it("should parse -b option", () => {
-      const args = parseArgs(["-b", "apple"])
-      expect(args.backend).toBe("apple")
+      const args = parseArgs(["-b", "parakeet"])
+      expect(args.backend).toBe("parakeet")
     })
 
     it("should parse --backend option", () => {
@@ -154,7 +154,7 @@ describe("parseArgs", () => {
       const args = parseArgs([
         "meeting.m4a",
         "-b",
-        "apple",
+        "parakeet",
         "-l",
         "de",
         "-o",
@@ -166,7 +166,7 @@ describe("parseArgs", () => {
       ])
 
       expect(args.positional).toEqual(["meeting.m4a"])
-      expect(args.backend).toBe("apple")
+      expect(args.backend).toBe("parakeet")
       expect(args.language).toBe("de")
       expect(args.output).toBe("transcript.md")
       expect(args.enhance).toBe(true)

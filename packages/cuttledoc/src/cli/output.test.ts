@@ -138,7 +138,7 @@ describe("cli output", () => {
         durationSeconds: 60,
         transcribeTimeSeconds: 6,
         totalTimeSeconds: 10,
-        backend: "apple",
+        backend: "parakeet",
         wordCount: 100,
         enhanced: false
       })
@@ -146,7 +146,7 @@ describe("cli output", () => {
       const allCalls = getAllConsoleOutput()
       expect(allCalls).toContain("STATISTICS")
       expect(allCalls).toContain("test.mp3")
-      expect(allCalls).toContain("apple")
+      expect(allCalls).toContain("parakeet")
       expect(allCalls).toContain("100")
     })
 
@@ -156,7 +156,7 @@ describe("cli output", () => {
         durationSeconds: 60,
         transcribeTimeSeconds: 6,
         totalTimeSeconds: 6,
-        backend: "apple",
+        backend: "parakeet",
         wordCount: 100,
         enhanced: false
       })
@@ -186,7 +186,7 @@ describe("cli output", () => {
         durationSeconds: 60,
         transcribeTimeSeconds: 6,
         totalTimeSeconds: 6,
-        backend: "apple",
+        backend: "parakeet",
         wordCount: 100,
         enhanced: false
       })
@@ -201,7 +201,7 @@ describe("cli output", () => {
         durationSeconds: 3661, // 1:01:01
         transcribeTimeSeconds: 100,
         totalTimeSeconds: 100,
-        backend: "apple",
+        backend: "parakeet",
         wordCount: 1000,
         enhanced: false
       })
@@ -216,7 +216,7 @@ describe("cli output", () => {
         durationSeconds: 65, // 1:05
         transcribeTimeSeconds: 6.5,
         totalTimeSeconds: 6.5,
-        backend: "apple",
+        backend: "parakeet",
         wordCount: 50,
         enhanced: false
       })

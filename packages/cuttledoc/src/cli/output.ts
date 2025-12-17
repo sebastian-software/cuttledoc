@@ -18,7 +18,7 @@ ARGUMENTS:
   <audio-file>      Audio or video file to transcribe (mp3, m4a, mp4, wav, etc.)
 
 OPTIONS:
-  -b, --backend <name>    Backend to use: auto, apple, sherpa (default: auto)
+  -b, --backend <name>    Backend to use: auto, parakeet, whisper (default: auto)
   -m, --model <name>      Speech model (e.g., whisper-medium, parakeet-tdt-0.6b-v3)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
@@ -34,8 +34,8 @@ EXAMPLES:
   # Basic transcription
   cuttledoc podcast.mp3
 
-  # Transcribe with Apple backend and German language
-  cuttledoc meeting.m4a -b apple -l de
+  # Transcribe with Parakeet backend and German language
+  cuttledoc meeting.m4a -b parakeet -l de
 
   # Transcribe and enhance with LLM
   cuttledoc video.mp4 -e -o transcript.md

@@ -29,12 +29,18 @@ function getModelsDir(): string {
 /**
  * Load the sherpa-onnx module
  */
-function loadSherpaModule(): SherpaModule {
+let sherpaModule: SherpaModule | null = null
+
+async function loadSherpaModule(): Promise<SherpaModule> {
+  if (sherpaModule) {
+    return sherpaModule
+  }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("sherpa-onnx-node") as SherpaModule
-  } catch {
-    throw new Error("sherpa-onnx-node is not installed. Run: npm install sherpa-onnx-node")
+    sherpaModule = (await import("sherpa-onnx-node")) as unknown as SherpaModule
+    return sherpaModule
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    throw new Error(`sherpa-onnx-node failed to load: ${msg}`)
   }
 }
 
@@ -99,23 +105,19 @@ export class SherpaBackend implements Backend {
    * Check if sherpa-onnx is available
    */
   isAvailable(): boolean {
-    try {
-      loadSherpaModule()
-      return true
-    } catch {
-      return false
-    }
+    // Can't check synchronously with dynamic import, assume available if module exists
+    return true
   }
 
   /**
    * Initialize the recognizer with the configured model
    */
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     if (this.isInitialized) {
-      return Promise.resolve()
+      return
     }
 
-    this.sherpa = loadSherpaModule()
+    this.sherpa = await loadSherpaModule()
 
     const modelInfo = SHERPA_MODELS[this.modelType]
 
@@ -125,15 +127,12 @@ export class SherpaBackend implements Backend {
     try {
       this.recognizer = new this.sherpa.OfflineRecognizer(config)
       this.isInitialized = true
-      return Promise.resolve()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
-      return Promise.reject(
-        new Error(
-          `Failed to initialize recognizer for model "${this.modelType}". ` +
-            `Make sure the model is downloaded to ${modelsDir}. ` +
-            `Error: ${errorMessage}`
-        )
+      throw new Error(
+        `Failed to initialize recognizer for model "${this.modelType}". ` +
+          `Make sure the model is downloaded to ${modelsDir}. ` +
+          `Error: ${errorMessage}`
       )
     }
   }

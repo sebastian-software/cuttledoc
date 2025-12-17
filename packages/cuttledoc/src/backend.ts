@@ -1,5 +1,3 @@
-import { platform } from "node:os"
-
 import {
   BACKEND_TYPES,
   type BackendInfo,
@@ -41,45 +39,6 @@ const EU_LANGUAGES = [
   "uk"
 ] as const
 
-/**
- * Languages supported by Apple Speech Framework (partial list)
- */
-const APPLE_LANGUAGES = [
-  "en",
-  "de",
-  "fr",
-  "es",
-  "it",
-  "pt",
-  "nl",
-  "pl",
-  "ja",
-  "zh",
-  "ko",
-  "ar",
-  "ru",
-  "uk",
-  "th",
-  "vi",
-  "id",
-  "ms",
-  "tr",
-  "he",
-  "hi",
-  "cs",
-  "sk",
-  "hu",
-  "ro",
-  "bg",
-  "el",
-  "sv",
-  "da",
-  "fi",
-  "no",
-  "hr",
-  "sl"
-] as const
-
 let currentBackend: BackendType = BACKEND_TYPES.auto
 
 /**
@@ -97,30 +56,12 @@ export function getBackend(): BackendType {
 }
 
 /**
- * Check if running on macOS
- */
-function isMacOS(): boolean {
-  return platform() === "darwin"
-}
-
-/**
  * Get list of available backends on this system
  */
 export function getAvailableBackends(): readonly BackendInfo[] {
   const backends: BackendInfo[] = []
 
-  // Apple Speech (macOS only)
-  if (isMacOS()) {
-    backends.push({
-      name: BACKEND_TYPES.apple,
-      isAvailable: true,
-      languages: APPLE_LANGUAGES,
-      models: ["default"],
-      requiresDownload: false
-    })
-  }
-
-  // Parakeet (ONNX - cross-platform)
+  // Parakeet (ONNX - cross-platform, fastest)
   backends.push({
     name: BACKEND_TYPES.parakeet,
     isAvailable: true,
@@ -138,7 +79,7 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     requiresDownload: true
   })
 
-  // Whisper (cross-platform fallback)
+  // Whisper (cross-platform, highest quality)
   backends.push({
     name: BACKEND_TYPES.whisper,
     isAvailable: true,
@@ -154,12 +95,7 @@ export function getAvailableBackends(): readonly BackendInfo[] {
  * Auto-select the best available backend based on system and language
  */
 export function selectBestBackend(language?: string): BackendType {
-  // Prefer Apple on macOS (fastest, no download needed)
-  if (isMacOS()) {
-    return BACKEND_TYPES.apple
-  }
-
-  // For EU languages, prefer Parakeet (fastest ONNX model)
+  // For EU languages, prefer Parakeet (fastest, good quality)
   const langCode = language?.split("-")[0]
   const isEuLanguage = langCode === undefined || EU_LANGUAGES.includes(langCode as (typeof EU_LANGUAGES)[number])
 

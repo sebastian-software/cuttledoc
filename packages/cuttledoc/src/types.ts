@@ -3,7 +3,6 @@
  */
 export const BACKEND_TYPES = {
   auto: "auto",
-  apple: "apple",
   parakeet: "parakeet",
   canary: "canary",
   whisper: "whisper"

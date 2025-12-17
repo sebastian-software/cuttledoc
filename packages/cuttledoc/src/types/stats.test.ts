@@ -112,7 +112,7 @@ describe("stats utils", () => {
           realtimeFactor: 0.0167
         },
         transcription: {
-          backend: "apple",
+          backend: "parakeet",
           model: "default",
           processingTimeSeconds: 30,
           realtimeFactor: 0.1,
@@ -165,7 +165,7 @@ describe("stats utils", () => {
 
       expect(report).toContain("TRANSCRIPTION")
       expect(report).toContain("Backend:")
-      expect(report).toContain("apple")
+      expect(report).toContain("parakeet")
       expect(report).toContain("Model:")
       expect(report).toContain("Words:")
       expect(report).toContain("500")
@@ -287,7 +287,7 @@ describe("stats utils", () => {
           realtimeFactor: 0.1 // 10x speed
         },
         transcription: {
-          backend: "apple",
+          backend: "parakeet",
           model: "default",
           processingTimeSeconds: 30,
           realtimeFactor: 0.05, // 20x speed

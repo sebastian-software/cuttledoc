@@ -1,12 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
 import { BACKEND_TYPES } from "./types.js"
-
-// Mock os.platform
-vi.mock("node:os", () => ({
-  platform: vi.fn(() => "darwin")
-}))
 
 describe("backend", () => {
   afterEach(() => {
@@ -17,11 +12,6 @@ describe("backend", () => {
   describe("setBackend/getBackend", () => {
     it("should default to auto", () => {
       expect(getBackend()).toBe(BACKEND_TYPES.auto)
-    })
-
-    it("should set and get apple backend", () => {
-      setBackend(BACKEND_TYPES.apple)
-      expect(getBackend()).toBe(BACKEND_TYPES.apple)
     })
 
     it("should set and get parakeet backend", () => {
@@ -45,17 +35,6 @@ describe("backend", () => {
       const backends = getAvailableBackends()
       expect(Array.isArray(backends)).toBe(true)
       expect(backends.length).toBeGreaterThan(0)
-    })
-
-    it("should include apple backend on macOS", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("darwin")
-
-      const backends = getAvailableBackends()
-      const appleBackend = backends.find((b) => b.name === BACKEND_TYPES.apple)
-      expect(appleBackend).toBeDefined()
-      expect(appleBackend?.isAvailable).toBe(true)
-      expect(appleBackend?.requiresDownload).toBe(false)
     })
 
     it("should always include parakeet backend", () => {
@@ -98,54 +77,25 @@ describe("backend", () => {
   })
 
   describe("selectBestBackend", () => {
-    it("should select apple on macOS", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("darwin")
-
-      const backend = selectBestBackend()
-      expect(backend).toBe(BACKEND_TYPES.apple)
-    })
-
-    it("should select apple on macOS regardless of language", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("darwin")
-
-      expect(selectBestBackend("de")).toBe(BACKEND_TYPES.apple)
-      expect(selectBestBackend("ja")).toBe(BACKEND_TYPES.apple)
-      expect(selectBestBackend("zh")).toBe(BACKEND_TYPES.apple)
-    })
-
-    it("should select parakeet for EU languages on non-macOS", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("linux")
-
+    it("should select parakeet for EU languages", () => {
       expect(selectBestBackend("de")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("en")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("fr")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("es")).toBe(BACKEND_TYPES.parakeet)
     })
 
-    it("should select parakeet when no language specified on non-macOS", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("linux")
-
+    it("should select parakeet when no language specified", () => {
       const backend = selectBestBackend()
       expect(backend).toBe(BACKEND_TYPES.parakeet)
     })
 
-    it("should select whisper for non-EU languages on non-macOS", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("linux")
-
+    it("should select whisper for non-EU languages", () => {
       expect(selectBestBackend("ja")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("zh")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("ar")).toBe(BACKEND_TYPES.whisper)
     })
 
-    it("should handle language codes with region", async () => {
-      const os = await import("node:os")
-      vi.mocked(os.platform).mockReturnValue("linux")
-
+    it("should handle language codes with region", () => {
       expect(selectBestBackend("en-US")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("de-DE")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("ja-JP")).toBe(BACKEND_TYPES.whisper)

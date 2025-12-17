@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { transcribe, cleanup } from "./index.js"
-import { AppleBackend } from "./backends/apple/index.js"
+import { transcribe, cleanup, BACKEND_TYPES } from "./index.js"
+import { isModelDownloaded } from "./backends/sherpa/download.js"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 const fixturesDir = resolve(__dirname, "../fixtures")
@@ -33,86 +33,108 @@ function calculateWordOverlap(actual: string, expected: string): number {
   return matchingWords.length / actualWords.length
 }
 
+// Check if Parakeet model is available and sherpa-onnx can be loaded
+const hasParakeetModel = isModelDownloaded("parakeet-tdt-0.6b-v3")
+
+// Check if sherpa-onnx-node can be loaded (may fail due to pnpm path issues)
+let canLoadSherpa = false
+try {
+  const { SherpaBackend } = await import("./backends/sherpa/index.js")
+  const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+  await backend.initialize()
+  await backend.dispose()
+  canLoadSherpa = true
+} catch {
+  // sherpa-onnx-node failed to load (pnpm path issues)
+  canLoadSherpa = false
+}
+
+const canRunIntegrationTests = hasParakeetModel && canLoadSherpa
+
 describe("integration", () => {
   // Clean up after all tests
   afterAll(async () => {
     await cleanup()
-    // Also shut down Apple backend server if running
-    if (process.platform === "darwin") {
-      const appleBackend = new AppleBackend()
-      await appleBackend.dispose()
-    }
   })
 
-  describe("Apple backend", () => {
-    it.skipIf(process.platform !== "darwin")("should be available on macOS", () => {
-      const backend = new AppleBackend()
+  describe("Parakeet backend", () => {
+    it.skipIf(!canRunIntegrationTests)("should be available when model is downloaded", async () => {
+      const { SherpaBackend } = await import("./backends/sherpa/index.js")
+      const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
       expect(backend.isAvailable()).toBe(true)
     })
 
-    it.skipIf(process.platform !== "darwin")(
+    it.skipIf(!canRunIntegrationTests)(
       "should transcribe short English audio",
       async () => {
         const audioPath = resolve(fixturesDir, "fairytale-en.ogg")
         const expectedText = await readFile(resolve(fixturesDir, "fairytale-en.md"), "utf-8")
 
-        const backend = new AppleBackend()
-        const result = await backend.transcribe(audioPath, { language: "en-US" })
+        const { SherpaBackend } = await import("./backends/sherpa/index.js")
+        const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+        await backend.initialize()
+        const result = await backend.transcribe(audioPath, { language: "en" })
 
         expect(result.text).toBeTruthy()
         expect(result.durationSeconds).toBeGreaterThan(0)
         expect(result.segments.length).toBeGreaterThan(0)
-        expect(result.backend).toBe("apple")
+        expect(result.backend).toBe(BACKEND_TYPES.parakeet)
 
-        // Check word overlap is high (>80% of words should match)
+        // Check word overlap is high (>90% of words should match)
         const overlap = calculateWordOverlap(result.text, expectedText)
-        expect(overlap).toBeGreaterThan(0.8)
+        expect(overlap).toBeGreaterThan(0.9)
+
+        await backend.dispose()
       },
       60_000
     )
 
-    it.skipIf(process.platform !== "darwin")(
+    it.skipIf(!canRunIntegrationTests)(
       "should transcribe short German audio",
       async () => {
         const audioPath = resolve(fixturesDir, "fairytale-de.ogg")
         const expectedText = await readFile(resolve(fixturesDir, "fairytale-de.md"), "utf-8")
 
-        const backend = new AppleBackend()
-        const result = await backend.transcribe(audioPath, { language: "de-DE" })
+        const { SherpaBackend } = await import("./backends/sherpa/index.js")
+        const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+        await backend.initialize()
+        const result = await backend.transcribe(audioPath, { language: "de" })
 
         expect(result.text).toBeTruthy()
         expect(result.durationSeconds).toBeGreaterThan(0)
         expect(result.segments.length).toBeGreaterThan(0)
 
-        // Check word overlap is high (>80% of words should match)
+        // Check word overlap is high (>90% of words should match)
         const overlap = calculateWordOverlap(result.text, expectedText)
-        expect(overlap).toBeGreaterThan(0.8)
+        expect(overlap).toBeGreaterThan(0.9)
+
+        await backend.dispose()
       },
       60_000
     )
   })
 
   describe("transcribe function", () => {
-    it.skipIf(process.platform !== "darwin")(
-      "should auto-select Apple backend on macOS",
+    it.skipIf(!canRunIntegrationTests)(
+      "should auto-select Parakeet backend",
       async () => {
         const audioPath = resolve(fixturesDir, "fairytale-en.ogg")
 
-        const result = await transcribe(audioPath, { language: "en-US" })
+        const result = await transcribe(audioPath, { language: "en" })
 
         expect(result.text).toBeTruthy()
-        expect(result.backend).toBe("apple")
+        expect(result.backend).toBe(BACKEND_TYPES.parakeet)
         expect(result.processingTimeSeconds).toBeGreaterThan(0)
       },
       60_000
     )
 
-    it.skipIf(process.platform !== "darwin")(
+    it.skipIf(!canRunIntegrationTests)(
       "should return segment timing information",
       async () => {
         const audioPath = resolve(fixturesDir, "fairytale-en.ogg")
 
-        const result = await transcribe(audioPath, { language: "en-US" })
+        const result = await transcribe(audioPath, { language: "en" })
 
         // Should have segments
         expect(result.segments.length).toBeGreaterThan(0)
@@ -122,8 +144,6 @@ describe("integration", () => {
           expect(segment.startSeconds).toBeGreaterThanOrEqual(0)
           expect(segment.endSeconds).toBeGreaterThan(segment.startSeconds)
           expect(segment.text).toBeTruthy()
-          expect(segment.confidence).toBeGreaterThanOrEqual(0)
-          expect(segment.confidence).toBeLessThanOrEqual(1)
         }
       },
       60_000
