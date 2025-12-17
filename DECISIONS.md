@@ -201,7 +201,7 @@ Reasons:
 - ✅ Cleaner codebase
 - ✅ Better bundler compatibility
 - ⚠️ CJS users must use dynamic import
-- ⚠️ Requires Node.js 18+ (we target 24+)
+- ⚠️ Requires Node.js 22+ (we test 22 and 24, but recommend 24+)
 
 ---
 
@@ -329,15 +329,104 @@ Reasons:
 
 ---
 
+## ADR-008: TurboRepo for Monorepo Build Pipeline
+
+**Status:** Accepted
+**Date:** 2025-01-XX
+
+### Context
+
+The project uses a pnpm monorepo with multiple packages (`cuttledoc`, `@cuttledoc/docs`). We need efficient build orchestration, caching, and parallel execution.
+
+### Decision
+
+Use **TurboRepo** for build pipeline management:
+
+```json
+{
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint"
+  }
+}
+```
+
+Reasons:
+
+1. **Intelligent caching** - Skips unchanged packages
+2. **Parallel execution** - Runs independent tasks concurrently
+3. **Dependency awareness** - Respects package dependencies
+4. **Remote caching** - Can share cache across CI runs
+5. **Task pipelines** - Defines task dependencies clearly
+
+### Consequences
+
+- ✅ Faster builds through caching and parallelization
+- ✅ Better developer experience with incremental builds
+- ✅ Consistent build behavior across environments
+- ⚠️ Additional dependency (turbo)
+- ⚠️ Requires turbo.json configuration
+
+---
+
+## ADR-009: Cross-Platform CI Matrix Testing
+
+**Status:** Accepted
+**Date:** 2025-01-XX
+
+### Context
+
+The project supports multiple platforms:
+
+- macOS (with native Apple Speech backend)
+- Windows
+- Linux
+
+We need to ensure compatibility across all platforms.
+
+### Decision
+
+Use **GitHub Actions matrix strategy** to test on all platforms:
+
+```yaml
+strategy:
+  matrix:
+    os: [ubuntu-latest, windows-latest, macos-latest]
+    node-version: [22, 24]
+```
+
+Test matrix covers:
+
+- **Platforms**: Ubuntu, Windows, macOS
+- **Node.js versions**: 22, 24
+- **Jobs**: typecheck, test, build
+
+Special handling:
+
+- macOS builds native Apple Speech module (`build:native`)
+- All platforms test TypeScript compilation and tests
+
+### Consequences
+
+- ✅ Ensures cross-platform compatibility
+- ✅ Catches platform-specific issues early
+- ✅ Validates native module builds on macOS
+- ⚠️ Longer CI runtime (6 combinations per job)
+- ⚠️ Higher CI costs (macOS runners)
+
+---
+
 ## Future Considerations
 
 ### Potential ADRs
 
-- **ADR-008**: Model caching and download strategy
-- **ADR-009**: Worker thread isolation for heavy processing
-- **ADR-010**: Browser/WebAssembly support
-- **ADR-011**: Streaming transcription API design
+- **ADR-010**: Model caching and download strategy
+- **ADR-011**: Worker thread isolation for heavy processing
+- **ADR-012**: Browser/WebAssembly support
+- **ADR-013**: Streaming transcription API design
 
 ---
 
-_Last updated: 2024-12-16_
+_Last updated: 2025-01-XX_
