@@ -6,6 +6,12 @@
   "bin": {
     "cuttledoc": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "build/Release",
+    "binding.gyp",
+    "src/backends/apple/native"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -36,9 +42,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist build",
-    "release": "release-it",
-    "release:auto": "release-it --ci",
-    "release:dry": "release-it --dry-run"
+    "release": "release-it --npm.otp=$(op item get 'npmjs' --otp)",
+    "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)"
   },
   "keywords": [
     "speech-recognition",

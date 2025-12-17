@@ -2,22 +2,16 @@
   "git": {
     "commitMessage": "chore: release v${version}",
     "tagName": "v${version}",
-    "tagAnnotation": "Release ${version}",
+    "tagAnnotation": "Release v${version}",
     "requireBranch": "main",
-    "requireCleanWorkingDir": true,
-    "requireUpstream": true
+    "requireCleanWorkingDir": true
   },
   "github": {
     "release": true,
     "releaseName": "v${version}"
   },
   "npm": {
-    "publish": true,
-    "publishArgs": ["--access", "public"]
-  },
-  "hooks": {
-    "before:init": ["pnpm lint", "pnpm test"],
-    "before:release": ["pnpm run build:all"]
+    "publish": true
   },
   "plugins": {
     "@release-it/conventional-changelog": {
@@ -27,15 +21,20 @@
           { "type": "feat", "section": "Features" },
           { "type": "fix", "section": "Bug Fixes" },
           { "type": "perf", "section": "Performance" },
+          { "type": "refactor", "section": "Refactoring" },
           { "type": "docs", "section": "Documentation" },
           { "type": "chore", "hidden": true },
           { "type": "style", "hidden": true },
-          { "type": "refactor", "hidden": true },
-          { "type": "test", "hidden": true }
+          { "type": "test", "hidden": true },
+          { "type": "build", "hidden": true },
+          { "type": "ci", "hidden": true }
         ]
       },
       "infile": "CHANGELOG.md",
       "header": "# Changelog"
     }
+  },
+  "hooks": {
+    "before:init": ["pnpm run lint", "pnpm run test", "pnpm run build:all"]
   }
 }
