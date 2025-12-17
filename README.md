@@ -8,9 +8,16 @@
   <strong>Fast, offline speech-to-text transcription for Node.js with multiple backend support.</strong>
 </p>
 
-[![CI](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/cuttledoc/actions/workflows/ci.yml)
+[![CI](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml)
 [![npm version](https://badge.fury.io/js/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-22%2B-green.svg)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-10%2B-orange.svg)](https://pnpm.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/sebastian-software/cuttledoc)
+[![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
+[![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
+[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/sebastian-software/cuttledoc)
 
 ## Features
 
@@ -185,7 +192,7 @@ cuttledoc/
 
 ```bash
 # Clone
-git clone https://github.com/your-username/cuttledoc
+git clone https://github.com/sebastian-software/cuttledoc
 cd cuttledoc
 
 # Install (uses pnpm)
