@@ -19,11 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -31,10 +27,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Build core package
         run: pnpm --filter cuttledoc build
-
       - name: Build docs
         run: pnpm --filter @cuttledoc/docs build
         env:
