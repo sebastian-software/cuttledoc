@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="packages/docs/public/logo.svg" width="150" height="150" alt="cuttledoc logo">
+  <img src="packages/docs/app/assets/logo.svg" width="150" height="150" alt="cuttledoc logo">
 </p>
 
 <h1 align="center">cuttledoc</h1>
@@ -17,9 +17,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/cuttledoc)](https://bundlephobia.com/package/cuttledoc)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/sebastian-software/cuttledoc)
-[![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
-[![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
-[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/sebastian-software/cuttledoc)
 
 ## Features
 
