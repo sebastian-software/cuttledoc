@@ -1,3 +1,8 @@
+import { existsSync } from "node:fs"
+import { platform } from "node:os"
+import { join } from "node:path"
+import { fileURLToPath } from "node:url"
+
 import {
   BACKEND_TYPES,
   type Backend,
@@ -6,94 +11,77 @@ import {
   type TranscriptionSegment
 } from "../../types.js"
 
-import { getNativeModule, isNativeModuleAvailable } from "./native.js"
-import { type AuthorizationStatus } from "./types.js"
+import { getSpeechClient, type ServerResponse } from "./client.js"
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url))
+
+/** Path to the Cuttledoc.app bundle */
+const APP_BUNDLE_PATH = join(__dirname, "swift", "Cuttledoc.app")
 
 /**
  * Apple Speech Framework backend for macOS
  *
- * Uses the native SFSpeechRecognizer for on-device transcription.
+ * Uses a Swift-based Unix socket server for on-device transcription.
  * Requires macOS 12.0+ and speech recognition permissions.
+ *
+ * The server runs as a signed macOS app to properly handle TCC permissions.
  */
 export class AppleBackend implements Backend {
-  private readonly onDeviceOnly: boolean
+  private readonly socketPath: string
 
-  constructor(options: { onDeviceOnly?: boolean } = {}) {
-    this.onDeviceOnly = options.onDeviceOnly ?? true
+  constructor(options: { socketPath?: string } = {}) {
+    this.socketPath = options.socketPath ?? "/tmp/cuttledoc-speech.sock"
   }
 
   /**
    * Check if Apple Speech is available on this system
    */
   isAvailable(): boolean {
-    if (!isNativeModuleAvailable()) {
+    // Only available on macOS
+    if (platform() !== "darwin") {
       return false
     }
 
-    try {
-      const native = getNativeModule()
-      return native.isAvailable()
-    } catch {
-      return false
-    }
+    // Check if the app bundle exists
+    return existsSync(APP_BUNDLE_PATH)
   }
 
   /**
-   * Check if on-device recognition is supported for a language
+   * Check if the server is currently running
    */
-  supportsOnDevice(language?: string): boolean {
-    if (!isNativeModuleAvailable()) {
-      return false
-    }
-
-    try {
-      const native = getNativeModule()
-      return native.supportsOnDevice(language)
-    } catch {
-      return false
-    }
+  async isServerRunning(): Promise<boolean> {
+    const client = getSpeechClient(this.socketPath)
+    return client.isServerRunning()
   }
 
   /**
-   * Get list of supported locales
+   * Start the transcription server if not already running
    */
-  getSupportedLocales(): readonly string[] {
-    if (!isNativeModuleAvailable()) {
-      return []
-    }
-
-    try {
-      const native = getNativeModule()
-      return native.getSupportedLocales()
-    } catch {
-      return []
-    }
-  }
-
-  /**
-   * Request speech recognition authorization
-   */
-  async requestAuthorization(): Promise<AuthorizationStatus> {
-    const native = getNativeModule()
-    return native.requestAuthorization()
+  async ensureServerRunning(): Promise<void> {
+    const client = getSpeechClient(this.socketPath)
+    await client.ensureServerRunning()
   }
 
   /**
    * Transcribe an audio file using Apple Speech Framework
    */
   async transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
-    const native = getNativeModule()
+    const client = getSpeechClient(this.socketPath)
     const startTime = performance.now()
     const language = options.language ?? "en-US"
 
-    // Call native transcription
-    const result = await native.transcribe(audioPath, {
-      language,
-      onDeviceOnly: this.onDeviceOnly
-    })
+    // Ensure server is running
+    await client.ensureServerRunning()
+
+    // Call transcription via socket
+    const result: ServerResponse = await client.transcribe(audioPath, language)
+
+    if (!result.success) {
+      throw new Error(result.error ?? "Transcription failed")
+    }
 
     // Convert segments to our format
-    const segments: TranscriptionSegment[] = result.segments.map((seg) => ({
+    const segments: TranscriptionSegment[] = (result.segments ?? []).map((seg) => ({
       text: seg.text,
       startSeconds: seg.startSeconds,
       endSeconds: seg.endSeconds,
@@ -101,9 +89,9 @@ export class AppleBackend implements Backend {
     }))
 
     return {
-      text: result.text,
+      text: result.text ?? "",
       segments,
-      durationSeconds: result.durationSeconds,
+      durationSeconds: result.durationSeconds ?? 0,
       processingTimeSeconds: (performance.now() - startTime) / 1000,
       language,
       backend: BACKEND_TYPES.apple
@@ -111,19 +99,15 @@ export class AppleBackend implements Backend {
   }
 
   /**
-   * Clean up resources
+   * Clean up resources - shuts down the server
    */
-  dispose(): Promise<void> {
-    // No cleanup needed for Apple Speech
-    return Promise.resolve()
+  async dispose(): Promise<void> {
+    const client = getSpeechClient(this.socketPath)
+    if (await client.isServerRunning()) {
+      await client.shutdown()
+    }
   }
 }
 
-// Re-export types
-export type {
-  AppleNativeBindings,
-  AppleNativeResult,
-  AppleNativeSegment,
-  AppleTranscribeOptions,
-  AuthorizationStatus
-} from "./types.js"
+// Re-export client types
+export { getSpeechClient, type ServerResponse } from "./client.js"

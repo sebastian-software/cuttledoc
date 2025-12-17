@@ -185,20 +185,20 @@ class TranscriptionServer {
     let socketPath: String
     var serverSocket: Int32 = -1
     var isRunning = false
-    
+
     init(socketPath: String) {
         self.socketPath = socketPath
     }
-    
+
     func start() {
         unlink(socketPath)
-        
+
         serverSocket = socket(AF_UNIX, SOCK_STREAM, 0)
         guard serverSocket >= 0 else {
             fputs("Failed to create socket\n", stderr)
             exit(1)
         }
-        
+
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
         socketPath.withCString { ptr in
@@ -207,27 +207,27 @@ class TranscriptionServer {
                 strcpy(pathBuffer, ptr)
             }
         }
-        
+
         let bindResult = withUnsafePointer(to: &addr) { ptr in
             ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPtr in
                 bind(serverSocket, sockaddrPtr, socklen_t(MemoryLayout<sockaddr_un>.size))
             }
         }
-        
+
         guard bindResult >= 0 else {
             fputs("Failed to bind socket: \(String(cString: strerror(errno)))\n", stderr)
             exit(1)
         }
-        
+
         guard listen(serverSocket, 5) >= 0 else {
             fputs("Failed to listen on socket\n", stderr)
             exit(1)
         }
-        
+
         chmod(socketPath, 0o777)
         isRunning = true
         fputs("Server listening on \(socketPath)\n", stderr)
-        
+
         while isRunning {
             let clientSocket = accept(serverSocket, nil, nil)
             guard clientSocket >= 0 else {
@@ -237,26 +237,26 @@ class TranscriptionServer {
             handleClient(clientSocket)
             close(clientSocket)
         }
-        
+
         close(serverSocket)
         unlink(socketPath)
     }
-    
+
     func handleClient(_ clientSocket: Int32) {
         var buffer = [CChar](repeating: 0, count: 65536)
         let bytesRead = read(clientSocket, &buffer, buffer.count - 1)
         guard bytesRead > 0 else { return }
-        
+
         buffer[bytesRead] = 0
         let requestString = String(cString: buffer)
-        
+
         guard let data = requestString.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let action = json["action"] as? String else {
             sendError(clientSocket, "Invalid request")
             return
         }
-        
+
         switch action {
         case "ping":
             sendJSON(clientSocket, ["success": true, "message": "pong"])
@@ -275,43 +275,43 @@ class TranscriptionServer {
             sendError(clientSocket, "Unknown action: \(action)")
         }
     }
-    
+
     func sendJSON(_ clientSocket: Int32, _ dict: [String: Any]) {
         guard let data = try? JSONSerialization.data(withJSONObject: dict),
               var json = String(data: data, encoding: .utf8) else { return }
         json += "\n"
         json.withCString { ptr in _ = write(clientSocket, ptr, strlen(ptr)) }
     }
-    
+
     func sendError(_ clientSocket: Int32, _ message: String) {
         sendJSON(clientSocket, ["success": false, "error": message])
     }
-    
+
     func performServerTranscription(audioPath: String, language: String) -> [String: Any] {
         let fileURL = URL(fileURLWithPath: audioPath)
-        
+
         guard FileManager.default.fileExists(atPath: audioPath) else {
             return ["success": false, "error": "File not found: \(audioPath)"]
         }
-        
+
         let asset = AVAsset(url: fileURL)
         let duration = CMTimeGetSeconds(asset.duration)
-        
+
         let locale = Locale(identifier: language)
         guard let recognizer = SFSpeechRecognizer(locale: locale), recognizer.isAvailable else {
             return ["success": false, "error": "Recognizer not available", "durationSeconds": duration]
         }
-        
+
         let request = SFSpeechURLRecognitionRequest(url: fileURL)
         request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
         request.shouldReportPartialResults = false
         if #available(macOS 13.0, *) { request.addsPunctuation = true }
-        
+
         var completed = false
         var resultText: String?
         var resultSegments: [[String: Any]] = []
         var resultError: String?
-        
+
         let task = recognizer.recognitionTask(with: request) { result, error in
             if let error = error {
                 resultError = error.localizedDescription
@@ -331,21 +331,21 @@ class TranscriptionServer {
                 completed = true
             }
         }
-        
+
         let timeout = Date(timeIntervalSinceNow: 300)
         while !completed && Date() < timeout {
             RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.1))
         }
-        
+
         if !completed {
             task.cancel()
             return ["success": false, "error": "Timeout", "durationSeconds": duration]
         }
-        
+
         if let error = resultError {
             return ["success": false, "error": error, "durationSeconds": duration]
         }
-        
+
         return [
             "success": true,
             "text": resultText ?? "",
@@ -365,10 +365,10 @@ if args.contains("--server") {
     if let idx = args.firstIndex(of: "--socket"), idx + 1 < args.count {
         socketPath = args[idx + 1]
     }
-    
+
     signal(SIGINT) { _ in exit(0) }
     signal(SIGTERM) { _ in exit(0) }
-    
+
     let server = TranscriptionServer(socketPath: socketPath)
     server.start()
     exit(0)
