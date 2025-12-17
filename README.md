@@ -55,32 +55,32 @@ npx cuttledoc audio.wav --stats
 ### API
 
 ```typescript
-import { transcribe } from "cuttledoc";
+import { transcribe } from "cuttledoc"
 
 const result = await transcribe("audio.mp3", {
   language: "en",
-  backend: "auto", // auto, apple, whisper, parakeet
-});
+  backend: "auto" // auto, apple, whisper, parakeet
+})
 
-console.log(result.text);
-console.log(`Duration: ${result.durationSeconds}s`);
-console.log(`Confidence: ${result.confidence}`);
+console.log(result.text)
+console.log(`Duration: ${result.durationSeconds}s`)
+console.log(`Confidence: ${result.confidence}`)
 ```
 
 ### With LLM Enhancement
 
 ```typescript
-import { transcribe } from "cuttledoc";
-import { enhanceTranscript } from "cuttledoc/llm";
+import { transcribe } from "cuttledoc"
+import { enhanceTranscript } from "cuttledoc/llm"
 
-const result = await transcribe("podcast.mp3");
+const result = await transcribe("podcast.mp3")
 
 const enhanced = await enhanceTranscript(result.text, {
   model: "gemma3n:e4b",
-  mode: "enhance", // or "correct" for minimal changes
-});
+  mode: "enhance" // or "correct" for minimal changes
+})
 
-console.log(enhanced.markdown);
+console.log(enhanced.markdown)
 ```
 
 ## CLI Reference
@@ -118,11 +118,11 @@ cuttledoc models download gemma3n:e4b
 
 ## Backends
 
-| Backend | Platform | Speed | Quality | Languages |
-|---------|----------|-------|---------|-----------|
-| Apple Speech | macOS 14+ | ⚡⚡⚡ | ★★★★ | 60+ |
-| Whisper (medium) | All | ⚡⚡ | ★★★★★ | 99 |
-| Parakeet v3 | All | ⚡⚡⚡ | ★★★★ | 26 (EU) |
+| Backend          | Platform  | Speed  | Quality | Languages |
+| ---------------- | --------- | ------ | ------- | --------- |
+| Apple Speech     | macOS 14+ | ⚡⚡⚡ | ★★★★    | 60+       |
+| Whisper (medium) | All       | ⚡⚡   | ★★★★★   | 99        |
+| Parakeet v3      | All       | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
 
 ### Backend Selection
 
@@ -146,7 +146,7 @@ The optional LLM post-processing uses Gemma 3n to:
 2. Structure text into **logical paragraphs**
 3. Add **Markdown formatting**:
    - **Bold** for key terms
-   - *Italic* for emphasis
+   - _Italic_ for emphasis
    - `##` Headings for topic changes
    - Bullet lists where appropriate
 4. Fix obvious **transcription errors**
@@ -157,11 +157,11 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Typical processing speed on M1 MacBook Pro:
 
-| Input | Backend | Transcription | LLM | Total |
-|-------|---------|---------------|-----|-------|
-| 10 min audio | Apple | 15s | - | 15s |
-| 10 min audio | Whisper | 45s | - | 45s |
-| 10 min audio | Apple + LLM | 15s | 20s | 35s |
+| Input        | Backend     | Transcription | LLM | Total |
+| ------------ | ----------- | ------------- | --- | ----- |
+| 10 min audio | Apple       | 15s           | -   | 15s   |
+| 10 min audio | Whisper     | 45s           | -   | 45s   |
+| 10 min audio | Apple + LLM | 15s           | 20s | 35s   |
 
 ## Documentation
 

@@ -5,6 +5,7 @@
 ## Summary
 
 A standalone npm package providing unified access to multiple local speech-to-text engines:
+
 - **Apple Speech Framework** (native macOS)
 - **Whisper.cpp** (cross-platform, GGML)
 - **ONNX Runtime** (Parakeet, Canary - NVIDIA NeMo models)
@@ -15,19 +16,20 @@ All processing happens on-device without external API dependencies.
 
 Current options for local speech recognition in Node.js are fragmented:
 
-| Solution | Pros | Cons |
-|----------|------|------|
-| `nodejs-whisper` | Works everywhere | Large models (500MB+), slower |
-| OpenAI Whisper API | High quality | Requires internet, costs money |
-| `whisperkit-cli` | Fast on Apple Silicon | External binary, not native JS |
-| Apple Speech | Native, fast | macOS only |
-| NVIDIA Parakeet | Fastest, 25 languages | No Node.js bindings |
+| Solution           | Pros                  | Cons                           |
+| ------------------ | --------------------- | ------------------------------ |
+| `nodejs-whisper`   | Works everywhere      | Large models (500MB+), slower  |
+| OpenAI Whisper API | High quality          | Requires internet, costs money |
+| `whisperkit-cli`   | Fast on Apple Silicon | External binary, not native JS |
+| Apple Speech       | Native, fast          | macOS only                     |
+| NVIDIA Parakeet    | Fastest, 25 languages | No Node.js bindings            |
 
 **This package unifies all local options under one API.**
 
 ## Supported Backends
 
 ### 1. Apple Speech Framework (macOS)
+
 - **On-device processing** - No data leaves the machine
 - **Optimized for Apple Silicon** - Uses Neural Engine
 - **Pre-installed models** - No download required
@@ -38,14 +40,15 @@ Current options for local speech recognition in Node.js are fragmented:
 
 From [NVIDIA's August 2025 release](https://blogs.nvidia.com/blog/speech-ai-dataset-models/):
 
-| Model | Parameters | Languages | Focus | Speed |
-|-------|------------|-----------|-------|-------|
-| **Parakeet-tdt-0.6b-v3** | 600M | 25 EU langs | Throughput | ⚡⚡⚡⚡ |
-| **Canary-1b-v2** | 1B | 25 EU langs | Accuracy + Translation | ⚡⚡⚡ |
+| Model                    | Parameters | Languages   | Focus                  | Speed    |
+| ------------------------ | ---------- | ----------- | ---------------------- | -------- |
+| **Parakeet-tdt-0.6b-v3** | 600M       | 25 EU langs | Throughput             | ⚡⚡⚡⚡ |
+| **Canary-1b-v2**         | 1B         | 25 EU langs | Accuracy + Translation | ⚡⚡⚡   |
 
 **Supported Languages:** English, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Czech, Slovak, Hungarian, Romanian, Bulgarian, Greek, Swedish, Danish, Finnish, Norwegian, Croatian, Slovenian, Estonian, Latvian, Lithuanian, Maltese, Russian, Ukrainian
 
 **Key Features:**
+
 - 🚀 Highest throughput of multilingual models on HuggingFace
 - 🎯 24-minute audio in single inference pass
 - 🔍 Auto language detection (no prompting needed)
@@ -53,6 +56,7 @@ From [NVIDIA's August 2025 release](https://blogs.nvidia.com/blog/speech-ai-data
 - 📦 Available on HuggingFace under permissive license
 
 ### 3. Whisper.cpp (Cross-platform fallback)
+
 - Works on macOS, Linux, Windows
 - Metal acceleration on Apple Silicon
 - Models: tiny (75MB) → large (3GB)
@@ -143,71 +147,68 @@ cuttledoc/
 
 ```typescript
 // Backend types
-export type BackendType = 'auto' | 'apple' | 'parakeet' | 'canary' | 'whisper';
+export type BackendType = "auto" | "apple" | "parakeet" | "canary" | "whisper"
 
-export type ParakeetModel = 'parakeet-tdt-0.6b-v3';
-export type CanaryModel = 'canary-1b-v2';
-export type WhisperModel = 'tiny' | 'base' | 'small' | 'medium' | 'large';
+export type ParakeetModel = "parakeet-tdt-0.6b-v3"
+export type CanaryModel = "canary-1b-v2"
+export type WhisperModel = "tiny" | "base" | "small" | "medium" | "large"
 
 // Main transcription function
-export function transcribe(
-  audioPath: string,
-  options?: TranscribeOptions
-): Promise<TranscriptionResult>;
+export function transcribe(audioPath: string, options?: TranscribeOptions): Promise<TranscriptionResult>
 
 // Backend management
-export function setBackend(backend: BackendType, options?: BackendOptions): void;
-export function getAvailableBackends(): BackendInfo[];
-export function downloadModel(backend: BackendType, model?: string): Promise<void>;
+export function setBackend(backend: BackendType, options?: BackendOptions): void
+export function getAvailableBackends(): BackendInfo[]
+export function downloadModel(backend: BackendType, model?: string): Promise<void>
 
 // Types
 export interface TranscribeOptions {
-  language?: string;           // Default: auto-detect
-  backend?: BackendType;       // Override default backend
-  onProgress?: (partial: PartialResult) => void;
+  language?: string // Default: auto-detect
+  backend?: BackendType // Override default backend
+  onProgress?: (partial: PartialResult) => void
 }
 
 export interface BackendOptions {
-  model?: string;              // Model variant
-  modelPath?: string;          // Custom model path
-  useGPU?: boolean;            // Use GPU acceleration (default: true)
+  model?: string // Model variant
+  modelPath?: string // Custom model path
+  useGPU?: boolean // Use GPU acceleration (default: true)
 }
 
 export interface BackendInfo {
-  name: BackendType;
-  available: boolean;
-  languages: string[];
-  models: string[];
-  requiresDownload: boolean;
+  name: BackendType
+  available: boolean
+  languages: string[]
+  models: string[]
+  requiresDownload: boolean
 }
 
 export interface TranscriptionResult {
-  text: string;
-  segments: TranscriptionSegment[];
-  words?: WordTimestamp[];     // Word-level timestamps (Parakeet/Canary)
-  duration: number;            // Audio duration in seconds
-  processingTime: number;      // Time taken to transcribe
-  language: string;            // Detected or specified language
-  backend: BackendType;        // Which backend was used
+  text: string
+  segments: TranscriptionSegment[]
+  words?: WordTimestamp[] // Word-level timestamps (Parakeet/Canary)
+  duration: number // Audio duration in seconds
+  processingTime: number // Time taken to transcribe
+  language: string // Detected or specified language
+  backend: BackendType // Which backend was used
 }
 
 export interface TranscriptionSegment {
-  text: string;
-  start: number;               // Start time in seconds
-  end: number;                 // End time in seconds
-  confidence?: number;         // 0.0 - 1.0
+  text: string
+  start: number // Start time in seconds
+  end: number // End time in seconds
+  confidence?: number // 0.0 - 1.0
 }
 
 export interface WordTimestamp {
-  word: string;
-  start: number;
-  end: number;
-  confidence?: number;
+  word: string
+  start: number
+  end: number
+  confidence?: number
 }
 
 export interface PartialResult {
-  text: string;
-  isFinal: boolean;
+  text: string
+  isFinal: boolean
 }
 ```
 
@@ -390,69 +391,69 @@ NODE_API_MODULE(apple_speech, Init)
 ```typescript
 // src/backends/parakeet/index.ts
 
-import * as ort from 'onnxruntime-node';
-import { AudioProcessor } from './processor.js';
-import { ModelManager } from '../../utils/download.js';
-import type { TranscriptionResult, BackendOptions } from '../../types.js';
+import * as ort from "onnxruntime-node"
+import { AudioProcessor } from "./processor.js"
+import { ModelManager } from "../../utils/download.js"
+import type { TranscriptionResult, BackendOptions } from "../../types.js"
 
 const MODELS = {
-  'parakeet-tdt-0.6b-v3': {
-    url: 'https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/resolve/main/model.onnx',
-    size: '600MB',
-    languages: 25,
+  "parakeet-tdt-0.6b-v3": {
+    url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/resolve/main/model.onnx",
+    size: "600MB",
+    languages: 25
   },
-  'canary-1b-v2': {
-    url: 'https://huggingface.co/nvidia/canary-1b-v2/resolve/main/model.onnx',
-    size: '1.2GB',
+  "canary-1b-v2": {
+    url: "https://huggingface.co/nvidia/canary-1b-v2/resolve/main/model.onnx",
+    size: "1.2GB",
     languages: 25,
-    supportsTranslation: true,
-  },
-} as const;
+    supportsTranslation: true
+  }
+} as const
 
 export class ParakeetBackend {
-  private session: ort.InferenceSession | null = null;
-  private processor: AudioProcessor;
-  private modelManager: ModelManager;
+  private session: ort.InferenceSession | null = null
+  private processor: AudioProcessor
+  private modelManager: ModelManager
 
   constructor(options: BackendOptions = {}) {
-    this.processor = new AudioProcessor();
-    this.modelManager = new ModelManager();
+    this.processor = new AudioProcessor()
+    this.modelManager = new ModelManager()
   }
 
-  async initialize(model: keyof typeof MODELS = 'parakeet-tdt-0.6b-v3'): Promise<void> {
-    const modelPath = await this.modelManager.ensureModel(model, MODELS[model].url);
+  async initialize(model: keyof typeof MODELS = "parakeet-tdt-0.6b-v3"): Promise<void> {
+    const modelPath = await this.modelManager.ensureModel(model, MODELS[model].url)
 
     // Use CoreML Execution Provider on macOS for GPU acceleration
     const sessionOptions: ort.InferenceSession.SessionOptions = {
       executionProviders: [
-        { name: 'coreml' },  // Apple Silicon GPU
-        { name: 'cpu' },     // Fallback
-      ],
-    };
+        { name: "coreml" }, // Apple Silicon GPU
+        { name: "cpu" } // Fallback
+      ]
+    }
 
-    this.session = await ort.InferenceSession.create(modelPath, sessionOptions);
+    this.session = await ort.InferenceSession.create(modelPath, sessionOptions)
   }
 
   async transcribe(audioPath: string): Promise<TranscriptionResult> {
     if (!this.session) {
-      throw new Error('Backend not initialized. Call initialize() first.');
+      throw new Error("Backend not initialized. Call initialize() first.")
     }
 
-    const startTime = performance.now();
+    const startTime = performance.now()
 
     // Preprocess audio to mel spectrogram
-    const { melSpectrogram, duration } = await this.processor.processAudio(audioPath);
+    const { melSpectrogram, duration } = await this.processor.processAudio(audioPath)
 
     // Run inference
     const feeds = {
-      audio_signal: new ort.Tensor('float32', melSpectrogram.data, melSpectrogram.shape),
-      length: new ort.Tensor('int64', [BigInt(melSpectrogram.shape[2])], [1]),
-    };
+      audio_signal: new ort.Tensor("float32", melSpectrogram.data, melSpectrogram.shape),
+      length: new ort.Tensor("int64", [BigInt(melSpectrogram.shape[2])], [1])
+    }
 
-    const results = await this.session.run(feeds);
+    const results = await this.session.run(feeds)
 
     // Decode output tokens to text
-    const { text, segments, words } = this.processor.decodeOutput(results);
+    const { text, segments, words } = this.processor.decodeOutput(results)
 
     return {
       text,
@@ -460,19 +461,19 @@ export class ParakeetBackend {
       words,
       duration,
       processingTime: (performance.now() - startTime) / 1000,
-      language: 'auto', // Parakeet v3 auto-detects
-      backend: 'parakeet',
-    };
+      language: "auto", // Parakeet v3 auto-detects
+      backend: "parakeet"
+    }
   }
 
   isAvailable(): boolean {
-    return true; // ONNX Runtime works everywhere
+    return true // ONNX Runtime works everywhere
   }
 
   async dispose(): Promise<void> {
     if (this.session) {
-      await this.session.release();
-      this.session = null;
+      await this.session.release()
+      this.session = null
     }
   }
 }
@@ -483,82 +484,79 @@ export class ParakeetBackend {
 ```typescript
 // src/backends/parakeet/processor.ts
 
-import { execSync } from 'child_process';
-import { readFileSync, unlinkSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { execSync } from "child_process"
+import { readFileSync, unlinkSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 
 export class AudioProcessor {
   /**
    * Convert audio to 16kHz mono WAV and extract mel spectrogram
    */
   async processAudio(audioPath: string): Promise<{
-    melSpectrogram: { data: Float32Array; shape: number[] };
-    duration: number;
+    melSpectrogram: { data: Float32Array; shape: number[] }
+    duration: number
   }> {
     // Convert to 16kHz mono WAV using ffmpeg
-    const tempWav = join(tmpdir(), `transcribe-${Date.now()}.wav`);
+    const tempWav = join(tmpdir(), `transcribe-${Date.now()}.wav`)
 
-    execSync(
-      `ffmpeg -i "${audioPath}" -ar 16000 -ac 1 -f wav "${tempWav}" -y`,
-      { stdio: 'pipe' }
-    );
+    execSync(`ffmpeg -i "${audioPath}" -ar 16000 -ac 1 -f wav "${tempWav}" -y`, { stdio: "pipe" })
 
     // Read WAV and compute mel spectrogram
-    const wavData = readFileSync(tempWav);
-    unlinkSync(tempWav);
+    const wavData = readFileSync(tempWav)
+    unlinkSync(tempWav)
 
-    const samples = this.decodeWav(wavData);
-    const duration = samples.length / 16000;
-    const melSpectrogram = this.computeMelSpectrogram(samples);
+    const samples = this.decodeWav(wavData)
+    const duration = samples.length / 16000
+    const melSpectrogram = this.computeMelSpectrogram(samples)
 
-    return { melSpectrogram, duration };
+    return { melSpectrogram, duration }
   }
 
   private decodeWav(buffer: Buffer): Float32Array {
     // Skip WAV header (44 bytes) and read PCM data
-    const pcmData = buffer.subarray(44);
-    const samples = new Float32Array(pcmData.length / 2);
+    const pcmData = buffer.subarray(44)
+    const samples = new Float32Array(pcmData.length / 2)
 
     for (let i = 0; i < samples.length; i++) {
-      samples[i] = pcmData.readInt16LE(i * 2) / 32768;
+      samples[i] = pcmData.readInt16LE(i * 2) / 32768
     }
 
-    return samples;
+    return samples
   }
 
   private computeMelSpectrogram(samples: Float32Array): {
-    data: Float32Array;
-    shape: number[];
+    data: Float32Array
+    shape: number[]
   } {
     // Mel spectrogram computation (simplified)
     // In production, use proper FFT library like fft.js
-    const nFft = 512;
-    const hopLength = 160;
-    const nMels = 80;
-    const nFrames = Math.floor((samples.length - nFft) / hopLength) + 1;
+    const nFft = 512
+    const hopLength = 160
+    const nMels = 80
+    const nFrames = Math.floor((samples.length - nFft) / hopLength) + 1
 
-    const melSpec = new Float32Array(nMels * nFrames);
+    const melSpec = new Float32Array(nMels * nFrames)
     // ... actual mel spectrogram computation ...
 
     return {
       data: melSpec,
-      shape: [1, nMels, nFrames],
-    };
+      shape: [1, nMels, nFrames]
+    }
   }
 
   decodeOutput(results: Record<string, unknown>): {
-    text: string;
-    segments: Array<{ text: string; start: number; end: number }>;
-    words: Array<{ word: string; start: number; end: number }>;
+    text: string
+    segments: Array<{ text: string; start: number; end: number }>
+    words: Array<{ word: string; start: number; end: number }>
   } {
     // Decode CTC/TDT output tokens using vocabulary
     // Implementation depends on model architecture
     return {
-      text: '',
+      text: "",
       segments: [],
-      words: [],
-    };
+      words: []
+    }
   }
 }
 ```
@@ -567,73 +565,68 @@ export class AudioProcessor {
 
 ```typescript
 // src/index.ts
-import { platform } from 'os';
-import type {
-  BackendType,
-  TranscribeOptions,
-  TranscriptionResult,
-  BackendInfo,
-} from './types.js';
+import { platform } from "os"
+import type { BackendType, TranscribeOptions, TranscriptionResult, BackendInfo } from "./types.js"
 
 // Lazy-loaded backends
-let appleBackend: import('./backends/apple/index.js').AppleBackend | null = null;
-let parakeetBackend: import('./backends/parakeet/index.js').ParakeetBackend | null = null;
-let whisperBackend: import('./backends/whisper/index.js').WhisperBackend | null = null;
+let appleBackend: import("./backends/apple/index.js").AppleBackend | null = null
+let parakeetBackend: import("./backends/parakeet/index.js").ParakeetBackend | null = null
+let whisperBackend: import("./backends/whisper/index.js").WhisperBackend | null = null
 
-let currentBackend: BackendType = 'auto';
+let currentBackend: BackendType = "auto"
 
 /**
  * Get list of available backends on this system
  */
 export function getAvailableBackends(): BackendInfo[] {
-  const backends: BackendInfo[] = [];
+  const backends: BackendInfo[] = []
 
   // Apple Speech (macOS only)
-  if (platform() === 'darwin') {
+  if (platform() === "darwin") {
     backends.push({
-      name: 'apple',
+      name: "apple",
       available: true,
-      languages: ['de', 'en', 'fr', 'es', 'it', /* ... 50+ */],
-      models: ['default'],
-      requiresDownload: false,
-    });
+      languages: ["de", "en", "fr", "es", "it" /* ... 50+ */],
+      models: ["default"],
+      requiresDownload: false
+    })
   }
 
   // Parakeet (ONNX - cross-platform)
   backends.push({
-    name: 'parakeet',
+    name: "parakeet",
     available: true,
-    languages: ['de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl', /* ... 25 EU */],
-    models: ['parakeet-tdt-0.6b-v3'],
-    requiresDownload: true,
-  });
+    languages: ["de", "en", "fr", "es", "it", "pt", "nl", "pl" /* ... 25 EU */],
+    models: ["parakeet-tdt-0.6b-v3"],
+    requiresDownload: true
+  })
 
   // Canary (ONNX - cross-platform)
   backends.push({
-    name: 'canary',
+    name: "canary",
     available: true,
-    languages: ['de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl', /* ... 25 EU */],
-    models: ['canary-1b-v2'],
-    requiresDownload: true,
-  });
+    languages: ["de", "en", "fr", "es", "it", "pt", "nl", "pl" /* ... 25 EU */],
+    models: ["canary-1b-v2"],
+    requiresDownload: true
+  })
 
   // Whisper (cross-platform fallback)
   backends.push({
-    name: 'whisper',
+    name: "whisper",
     available: true,
-    languages: ['de', 'en', 'fr', 'es', /* ... 99 */],
-    models: ['tiny', 'base', 'small', 'medium', 'large'],
-    requiresDownload: true,
-  });
+    languages: ["de", "en", "fr", "es" /* ... 99 */],
+    models: ["tiny", "base", "small", "medium", "large"],
+    requiresDownload: true
+  })
 
-  return backends;
+  return backends
 }
 
 /**
  * Set the default backend
  */
 export function setBackend(backend: BackendType): void {
-  currentBackend = backend;
+  currentBackend = backend
 }
 
 /**
@@ -641,79 +634,70 @@ export function setBackend(backend: BackendType): void {
  */
 function selectBestBackend(language?: string): BackendType {
   // Prefer Apple on macOS (fastest, no download)
-  if (platform() === 'darwin') {
-    return 'apple';
+  if (platform() === "darwin") {
+    return "apple"
   }
 
   // Parakeet for EU languages (fastest ONNX)
-  const euLanguages = ['de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl'];
-  if (!language || euLanguages.includes(language.split('-')[0])) {
-    return 'parakeet';
+  const euLanguages = ["de", "en", "fr", "es", "it", "pt", "nl", "pl"]
+  if (!language || euLanguages.includes(language.split("-")[0])) {
+    return "parakeet"
   }
 
   // Whisper for everything else
-  return 'whisper';
+  return "whisper"
 }
 
 /**
  * Main transcription function
  */
-export async function transcribe(
-  audioPath: string,
-  options: TranscribeOptions = {}
-): Promise<TranscriptionResult> {
-  const backend = options.backend ??
-    (currentBackend === 'auto' ? selectBestBackend(options.language) : currentBackend);
+export async function transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
+  const backend = options.backend ?? (currentBackend === "auto" ? selectBestBackend(options.language) : currentBackend)
 
   switch (backend) {
-    case 'apple': {
+    case "apple": {
       if (!appleBackend) {
-        const { AppleBackend } = await import('./backends/apple/index.js');
-        appleBackend = new AppleBackend();
+        const { AppleBackend } = await import("./backends/apple/index.js")
+        appleBackend = new AppleBackend()
       }
-      return appleBackend.transcribe(audioPath, options);
+      return appleBackend.transcribe(audioPath, options)
     }
 
-    case 'parakeet':
-    case 'canary': {
+    case "parakeet":
+    case "canary": {
       if (!parakeetBackend) {
-        const { ParakeetBackend } = await import('./backends/parakeet/index.js');
-        parakeetBackend = new ParakeetBackend();
-        await parakeetBackend.initialize(
-          backend === 'canary' ? 'canary-1b-v2' : 'parakeet-tdt-0.6b-v3'
-        );
+        const { ParakeetBackend } = await import("./backends/parakeet/index.js")
+        parakeetBackend = new ParakeetBackend()
+        await parakeetBackend.initialize(backend === "canary" ? "canary-1b-v2" : "parakeet-tdt-0.6b-v3")
       }
-      return parakeetBackend.transcribe(audioPath);
+      return parakeetBackend.transcribe(audioPath)
     }
 
-    case 'whisper': {
+    case "whisper": {
       if (!whisperBackend) {
-        const { WhisperBackend } = await import('./backends/whisper/index.js');
-        whisperBackend = new WhisperBackend();
-        await whisperBackend.initialize();
+        const { WhisperBackend } = await import("./backends/whisper/index.js")
+        whisperBackend = new WhisperBackend()
+        await whisperBackend.initialize()
       }
-      return whisperBackend.transcribe(audioPath, options);
+      return whisperBackend.transcribe(audioPath, options)
     }
 
     default:
-      throw new Error(`Unknown backend: ${backend}`);
+      throw new Error(`Unknown backend: ${backend}`)
   }
 }
 
 /**
  * Download model for a backend
  */
-export async function downloadModel(
-  backend: BackendType,
-  model?: string
-): Promise<void> {
-  const { ModelManager } = await import('./utils/download.js');
-  const manager = new ModelManager();
-  await manager.download(backend, model);
+export async function downloadModel(backend: BackendType, model?: string): Promise<void> {
+  const { ModelManager } = await import("./utils/download.js")
+  const manager = new ModelManager()
+  await manager.download(backend, model)
 }
 
 // Re-export types
-export * from './types.js';
+export * from "./types.js"
 ```
 
 ## Requirements
@@ -738,6 +722,7 @@ npm install cuttledoc
 ```
 
 The package will:
+
 1. Install `onnxruntime-node` for ONNX models
 2. On macOS: Compile Apple Speech native addon
 3. Optionally: Install whisper.cpp bindings
@@ -760,77 +745,77 @@ npx cuttledoc download whisper --model small
 ### Basic Transcription (Auto Backend)
 
 ```typescript
-import { transcribe } from 'cuttledoc';
+import { transcribe } from "cuttledoc"
 
 // Automatically selects best backend for your system
-const result = await transcribe('./recording.wav', {
-  language: 'de'
-});
+const result = await transcribe("./recording.wav", {
+  language: "de"
+})
 
-console.log(result.text);
-console.log(`Transcribed in ${result.processingTime}s using ${result.backend}`);
+console.log(result.text)
+console.log(`Transcribed in ${result.processingTime}s using ${result.backend}`)
 ```
 
 ### Explicit Backend Selection
 
 ```typescript
-import { transcribe, setBackend, downloadModel } from 'cuttledoc';
+import { transcribe, setBackend, downloadModel } from "cuttledoc"
 
 // Use Parakeet for German (fastest for EU languages)
-await downloadModel('parakeet');
-setBackend('parakeet');
+await downloadModel("parakeet")
+setBackend("parakeet")
 
-const result = await transcribe('./audio.mp4');
-console.log(result.text);
-console.log(result.words); // Word-level timestamps!
+const result = await transcribe("./audio.mp4")
+console.log(result.text)
+console.log(result.words) // Word-level timestamps!
 ```
 
 ### Apple Speech on macOS
 
 ```typescript
-import { transcribe, getAvailableBackends } from 'cuttledoc';
+import { transcribe, getAvailableBackends } from "cuttledoc"
 
-const backends = getAvailableBackends();
-const appleAvailable = backends.find(b => b.name === 'apple')?.available;
+const backends = getAvailableBackends()
+const appleAvailable = backends.find((b) => b.name === "apple")?.available
 
 if (appleAvailable) {
   // No download needed, uses built-in models
-  const result = await transcribe('./audio.m4a', { backend: 'apple' });
-  console.log(result.text);
+  const result = await transcribe("./audio.m4a", { backend: "apple" })
+  console.log(result.text)
 }
 ```
 
 ### With Progress Callback
 
 ```typescript
-import { transcribe } from 'cuttledoc';
+import { transcribe } from "cuttledoc"
 
-const result = await transcribe('./long-recording.wav', {
-  language: 'de',
+const result = await transcribe("./long-recording.wav", {
+  language: "de",
   onProgress: (partial) => {
     if (!partial.isFinal) {
-      process.stdout.write(`\r${partial.text}`);
+      process.stdout.write(`\r${partial.text}`)
     }
   }
-});
+})
 ```
 
 ### Integration with course-grab
 
 ```typescript
 // In course-grab enrichment pipeline
-import { transcribe, getAvailableBackends } from 'cuttledoc';
+import { transcribe, getAvailableBackends } from "cuttledoc"
 
 export async function transcribeLesson(videoPath: string): Promise<string> {
   // Extract audio from video
-  const audioPath = await extractAudio(videoPath);
+  const audioPath = await extractAudio(videoPath)
 
   // Transcribe with best available backend
   const result = await transcribe(audioPath, {
-    language: 'de',
-  });
+    language: "de"
+  })
 
-  return result.text;
+  return result.text
 }
 ```
 
@@ -838,12 +823,12 @@ export async function transcribeLesson(videoPath: string): Promise<string> {
 
 ### Per Backend
 
-| Backend | Limitations |
-|---------|-------------|
-| Apple | macOS only, permissions required |
+| Backend  | Limitations                           |
+| -------- | ------------------------------------- |
+| Apple    | macOS only, permissions required      |
 | Parakeet | 25 EU languages only, ~600MB download |
-| Canary | 25 EU languages only, ~1.2GB download |
-| Whisper | Slower than Parakeet, larger models |
+| Canary   | 25 EU languages only, ~1.2GB download |
+| Whisper  | Slower than Parakeet, larger models   |
 
 ### General
 
@@ -881,12 +866,15 @@ export async function transcribeLesson(videoPath: string): Promise<string> {
 ## Alternatives Considered
 
 ### CLI Wrapper Only (Rejected)
+
 Simpler but adds process spawn overhead and complicates error handling/progress.
 
 ### Separate Packages per Backend (Rejected)
+
 Would complicate installation and selection logic for users.
 
 ### Python Bridge (Rejected)
+
 Would require Python runtime, adds complexity for Node.js users.
 
 ## Open Questions
@@ -910,4 +898,3 @@ Would require Python runtime, adds complexity for Node.js users.
 **Author:** course-grab team
 **Created:** 2025-12-16
 **Updated:** 2025-12-16 - Added multi-backend support (Parakeet v3, Canary, Whisper)
-

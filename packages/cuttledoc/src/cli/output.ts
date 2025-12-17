@@ -127,4 +127,3 @@ function formatDuration(seconds: number): string {
   }
   return `${m.toString()}:${s.toString().padStart(2, "0")}`
 }
-

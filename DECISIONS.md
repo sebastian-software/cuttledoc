@@ -13,12 +13,12 @@ This document captures key architectural decisions for `cuttledoc`.
 
 Local speech-to-text has multiple viable approaches, each with trade-offs:
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| Apple Speech | Native, fast, no download | macOS only |
-| Whisper (OpenAI) | High quality, 99 languages | Large models, slower |
-| Parakeet (NVIDIA) | Fastest for EU languages | 25 languages only |
-| Cloud APIs | Best quality | Requires internet, costs money |
+| Approach          | Pros                       | Cons                           |
+| ----------------- | -------------------------- | ------------------------------ |
+| Apple Speech      | Native, fast, no download  | macOS only                     |
+| Whisper (OpenAI)  | High quality, 99 languages | Large models, slower           |
+| Parakeet (NVIDIA) | Fastest for EU languages   | 25 languages only              |
+| Cloud APIs        | Best quality               | Requires internet, costs money |
 
 ### Decision
 
@@ -28,10 +28,11 @@ Implement a **unified API with pluggable backends**:
 const result = await transcribe("audio.wav", {
   language: "de",
   backend: "auto" // or "apple", "sherpa"
-});
+})
 ```
 
 Backend selection:
+
 1. **Auto mode**: Select best available backend for platform/language
 2. **Explicit mode**: User specifies preferred backend
 
@@ -53,18 +54,19 @@ Backend selection:
 
 For cross-platform speech recognition, we evaluated:
 
-| Option | Runtime Size | Node.js Bindings | Models Supported |
-|--------|--------------|------------------|------------------|
-| `onnxruntime-node` | ~100MB | ✅ Official | Any ONNX |
-| `sherpa-onnx` | ~40MB | ✅ Official | Speech-optimized |
-| `whisper.cpp` | ~2MB | 🔨 Build yourself | Whisper only |
-| MLX (Apple) | ~50MB | ❌ Python only | Apple Silicon only |
+| Option             | Runtime Size | Node.js Bindings  | Models Supported   |
+| ------------------ | ------------ | ----------------- | ------------------ |
+| `onnxruntime-node` | ~100MB       | ✅ Official       | Any ONNX           |
+| `sherpa-onnx`      | ~40MB        | ✅ Official       | Speech-optimized   |
+| `whisper.cpp`      | ~2MB         | 🔨 Build yourself | Whisper only       |
+| MLX (Apple)        | ~50MB        | ❌ Python only    | Apple Silicon only |
 
 ### Decision
 
 Use **sherpa-onnx** as the primary cross-platform backend.
 
 Reasons:
+
 1. **Official Node.js bindings** - `npm install sherpa-onnx`
 2. **Smaller runtime** - ~40MB vs ~100MB for full ONNX Runtime
 3. **Multi-model support** - Whisper, Parakeet v3, Paraformer in one runtime
@@ -91,12 +93,12 @@ Reasons:
 
 For European languages (de, en, fr, es, it, etc.), multiple models are viable:
 
-| Model | Size | Speed | Quality | Languages |
-|-------|------|-------|---------|-----------|
-| Whisper large-v3 | 3GB | Slow | Best | 99 |
-| Whisper small | 466MB | Medium | Good | 99 |
-| Parakeet v3 FP32 | 600MB | Fast | Excellent | 25 EU |
-| Parakeet v3 INT8 | ~150MB | Fastest | Excellent | 25 EU |
+| Model            | Size   | Speed   | Quality   | Languages |
+| ---------------- | ------ | ------- | --------- | --------- |
+| Whisper large-v3 | 3GB    | Slow    | Best      | 99        |
+| Whisper small    | 466MB  | Medium  | Good      | 99        |
+| Parakeet v3 FP32 | 600MB  | Fast    | Excellent | 25 EU     |
+| Parakeet v3 INT8 | ~150MB | Fastest | Excellent | 25 EU     |
 
 ### Decision
 
@@ -105,9 +107,9 @@ Use **Parakeet v3 INT8** as default for EU languages:
 ```typescript
 // Auto-selection logic
 if (isEuropeanLanguage(lang) && !userPreferredModel) {
-  return "parakeet-tdt-0.6b-v3-int8";
+  return "parakeet-tdt-0.6b-v3-int8"
 }
-return "whisper-small"; // fallback
+return "whisper-small" // fallback
 ```
 
 ### Consequences
@@ -128,11 +130,11 @@ return "whisper-small"; // fallback
 
 Apple Speech Framework requires native macOS code. Options:
 
-| Approach | Complexity | Performance | Maintenance |
-|----------|------------|-------------|-------------|
-| N-API + Objective-C++ | High | Best | Medium |
-| Swift executable + IPC | Medium | Good | Low |
-| AppleScript/osascript | Low | Poor | Low |
+| Approach               | Complexity | Performance | Maintenance |
+| ---------------------- | ---------- | ----------- | ----------- |
+| N-API + Objective-C++  | High       | Best        | Medium      |
+| Swift executable + IPC | Medium     | Good        | Low         |
+| AppleScript/osascript  | Low        | Poor        | Low         |
 
 ### Decision
 
@@ -147,6 +149,7 @@ Use **N-API with Objective-C++** for direct integration:
 ```
 
 Reasons:
+
 1. No subprocess overhead
 2. Direct memory sharing
 3. Proper async handling with N-API AsyncWorker
@@ -187,6 +190,7 @@ Ship as **ESM-only** (`"type": "module"`):
 ```
 
 Reasons:
+
 1. Node.js 24+ has mature ESM support
 2. Better tree-shaking
 3. Simpler build (no dual CJS/ESM)
@@ -216,16 +220,16 @@ Loading all backends at startup wastes resources if user only needs one.
 
 ```typescript
 export async function transcribe(audioPath: string, options: TranscribeOptions) {
-  const backend = options.backend ?? selectBestBackend();
+  const backend = options.backend ?? selectBestBackend()
 
   switch (backend) {
     case "apple": {
       // Only import when needed
-      const { AppleBackend } = await import("./backends/apple/index.js");
-      return new AppleBackend().transcribe(audioPath, options);
+      const { AppleBackend } = await import("./backends/apple/index.js")
+      return new AppleBackend().transcribe(audioPath, options)
     }
     case "sherpa": {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      const { SherpaBackend } = await import("./backends/sherpa/index.js")
       // ...
     }
   }
@@ -250,37 +254,38 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
 
 Speech recognition models typically require 16kHz mono WAV input. Users have audio in various formats (mp3, m4a, flac, etc.).
 
-| Option | Approach | Streaming | Binary Size |
-|--------|----------|-----------|-------------|
-| `ffmpeg` CLI | Subprocess | No (wait for file) | External dep |
-| `fluent-ffmpeg` | Subprocess wrapper | Partial | External dep |
-| `@mmomtchev/ffmpeg` | Native bindings | Yes (streams) | ~50MB bundled |
-| `@ffprobe-installer` | Download binary | No | ~30MB download |
+| Option               | Approach           | Streaming          | Binary Size    |
+| -------------------- | ------------------ | ------------------ | -------------- |
+| `ffmpeg` CLI         | Subprocess         | No (wait for file) | External dep   |
+| `fluent-ffmpeg`      | Subprocess wrapper | Partial            | External dep   |
+| `@mmomtchev/ffmpeg`  | Native bindings    | Yes (streams)      | ~50MB bundled  |
+| `@ffprobe-installer` | Download binary    | No                 | ~30MB download |
 
 ### Decision
 
 Use **@mmomtchev/ffmpeg** native bindings:
 
 ```typescript
-import { Demuxer, AudioDecoder, AudioTransform } from "@mmomtchev/ffmpeg/stream";
+import { Demuxer, AudioDecoder, AudioTransform } from "@mmomtchev/ffmpeg/stream"
 
 async function* streamAudioSamples(path: string) {
-  const demuxer = new Demuxer({ inputFile: path });
-  const decoder = new AudioDecoder({ stream: demuxer.audio[0] });
+  const demuxer = new Demuxer({ inputFile: path })
+  const decoder = new AudioDecoder({ stream: demuxer.audio[0] })
   const resampler = new AudioTransform({
     input: decoder.definition(),
     output: { sampleRate: 16000, channels: 1, format: "flt" }
-  });
+  })
 
-  decoder.pipe(resampler);
+  decoder.pipe(resampler)
 
   for await (const frame of resampler) {
-    yield frame.data as Float32Array;
+    yield frame.data as Float32Array
   }
 }
 ```
 
 Reasons:
+
 1. **True streaming** - Transcription can start before file is fully decoded
 2. **No external dependency** - FFmpeg bundled as native addon
 3. **Async, multi-threaded** - Leverages Node.js worker pool
@@ -335,5 +340,4 @@ Reasons:
 
 ---
 
-*Last updated: 2024-12-16*
-
+_Last updated: 2024-12-16_

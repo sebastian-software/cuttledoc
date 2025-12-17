@@ -3,11 +3,11 @@ import {
   type Backend,
   type TranscribeOptions,
   type TranscriptionResult,
-  type TranscriptionSegment,
-} from "../../types.js";
+  type TranscriptionSegment
+} from "../../types.js"
 
-import { getNativeModule, isNativeModuleAvailable } from "./native.js";
-import { type AuthorizationStatus } from "./types.js";
+import { getNativeModule, isNativeModuleAvailable } from "./native.js"
+import { type AuthorizationStatus } from "./types.js"
 
 /**
  * Apple Speech Framework backend for macOS
@@ -16,10 +16,10 @@ import { type AuthorizationStatus } from "./types.js";
  * Requires macOS 12.0+ and speech recognition permissions.
  */
 export class AppleBackend implements Backend {
-  private readonly onDeviceOnly: boolean;
+  private readonly onDeviceOnly: boolean
 
   constructor(options: { onDeviceOnly?: boolean } = {}) {
-    this.onDeviceOnly = options.onDeviceOnly ?? true;
+    this.onDeviceOnly = options.onDeviceOnly ?? true
   }
 
   /**
@@ -27,14 +27,14 @@ export class AppleBackend implements Backend {
    */
   isAvailable(): boolean {
     if (!isNativeModuleAvailable()) {
-      return false;
+      return false
     }
 
     try {
-      const native = getNativeModule();
-      return native.isAvailable();
+      const native = getNativeModule()
+      return native.isAvailable()
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -43,14 +43,14 @@ export class AppleBackend implements Backend {
    */
   supportsOnDevice(language?: string): boolean {
     if (!isNativeModuleAvailable()) {
-      return false;
+      return false
     }
 
     try {
-      const native = getNativeModule();
-      return native.supportsOnDevice(language);
+      const native = getNativeModule()
+      return native.supportsOnDevice(language)
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -59,14 +59,14 @@ export class AppleBackend implements Backend {
    */
   getSupportedLocales(): readonly string[] {
     if (!isNativeModuleAvailable()) {
-      return [];
+      return []
     }
 
     try {
-      const native = getNativeModule();
-      return native.getSupportedLocales();
+      const native = getNativeModule()
+      return native.getSupportedLocales()
     } catch {
-      return [];
+      return []
     }
   }
 
@@ -74,34 +74,31 @@ export class AppleBackend implements Backend {
    * Request speech recognition authorization
    */
   async requestAuthorization(): Promise<AuthorizationStatus> {
-    const native = getNativeModule();
-    return native.requestAuthorization();
+    const native = getNativeModule()
+    return native.requestAuthorization()
   }
 
   /**
    * Transcribe an audio file using Apple Speech Framework
    */
-  async transcribe(
-    audioPath: string,
-    options: TranscribeOptions = {}
-  ): Promise<TranscriptionResult> {
-    const native = getNativeModule();
-    const startTime = performance.now();
-    const language = options.language ?? "en-US";
+  async transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
+    const native = getNativeModule()
+    const startTime = performance.now()
+    const language = options.language ?? "en-US"
 
     // Call native transcription
     const result = await native.transcribe(audioPath, {
       language,
-      onDeviceOnly: this.onDeviceOnly,
-    });
+      onDeviceOnly: this.onDeviceOnly
+    })
 
     // Convert segments to our format
     const segments: TranscriptionSegment[] = result.segments.map((seg) => ({
       text: seg.text,
       startSeconds: seg.startSeconds,
       endSeconds: seg.endSeconds,
-      confidence: seg.confidence,
-    }));
+      confidence: seg.confidence
+    }))
 
     return {
       text: result.text,
@@ -109,8 +106,8 @@ export class AppleBackend implements Backend {
       durationSeconds: result.durationSeconds,
       processingTimeSeconds: (performance.now() - startTime) / 1000,
       language,
-      backend: BACKEND_TYPES.apple,
-    };
+      backend: BACKEND_TYPES.apple
+    }
   }
 
   /**
@@ -118,9 +115,15 @@ export class AppleBackend implements Backend {
    */
   dispose(): Promise<void> {
     // No cleanup needed for Apple Speech
-    return Promise.resolve();
+    return Promise.resolve()
   }
 }
 
 // Re-export types
-export type { AppleNativeBindings, AppleNativeResult, AppleNativeSegment, AppleTranscribeOptions, AuthorizationStatus } from "./types.js";
+export type {
+  AppleNativeBindings,
+  AppleNativeResult,
+  AppleNativeSegment,
+  AppleTranscribeOptions,
+  AuthorizationStatus
+} from "./types.js"

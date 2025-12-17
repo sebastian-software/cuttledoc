@@ -4,13 +4,13 @@ import { Link } from 'react-router'
 
 import type { Route } from './+types/home'
 
-import logoSvg from '@/assets/logo.svg'
-import nvidiaLogo from '@/assets/logos/nvidia.svg'
-import openaiLogo from '@/assets/logos/openai.svg'
-import geminiLogo from '@/assets/logos/gemini.svg'
-import appleLogo from '@/assets/logos/apple.svg'
-import onnxLogo from '@/assets/logos/onnx.svg'
-import { baseOptions } from '@/lib/layout.shared'
+import logoSvg from '../assets/logo.svg'
+import nvidiaLogo from '../assets/logos/nvidia.svg'
+import openaiLogo from '../assets/logos/openai.svg'
+import geminiLogo from '../assets/logos/gemini.svg'
+import appleLogo from '../assets/logos/apple.svg'
+import onnxLogo from '../assets/logos/onnx.svg'
+import { baseOptions } from '../lib/layout.shared'
 
 export function meta(_args: Route.MetaArgs) {
   return [
@@ -251,11 +251,7 @@ export default function Home() {
                 className="flex items-center gap-3 hover:scale-110 transition-transform cursor-default"
                 title="ONNX Runtime"
               >
-                <img
-                  src={onnxLogo}
-                  alt="ONNX"
-                  className="h-6 w-6 opacity-80 hover:opacity-100 transition-opacity"
-                />
+                <img src={onnxLogo} alt="ONNX" className="h-6 w-6 opacity-80 hover:opacity-100 transition-opacity" />
                 <span className="text-sm font-semibold text-fd-muted-foreground hover:text-fd-foreground transition-colors">
                   Runtime
                 </span>

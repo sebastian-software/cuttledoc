@@ -10,20 +10,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { existsSync } from "node:fs";
+import { existsSync } from "node:fs"
 
-import type { AudioStreamDefinition } from "@mmomtchev/ffmpeg/stream";
+import type { AudioStreamDefinition } from "@mmomtchev/ffmpeg/stream"
 
 /**
  * Audio samples in the format expected by speech recognition models
  */
 export interface AudioSamples {
   /** Float32 samples in range [-1, 1] */
-  samples: Float32Array;
+  samples: Float32Array
   /** Sample rate (always 16000 for our use case) */
-  sampleRate: number;
+  sampleRate: number
   /** Duration in seconds */
-  durationSeconds: number;
+  durationSeconds: number
 }
 
 /**
@@ -31,14 +31,14 @@ export interface AudioSamples {
  */
 export interface AudioPreprocessOptions {
   /** Target sample rate (default: 16000) */
-  sampleRate?: number;
+  sampleRate?: number
   /** Target channels (default: 1 for mono) */
-  channels?: number;
+  channels?: number
 }
 
 // Lazy-loaded ffmpeg modules
-let cachedFFmpeg: any = null;
-let cachedStream: any = null;
+let cachedFFmpeg: any = null
+let cachedStream: any = null
 
 /**
  * Check if ffmpeg bindings are available
@@ -46,10 +46,10 @@ let cachedStream: any = null;
 export function isFFmpegAvailable(): boolean {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("@mmomtchev/ffmpeg");
-    return true;
+    require("@mmomtchev/ffmpeg")
+    return true
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -60,16 +60,14 @@ function loadFFmpeg(): { ffmpeg: any; stream: any } {
   if (cachedFFmpeg === null || cachedStream === null) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      cachedFFmpeg = require("@mmomtchev/ffmpeg");
+      cachedFFmpeg = require("@mmomtchev/ffmpeg")
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      cachedStream = require("@mmomtchev/ffmpeg/stream");
+      cachedStream = require("@mmomtchev/ffmpeg/stream")
     } catch {
-      throw new Error(
-        "@mmomtchev/ffmpeg is not installed. Run: npm install @mmomtchev/ffmpeg"
-      );
+      throw new Error("@mmomtchev/ffmpeg is not installed. Run: npm install @mmomtchev/ffmpeg")
     }
   }
-  return { ffmpeg: cachedFFmpeg, stream: cachedStream };
+  return { ffmpeg: cachedFFmpeg, stream: cachedStream }
 }
 
 /**
@@ -81,42 +79,39 @@ function loadFFmpeg(): { ffmpeg: any; stream: any } {
  * @param options - Preprocessing options
  * @returns Promise resolving to audio samples
  */
-export async function preprocessAudio(
-  audioPath: string,
-  options: AudioPreprocessOptions = {}
-): Promise<AudioSamples> {
-  const targetSampleRate = options.sampleRate ?? 16000;
-  const targetChannels = options.channels ?? 1;
+export async function preprocessAudio(audioPath: string, options: AudioPreprocessOptions = {}): Promise<AudioSamples> {
+  const targetSampleRate = options.sampleRate ?? 16000
+  const targetChannels = options.channels ?? 1
 
   if (!existsSync(audioPath)) {
-    throw new Error(`Audio file not found: ${audioPath}`);
+    throw new Error(`Audio file not found: ${audioPath}`)
   }
 
-  const { ffmpeg, stream } = loadFFmpeg();
+  const { ffmpeg, stream } = loadFFmpeg()
 
   return new Promise((resolve, reject) => {
-    const chunks: Float32Array[] = [];
-    let totalSamples = 0;
+    const chunks: Float32Array[] = []
+    let totalSamples = 0
 
     // Create demuxer to read the input file
-    const demuxer = new stream.Demuxer({ inputFile: audioPath });
+    const demuxer = new stream.Demuxer({ inputFile: audioPath })
 
     demuxer.on("error", (err: Error) => {
-      reject(err);
-    });
+      reject(err)
+    })
 
     demuxer.on("ready", () => {
       try {
         // Get the first audio stream
-        const audioStream = demuxer.audio[0];
+        const audioStream = demuxer.audio[0]
         if (audioStream === undefined) {
-          reject(new Error("No audio stream found in file"));
-          return;
+          reject(new Error("No audio stream found in file"))
+          return
         }
 
         // Create audio decoder
-        const decoder = new stream.AudioDecoder({ stream: audioStream.stream });
-        const inputDef = decoder.definition();
+        const decoder = new stream.AudioDecoder({ stream: audioStream.stream })
+        const inputDef = decoder.definition()
 
         // Create output definition with proper types
         const outputDef: AudioStreamDefinition = {
@@ -125,69 +120,63 @@ export async function preprocessAudio(
           codec: inputDef.codec,
           sampleRate: targetSampleRate,
           sampleFormat: new ffmpeg.SampleFormat("flt"),
-          channelLayout: new ffmpeg.ChannelLayout(
-            targetChannels === 1 ? "mono" : "stereo"
-          ),
-        };
+          channelLayout: new ffmpeg.ChannelLayout(targetChannels === 1 ? "mono" : "stereo")
+        }
 
         // Create resampler to convert to target format
         const resampler = new stream.AudioTransform({
           input: inputDef,
-          output: outputDef,
-        });
+          output: outputDef
+        })
 
         // Pipe decoder output through resampler
-        decoder.pipe(resampler);
+        decoder.pipe(resampler)
 
         resampler.on("data", (frame: { data: Buffer }) => {
           // Convert Buffer to Float32Array
-          const float32 = new Float32Array(
-            frame.data.buffer,
-            frame.data.byteOffset,
-            frame.data.byteLength / 4
-          );
-          chunks.push(float32);
-          totalSamples += float32.length;
-        });
+          const float32 = new Float32Array(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength / 4)
+          chunks.push(float32)
+          totalSamples += float32.length
+        })
 
         resampler.on("end", () => {
           // Concatenate all chunks into a single Float32Array
-          const samples = new Float32Array(totalSamples);
-          let offset = 0;
+          const samples = new Float32Array(totalSamples)
+          let offset = 0
           for (const chunk of chunks) {
-            samples.set(chunk, offset);
-            offset += chunk.length;
+            samples.set(chunk, offset)
+            offset += chunk.length
           }
 
           resolve({
             samples,
             sampleRate: targetSampleRate,
-            durationSeconds: totalSamples / targetSampleRate,
-          });
-        });
+            durationSeconds: totalSamples / targetSampleRate
+          })
+        })
 
         resampler.on("error", (err: Error) => {
-          reject(err);
-        });
+          reject(err)
+        })
         decoder.on("error", (err: Error) => {
-          reject(err);
-        });
+          reject(err)
+        })
 
         // Discard other streams to prevent memory buildup
         for (const video of demuxer.video) {
-          video.resume();
+          video.resume()
         }
         for (let i = 1; i < demuxer.audio.length; i++) {
-          const extra = demuxer.audio[i];
+          const extra = demuxer.audio[i]
           if (extra !== undefined) {
-            extra.resume();
+            extra.resume()
           }
         }
       } catch (err) {
-        reject(err instanceof Error ? err : new Error(String(err)));
+        reject(err instanceof Error ? err : new Error(String(err)))
       }
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -203,57 +192,57 @@ export async function* streamAudioSamples(
   audioPath: string,
   options: AudioPreprocessOptions = {}
 ): AsyncGenerator<Float32Array, void, unknown> {
-  const targetSampleRate = options.sampleRate ?? 16000;
-  const targetChannels = options.channels ?? 1;
+  const targetSampleRate = options.sampleRate ?? 16000
+  const targetChannels = options.channels ?? 1
 
   if (!existsSync(audioPath)) {
-    throw new Error(`Audio file not found: ${audioPath}`);
+    throw new Error(`Audio file not found: ${audioPath}`)
   }
 
-  const { ffmpeg, stream } = loadFFmpeg();
+  const { ffmpeg, stream } = loadFFmpeg()
 
   // Create an async queue for samples
-  const queue: Float32Array[] = [];
-  let done = false;
-  let streamError: Error | null = null;
-  let resolveWait: (() => void) | null = null;
+  const queue: Float32Array[] = []
+  let done = false
+  let streamError: Error | null = null
+  let resolveWait: (() => void) | null = null
 
-  const demuxer = new stream.Demuxer({ inputFile: audioPath });
+  const demuxer = new stream.Demuxer({ inputFile: audioPath })
 
   const waitForData = (): Promise<void> => {
     if (queue.length > 0 || done) {
-      return Promise.resolve();
+      return Promise.resolve()
     }
     return new Promise((resolve) => {
-      resolveWait = resolve;
-    });
-  };
+      resolveWait = resolve
+    })
+  }
 
   const signalReady = (): void => {
     if (resolveWait !== null) {
-      resolveWait();
-      resolveWait = null;
+      resolveWait()
+      resolveWait = null
     }
-  };
+  }
 
   demuxer.on("error", (err: Error) => {
-    streamError = err;
-    done = true;
-    signalReady();
-  });
+    streamError = err
+    done = true
+    signalReady()
+  })
 
   demuxer.on("ready", () => {
     try {
-      const audioStream = demuxer.audio[0];
+      const audioStream = demuxer.audio[0]
       if (audioStream === undefined) {
-        streamError = new Error("No audio stream found in file");
-        done = true;
-        signalReady();
-        return;
+        streamError = new Error("No audio stream found in file")
+        done = true
+        signalReady()
+        return
       }
 
-      const decoder = new stream.AudioDecoder({ stream: audioStream.stream });
-      const inputDef = decoder.definition();
+      const decoder = new stream.AudioDecoder({ stream: audioStream.stream })
+      const inputDef = decoder.definition()
 
       const outputDef: AudioStreamDefinition = {
         type: "Audio",
@@ -261,80 +250,74 @@ export async function* streamAudioSamples(
         codec: inputDef.codec,
         sampleRate: targetSampleRate,
         sampleFormat: new ffmpeg.SampleFormat("flt"),
-        channelLayout: new ffmpeg.ChannelLayout(
-          targetChannels === 1 ? "mono" : "stereo"
-        ),
-      };
+        channelLayout: new ffmpeg.ChannelLayout(targetChannels === 1 ? "mono" : "stereo")
+      }
 
       const resampler = new stream.AudioTransform({
         input: inputDef,
-        output: outputDef,
-      });
+        output: outputDef
+      })
 
-      decoder.pipe(resampler);
+      decoder.pipe(resampler)
 
       resampler.on("data", (frame: { data: Buffer }) => {
-        const float32 = new Float32Array(
-          frame.data.buffer,
-          frame.data.byteOffset,
-          frame.data.byteLength / 4
-        );
-        queue.push(float32);
-        signalReady();
-      });
+        const float32 = new Float32Array(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength / 4)
+        queue.push(float32)
+        signalReady()
+      })
 
       resampler.on("end", () => {
-        done = true;
-        signalReady();
-      });
+        done = true
+        signalReady()
+      })
 
       resampler.on("error", (err: Error) => {
-        streamError = err;
-        done = true;
-        signalReady();
-      });
+        streamError = err
+        done = true
+        signalReady()
+      })
 
       // Discard other streams
       for (const video of demuxer.video) {
-        video.resume();
+        video.resume()
       }
       for (let i = 1; i < demuxer.audio.length; i++) {
-        const extra = demuxer.audio[i];
+        const extra = demuxer.audio[i]
         if (extra !== undefined) {
-          extra.resume();
+          extra.resume()
         }
       }
     } catch (err) {
-      streamError = err instanceof Error ? err : new Error(String(err));
-      done = true;
-      signalReady();
+      streamError = err instanceof Error ? err : new Error(String(err))
+      done = true
+      signalReady()
     }
-  });
+  })
 
   // Yield samples as they become available
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
-    await waitForData();
+    await waitForData()
 
     // Check for errors - streamError can be set asynchronously
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (streamError !== null) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw streamError;
+      throw streamError
     }
 
     // Yield all available chunks
     while (queue.length > 0) {
-      const chunk = queue.shift();
+      const chunk = queue.shift()
       if (chunk !== undefined) {
-        yield chunk;
+        yield chunk
       }
     }
 
     // Exit when done and queue is empty - done can be set asynchronously
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (done && queue.length === 0) {
-      break;
+      break
     }
   }
 }
@@ -349,8 +332,8 @@ export async function* streamAudioSamples(
  * @returns Duration in seconds
  */
 export async function getAudioDuration(audioPath: string): Promise<number> {
-  const result = await preprocessAudio(audioPath);
-  return result.durationSeconds;
+  const result = await preprocessAudio(audioPath)
+  return result.durationSeconds
 }
 
 /**
@@ -361,34 +344,34 @@ export async function getAudioDuration(audioPath: string): Promise<number> {
  */
 export async function isAudioSupported(audioPath: string): Promise<boolean> {
   if (!existsSync(audioPath)) {
-    return false;
+    return false
   }
 
   try {
-    const { stream } = loadFFmpeg();
+    const { stream } = loadFFmpeg()
 
     return await new Promise((resolve) => {
-      const demuxer = new stream.Demuxer({ inputFile: audioPath });
+      const demuxer = new stream.Demuxer({ inputFile: audioPath })
 
       demuxer.on("error", () => {
-        resolve(false);
-      });
+        resolve(false)
+      })
 
       demuxer.on("ready", () => {
-        const hasAudio = demuxer.audio.length > 0;
+        const hasAudio = demuxer.audio.length > 0
 
         // Clean up
         for (const video of demuxer.video) {
-          video.resume();
+          video.resume()
         }
         for (const audio of demuxer.audio) {
-          audio.resume();
+          audio.resume()
         }
 
-        resolve(hasAudio);
-      });
-    });
+        resolve(hasAudio)
+      })
+    })
   } catch {
-    return false;
+    return false
   }
 }

@@ -15,4 +15,3 @@ export default defineConfig({
   splitting: false,
   external: ["sherpa-onnx-node"]
 })
-

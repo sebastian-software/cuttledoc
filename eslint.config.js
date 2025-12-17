@@ -1,8 +1,8 @@
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
-import importX from "eslint-plugin-import-x";
-import eslintConfigPrettier from "eslint-config-prettier";
-import globals from "globals";
+import eslint from "@eslint/js"
+import tseslint from "typescript-eslint"
+import importX from "eslint-plugin-import-x"
+import eslintConfigPrettier from "eslint-config-prettier"
+import globals from "globals"
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -13,39 +13,28 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.browser,
+        ...globals.browser
       },
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
+        tsconfigRootDir: import.meta.dirname
+      }
     },
     plugins: {
-      "import-x": importX,
+      "import-x": importX
     },
     rules: {
       // Allow underscore-prefixed unused vars
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
 
       // Import rules
       "import-x/order": [
         "error",
         {
-          groups: [
-            "builtin",
-            "external",
-            "internal",
-            "parent",
-            "sibling",
-            "index",
-            "type",
-          ],
+          groups: ["builtin", "external", "internal", "parent", "sibling", "index", "type"],
           "newlines-between": "always",
-          alphabetize: { order: "asc", caseInsensitive: true },
-        },
+          alphabetize: { order: "asc", caseInsensitive: true }
+        }
       ],
       "import-x/no-duplicates": "error",
       "import-x/first": "error",
@@ -63,8 +52,8 @@ export default tseslint.config(
       "prefer-arrow-callback": "error",
       "prefer-template": "error",
       "no-nested-ternary": "error",
-      "no-unneeded-ternary": "error",
-    },
+      "no-unneeded-ternary": "error"
+    }
   },
   {
     ignores: [
@@ -76,7 +65,7 @@ export default tseslint.config(
       "**/*.config.js",
       "**/*.config.ts",
       // Fumadocs uses generated types that conflict with strict type checking
-      "packages/docs/**",
-    ],
+      "packages/docs/**"
+    ]
   }
-);
+)

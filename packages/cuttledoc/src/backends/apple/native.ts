@@ -1,11 +1,11 @@
-import { createRequire } from "node:module";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module"
+import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 
-import type { AppleNativeBindings } from "./types.js";
+import type { AppleNativeBindings } from "./types.js"
 
-const require = createRequire(import.meta.url);
-const currentDir = fileURLToPath(new URL(".", import.meta.url));
+const require = createRequire(import.meta.url)
+const currentDir = fileURLToPath(new URL(".", import.meta.url))
 
 /**
  * Load the native Apple Speech module
@@ -17,18 +17,18 @@ export function loadNativeModule(): AppleNativeBindings | null {
   try {
     // Try to load the pre-built native module
     // The module is built to: build/Release/apple_speech.node
-    const modulePath = join(currentDir, "..", "..", "..", "build", "Release", "apple_speech.node");
-    return require(modulePath) as AppleNativeBindings;
+    const modulePath = join(currentDir, "..", "..", "..", "build", "Release", "apple_speech.node")
+    return require(modulePath) as AppleNativeBindings
   } catch {
     // Native module not available
-    return null;
+    return null
   }
 }
 
 /**
  * Cached native module instance
  */
-let cachedModule: AppleNativeBindings | null | undefined;
+let cachedModule: AppleNativeBindings | null | undefined
 
 /**
  * Get the native Apple Speech module
@@ -37,17 +37,17 @@ let cachedModule: AppleNativeBindings | null | undefined;
  */
 export function getNativeModule(): AppleNativeBindings {
   if (cachedModule === undefined) {
-    cachedModule = loadNativeModule();
+    cachedModule = loadNativeModule()
   }
 
   if (cachedModule === null) {
     throw new Error(
       "Apple Speech native module is not available. " +
         "Make sure you're on macOS and have built the native module with 'npm run build:native'."
-    );
+    )
   }
 
-  return cachedModule;
+  return cachedModule
 }
 
 /**
@@ -55,8 +55,7 @@ export function getNativeModule(): AppleNativeBindings {
  */
 export function isNativeModuleAvailable(): boolean {
   if (cachedModule === undefined) {
-    cachedModule = loadNativeModule();
+    cachedModule = loadNativeModule()
   }
-  return cachedModule !== null;
+  return cachedModule !== null
 }
-

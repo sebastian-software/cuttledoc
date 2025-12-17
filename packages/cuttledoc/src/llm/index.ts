@@ -5,12 +5,7 @@
  * Supports Gemma 3n, Gemma 3, DeepSeek R1, Qwen 2.5 and other GGUF models.
  */
 
-export {
-  downloadModel,
-  enhanceTranscript,
-  isModelDownloaded,
-  LLMProcessor,
-} from "./processor.js";
+export { downloadModel, enhanceTranscript, isModelDownloaded, LLMProcessor } from "./processor.js"
 
 export {
   countParagraphs,
@@ -23,6 +18,5 @@ export {
   type LLMModelId,
   type LLMProcessOptions,
   type LLMProcessResult,
-  type ProcessMode,
-} from "./types.js";
-
+  type ProcessMode
+} from "./types.js"

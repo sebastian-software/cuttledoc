@@ -101,4 +101,3 @@ export function parseArgs(argv: string[]): CLIArgs {
 
   return args
 }
-

@@ -6,28 +6,28 @@ export const BACKEND_TYPES = {
   apple: "apple",
   parakeet: "parakeet",
   canary: "canary",
-  whisper: "whisper",
-} as const;
+  whisper: "whisper"
+} as const
 
-export type BackendType = (typeof BACKEND_TYPES)[keyof typeof BACKEND_TYPES];
+export type BackendType = (typeof BACKEND_TYPES)[keyof typeof BACKEND_TYPES]
 
 /**
  * Parakeet model variants
  */
 export const PARAKEET_MODELS = {
-  "parakeet-tdt-0.6b-v3": "parakeet-tdt-0.6b-v3",
-} as const;
+  "parakeet-tdt-0.6b-v3": "parakeet-tdt-0.6b-v3"
+} as const
 
-export type ParakeetModel = (typeof PARAKEET_MODELS)[keyof typeof PARAKEET_MODELS];
+export type ParakeetModel = (typeof PARAKEET_MODELS)[keyof typeof PARAKEET_MODELS]
 
 /**
  * Canary model variants
  */
 export const CANARY_MODELS = {
-  "canary-1b-v2": "canary-1b-v2",
-} as const;
+  "canary-1b-v2": "canary-1b-v2"
+} as const
 
-export type CanaryModel = (typeof CANARY_MODELS)[keyof typeof CANARY_MODELS];
+export type CanaryModel = (typeof CANARY_MODELS)[keyof typeof CANARY_MODELS]
 
 /**
  * Whisper model variants
@@ -37,21 +37,21 @@ export const WHISPER_MODELS = {
   base: "base",
   small: "small",
   medium: "medium",
-  large: "large",
-} as const;
+  large: "large"
+} as const
 
-export type WhisperModel = (typeof WHISPER_MODELS)[keyof typeof WHISPER_MODELS];
+export type WhisperModel = (typeof WHISPER_MODELS)[keyof typeof WHISPER_MODELS]
 
 /**
  * Options for transcription
  */
 export interface TranscribeOptions {
   /** Language code (e.g., 'de', 'en-US'). Default: auto-detect */
-  language?: string;
+  language?: string
   /** Override default backend */
-  backend?: BackendType;
+  backend?: BackendType
   /** Callback for partial results during transcription */
-  onProgress?: (partial: PartialResult) => void;
+  onProgress?: (partial: PartialResult) => void
 }
 
 /**
@@ -59,11 +59,11 @@ export interface TranscribeOptions {
  */
 export interface BackendOptions {
   /** Model variant to use */
-  model?: string;
+  model?: string
   /** Custom path to model file */
-  modelPath?: string;
+  modelPath?: string
   /** Use GPU acceleration (default: true) */
-  useGPU?: boolean;
+  useGPU?: boolean
 }
 
 /**
@@ -71,15 +71,15 @@ export interface BackendOptions {
  */
 export interface BackendInfo {
   /** Backend identifier */
-  name: BackendType;
+  name: BackendType
   /** Whether the backend is available on this system */
-  isAvailable: boolean;
+  isAvailable: boolean
   /** Supported language codes */
-  languages: readonly string[];
+  languages: readonly string[]
   /** Available model variants */
-  models: readonly string[];
+  models: readonly string[]
   /** Whether models need to be downloaded before use */
-  requiresDownload: boolean;
+  requiresDownload: boolean
 }
 
 /**
@@ -87,19 +87,19 @@ export interface BackendInfo {
  */
 export interface TranscriptionResult {
   /** Full transcribed text */
-  text: string;
+  text: string
   /** Segments with timestamps */
-  segments: readonly TranscriptionSegment[];
+  segments: readonly TranscriptionSegment[]
   /** Word-level timestamps (Parakeet/Canary only) */
-  words?: readonly WordTimestamp[];
+  words?: readonly WordTimestamp[]
   /** Audio duration in seconds */
-  durationSeconds: number;
+  durationSeconds: number
   /** Processing time in seconds */
-  processingTimeSeconds: number;
+  processingTimeSeconds: number
   /** Detected or specified language */
-  language: string;
+  language: string
   /** Which backend was used */
-  backend: BackendType;
+  backend: BackendType
 }
 
 /**
@@ -107,13 +107,13 @@ export interface TranscriptionResult {
  */
 export interface TranscriptionSegment {
   /** Transcribed text for this segment */
-  text: string;
+  text: string
   /** Start time in seconds */
-  startSeconds: number;
+  startSeconds: number
   /** End time in seconds */
-  endSeconds: number;
+  endSeconds: number
   /** Confidence score (0.0 - 1.0) */
-  confidence?: number;
+  confidence?: number
 }
 
 /**
@@ -121,13 +121,13 @@ export interface TranscriptionSegment {
  */
 export interface WordTimestamp {
   /** The word */
-  word: string;
+  word: string
   /** Start time in seconds */
-  startSeconds: number;
+  startSeconds: number
   /** End time in seconds */
-  endSeconds: number;
+  endSeconds: number
   /** Confidence score (0.0 - 1.0) */
-  confidence?: number;
+  confidence?: number
 }
 
 /**
@@ -135,9 +135,9 @@ export interface WordTimestamp {
  */
 export interface PartialResult {
   /** Partial transcribed text */
-  text: string;
+  text: string
   /** Whether this is the final result */
-  isFinal: boolean;
+  isFinal: boolean
 }
 
 /**
@@ -145,10 +145,9 @@ export interface PartialResult {
  */
 export interface Backend {
   /** Check if the backend is available on this system */
-  isAvailable(): boolean;
+  isAvailable(): boolean
   /** Transcribe an audio file */
-  transcribe(audioPath: string, options?: TranscribeOptions): Promise<TranscriptionResult>;
+  transcribe(audioPath: string, options?: TranscribeOptions): Promise<TranscriptionResult>
   /** Clean up resources */
-  dispose(): Promise<void>;
+  dispose(): Promise<void>
 }
-

@@ -1,4 +1,4 @@
-import { platform } from "node:os";
+import { platform } from "node:os"
 
 import {
   BACKEND_TYPES,
@@ -6,8 +6,8 @@ import {
   type BackendType,
   CANARY_MODELS,
   PARAKEET_MODELS,
-  WHISPER_MODELS,
-} from "./types.js";
+  WHISPER_MODELS
+} from "./types.js"
 
 /**
  * Supported EU languages for Parakeet/Canary models
@@ -38,8 +38,8 @@ const EU_LANGUAGES = [
   "lt",
   "mt",
   "ru",
-  "uk",
-] as const;
+  "uk"
+] as const
 
 /**
  * Languages supported by Apple Speech Framework (partial list)
@@ -77,37 +77,37 @@ const APPLE_LANGUAGES = [
   "fi",
   "no",
   "hr",
-  "sl",
-] as const;
+  "sl"
+] as const
 
-let currentBackend: BackendType = BACKEND_TYPES.auto;
+let currentBackend: BackendType = BACKEND_TYPES.auto
 
 /**
  * Set the default backend for transcription
  */
 export function setBackend(backend: BackendType): void {
-  currentBackend = backend;
+  currentBackend = backend
 }
 
 /**
  * Get the currently configured backend
  */
 export function getBackend(): BackendType {
-  return currentBackend;
+  return currentBackend
 }
 
 /**
  * Check if running on macOS
  */
 function isMacOS(): boolean {
-  return platform() === "darwin";
+  return platform() === "darwin"
 }
 
 /**
  * Get list of available backends on this system
  */
 export function getAvailableBackends(): readonly BackendInfo[] {
-  const backends: BackendInfo[] = [];
+  const backends: BackendInfo[] = []
 
   // Apple Speech (macOS only)
   if (isMacOS()) {
@@ -116,8 +116,8 @@ export function getAvailableBackends(): readonly BackendInfo[] {
       isAvailable: true,
       languages: APPLE_LANGUAGES,
       models: ["default"],
-      requiresDownload: false,
-    });
+      requiresDownload: false
+    })
   }
 
   // Parakeet (ONNX - cross-platform)
@@ -126,8 +126,8 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     isAvailable: true,
     languages: EU_LANGUAGES,
     models: Object.keys(PARAKEET_MODELS),
-    requiresDownload: true,
-  });
+    requiresDownload: true
+  })
 
   // Canary (ONNX - cross-platform)
   backends.push({
@@ -135,8 +135,8 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     isAvailable: true,
     languages: EU_LANGUAGES,
     models: Object.keys(CANARY_MODELS),
-    requiresDownload: true,
-  });
+    requiresDownload: true
+  })
 
   // Whisper (cross-platform fallback)
   backends.push({
@@ -144,10 +144,10 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     isAvailable: true,
     languages: EU_LANGUAGES, // Simplified - Whisper supports 99 languages
     models: Object.keys(WHISPER_MODELS),
-    requiresDownload: true,
-  });
+    requiresDownload: true
+  })
 
-  return backends;
+  return backends
 }
 
 /**
@@ -156,20 +156,17 @@ export function getAvailableBackends(): readonly BackendInfo[] {
 export function selectBestBackend(language?: string): BackendType {
   // Prefer Apple on macOS (fastest, no download needed)
   if (isMacOS()) {
-    return BACKEND_TYPES.apple;
+    return BACKEND_TYPES.apple
   }
 
   // For EU languages, prefer Parakeet (fastest ONNX model)
-  const langCode = language?.split("-")[0];
-  const isEuLanguage =
-    langCode === undefined ||
-    EU_LANGUAGES.includes(langCode as (typeof EU_LANGUAGES)[number]);
+  const langCode = language?.split("-")[0]
+  const isEuLanguage = langCode === undefined || EU_LANGUAGES.includes(langCode as (typeof EU_LANGUAGES)[number])
 
   if (isEuLanguage) {
-    return BACKEND_TYPES.parakeet;
+    return BACKEND_TYPES.parakeet
   }
 
   // Fallback to Whisper for other languages
-  return BACKEND_TYPES.whisper;
+  return BACKEND_TYPES.whisper
 }
-

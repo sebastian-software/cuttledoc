@@ -17,6 +17,7 @@
     "clean": "pnpm -r run clean",
     "docs:dev": "pnpm --filter @cuttledoc/docs run dev",
     "docs:build": "pnpm --filter @cuttledoc/docs run build",
+    "format": "prettier --write .",
     "release": "release-it",
     "release:dry": "release-it --dry-run"
   },

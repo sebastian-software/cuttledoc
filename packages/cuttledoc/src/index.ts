@@ -1,4 +1,4 @@
-import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js";
+import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
 import {
   BACKEND_TYPES,
   CANARY_MODELS,
@@ -15,14 +15,14 @@ import {
   type TranscriptionResult,
   type TranscriptionSegment,
   type WhisperModel,
-  type WordTimestamp,
-} from "./types.js";
+  type WordTimestamp
+} from "./types.js"
 
-import type { SherpaBackend } from "./backends/sherpa/index.js";
+import type { SherpaBackend } from "./backends/sherpa/index.js"
 
 // Re-export core types and functions
-export { getAvailableBackends, getBackend, selectBestBackend, setBackend };
-export { BACKEND_TYPES, CANARY_MODELS, PARAKEET_MODELS, WHISPER_MODELS };
+export { getAvailableBackends, getBackend, selectBestBackend, setBackend }
+export { BACKEND_TYPES, CANARY_MODELS, PARAKEET_MODELS, WHISPER_MODELS }
 export type {
   Backend,
   BackendInfo,
@@ -35,26 +35,28 @@ export type {
   TranscriptionResult,
   TranscriptionSegment,
   WhisperModel,
-  WordTimestamp,
-};
+  WordTimestamp
+}
 
 // Re-export sherpa types and functions for CLI
-export { SHERPA_MODELS, SHERPA_MODEL_TYPES, type SherpaModelType, type SherpaModelInfo } from "./backends/sherpa/types.js";
+export {
+  SHERPA_MODELS,
+  SHERPA_MODEL_TYPES,
+  type SherpaModelType,
+  type SherpaModelInfo
+} from "./backends/sherpa/types.js"
 export {
   downloadSherpaModel,
   isModelDownloaded as isSherpaModelDownloaded,
-  getAvailableModels as getAvailableSherpaModels,
-} from "./backends/sherpa/download.js";
+  getAvailableModels as getAvailableSherpaModels
+} from "./backends/sherpa/download.js"
 
 // Re-export LLM types for CLI
-export { LLM_MODELS, type LLMModelId } from "./llm/types.js";
-export {
-  downloadModel as downloadLLMModel,
-  isModelDownloaded as isLLMModelDownloaded,
-} from "./llm/processor.js";
+export { LLM_MODELS, type LLMModelId } from "./llm/types.js"
+export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "./llm/processor.js"
 
 // Cached backend instances for reuse
-let sherpaBackendInstance: SherpaBackend | null = null;
+let sherpaBackendInstance: SherpaBackend | null = null
 
 /**
  * Transcribe an audio file using the configured or best available backend
@@ -63,61 +65,57 @@ let sherpaBackendInstance: SherpaBackend | null = null;
  * @param options - Transcription options
  * @returns Promise resolving to the transcription result
  */
-export async function transcribe(
-  audioPath: string,
-  options: TranscribeOptions = {}
-): Promise<TranscriptionResult> {
-  const currentBackend = getBackend();
+export async function transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
+  const currentBackend = getBackend()
   const backend: BackendType =
-    options.backend ??
-    (currentBackend === BACKEND_TYPES.auto ? selectBestBackend(options.language) : currentBackend);
+    options.backend ?? (currentBackend === BACKEND_TYPES.auto ? selectBestBackend(options.language) : currentBackend)
 
   switch (backend) {
     case BACKEND_TYPES.apple: {
-      const { AppleBackend } = await import("./backends/apple/index.js");
-      const appleBackend = new AppleBackend();
+      const { AppleBackend } = await import("./backends/apple/index.js")
+      const appleBackend = new AppleBackend()
       try {
-        return await appleBackend.transcribe(audioPath, options);
+        return await appleBackend.transcribe(audioPath, options)
       } finally {
-        await appleBackend.dispose();
+        await appleBackend.dispose()
       }
     }
 
     case BACKEND_TYPES.parakeet: {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      const { SherpaBackend } = await import("./backends/sherpa/index.js")
       if (sherpaBackendInstance === null) {
-        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" });
-        await sherpaBackendInstance.initialize();
+        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+        await sherpaBackendInstance.initialize()
       }
-      return sherpaBackendInstance.transcribe(audioPath, options);
+      return sherpaBackendInstance.transcribe(audioPath, options)
     }
 
     case BACKEND_TYPES.canary: {
       // Canary uses the same sherpa backend with a different model
       // For now, fall back to parakeet v3
-      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      const { SherpaBackend } = await import("./backends/sherpa/index.js")
       if (sherpaBackendInstance === null) {
-        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" });
-        await sherpaBackendInstance.initialize();
+        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+        await sherpaBackendInstance.initialize()
       }
-      return sherpaBackendInstance.transcribe(audioPath, options);
+      return sherpaBackendInstance.transcribe(audioPath, options)
     }
 
     case BACKEND_TYPES.whisper: {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js");
+      const { SherpaBackend } = await import("./backends/sherpa/index.js")
       // Create a new instance for whisper with different model
-      const whisperBackend = new SherpaBackend({ model: "whisper-medium" });
-      await whisperBackend.initialize();
+      const whisperBackend = new SherpaBackend({ model: "whisper-medium" })
+      await whisperBackend.initialize()
       try {
-        return await whisperBackend.transcribe(audioPath, options);
+        return await whisperBackend.transcribe(audioPath, options)
       } finally {
-        await whisperBackend.dispose();
+        await whisperBackend.dispose()
       }
     }
 
     case BACKEND_TYPES.auto: {
       // This should never happen as we resolve 'auto' above
-      throw new Error("Unexpected 'auto' backend - this is a bug");
+      throw new Error("Unexpected 'auto' backend - this is a bug")
     }
   }
 }
@@ -132,19 +130,19 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
   switch (backend) {
     case BACKEND_TYPES.apple: {
       // Apple Speech uses built-in models, no download needed
-      return;
+      return
     }
 
     case BACKEND_TYPES.parakeet:
     case BACKEND_TYPES.canary:
     case BACKEND_TYPES.whisper: {
-      const { downloadSherpaModel } = await import("./backends/sherpa/download.js");
-      await downloadSherpaModel(model ?? "parakeet-tdt-0.6b-v3");
-      return;
+      const { downloadSherpaModel } = await import("./backends/sherpa/download.js")
+      await downloadSherpaModel(model ?? "parakeet-tdt-0.6b-v3")
+      return
     }
 
     case BACKEND_TYPES.auto: {
-      throw new Error("Cannot download model for 'auto' backend");
+      throw new Error("Cannot download model for 'auto' backend")
     }
   }
 }
@@ -154,7 +152,7 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
  */
 export async function cleanup(): Promise<void> {
   if (sherpaBackendInstance !== null) {
-    await sherpaBackendInstance.dispose();
-    sherpaBackendInstance = null;
+    await sherpaBackendInstance.dispose()
+    sherpaBackendInstance = null
   }
 }
