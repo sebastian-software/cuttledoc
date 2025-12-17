@@ -332,7 +332,7 @@ Reasons:
 ## ADR-008: TurboRepo for Monorepo Build Pipeline
 
 **Status:** Accepted
-**Date:** 2025-01-XX
+**Date:** 2025-12-17
 
 ### Context
 
@@ -374,7 +374,7 @@ Reasons:
 ## ADR-009: Cross-Platform CI Matrix Testing
 
 **Status:** Accepted
-**Date:** 2025-01-XX
+**Date:** 2025-12-17
 
 ### Context
 
@@ -429,4 +429,4 @@ Special handling:
 
 ---
 
-_Last updated: 2025-01-XX_
+_Last updated: 2025-12-17_
