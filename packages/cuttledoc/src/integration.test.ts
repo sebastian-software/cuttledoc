@@ -64,9 +64,9 @@ describe("integration", () => {
         expect(result.segments.length).toBeGreaterThan(0)
         expect(result.backend).toBe("apple")
 
-        // Check word overlap is reasonable (>40% of words should match)
+        // Check word overlap is high (>80% of words should match)
         const overlap = calculateWordOverlap(result.text, expectedText)
-        expect(overlap).toBeGreaterThan(0.4)
+        expect(overlap).toBeGreaterThan(0.8)
       },
       60_000
     )
@@ -84,9 +84,9 @@ describe("integration", () => {
         expect(result.durationSeconds).toBeGreaterThan(0)
         expect(result.segments.length).toBeGreaterThan(0)
 
-        // Check word overlap (German TTS may have lower accuracy)
+        // Check word overlap is high (>80% of words should match)
         const overlap = calculateWordOverlap(result.text, expectedText)
-        expect(overlap).toBeGreaterThan(0.3)
+        expect(overlap).toBeGreaterThan(0.8)
       },
       60_000
     )
