@@ -13,7 +13,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@orama/orama": "^3.1.17",
+    "@orama/orama": "^3.1.18",
     "@react-router/node": "^7.10.1",
     "fumadocs-core": "16.2.5",
     "fumadocs-mdx": "14.1.1",
