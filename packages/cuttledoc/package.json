@@ -61,8 +61,8 @@
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.4",
     "@vitest/coverage-v8": "^4.0.16",
-    "release-it": "^19.1.0",
-    "sherpa-onnx-node": "^1.12.19",
+    "release-it": "^19.2.2",
+    "sherpa-onnx-node": "^1.12.20",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
