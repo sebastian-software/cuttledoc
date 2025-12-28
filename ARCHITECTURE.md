@@ -27,35 +27,30 @@ This document provides a high-level overview of cuttledoc's architecture. For de
 │  └────────────────────┬─────────────────────────────────┘  │
 └───────────────────────┼──────────────────────────────────────┘
                         │
-        ┌───────────────┼───────────────┐
-        │               │               │
-        ▼               ▼               ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ Apple Backend│ │Sherpa Backend│ │  LLM Module  │
-│  (macOS)     │ │  (ONNX)      │ │  (Gemma 3n)  │
-└──────┬───────┘ └──────┬───────┘ └──────┬───────┘
-       │                │                │
-       ▼                ▼                ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│Speech.framework│ │sherpa-onnx  │ │node-llama-cpp│
-│  (Native)     │ │  Runtime     │ │  Runtime     │
-└───────────────┘ └──────────────┘ └──────────────┘
+                ┌───────┴───────┐
+                │               │
+                ▼               ▼
+         ┌──────────────┐ ┌──────────────┐
+         │Sherpa Backend│ │  LLM Module  │
+         │  (ONNX)      │ │  (Gemma 3n)  │
+         └──────┬───────┘ └──────┬───────┘
+                │                │
+                ▼                ▼
+         ┌──────────────┐ ┌──────────────┐
+         │sherpa-onnx   │ │node-llama-cpp│
+         │  Runtime     │ │  Runtime     │
+         └──────────────┘ └──────────────┘
 ```
 
 ## Core Components
 
 ### 1. Backend System
 
-The backend system provides a unified interface for multiple speech recognition engines:
-
-- **Apple Backend** (`backends/apple/`)
-  - Native macOS Speech Framework integration
-  - N-API bindings with Objective-C++
-  - Fastest option on macOS, no model downloads
+The backend system provides a unified interface for speech recognition:
 
 - **Sherpa Backend** (`backends/sherpa/`)
-  - Cross-platform ONNX runtime
-  - Supports Whisper, Parakeet, and Canary models
+  - Cross-platform ONNX runtime via sherpa-onnx
+  - Supports Whisper and Parakeet models
   - Model download and management
 
 ### 2. Audio Processing
@@ -103,14 +98,11 @@ cuttledoc/
 │   │   │   ├── index.ts           # Public API
 │   │   │   ├── backend.ts         # Backend selection
 │   │   │   ├── backends/          # Backend implementations
-│   │   │   │   ├── apple/         # macOS native backend
-│   │   │   │   ├── sherpa/        # ONNX backend (Whisper/Parakeet)
-│   │   │   │   └── whisper/       # (placeholder)
+│   │   │   │   └── sherpa/        # ONNX backend (Whisper/Parakeet)
 │   │   │   ├── cli/               # CLI implementation
 │   │   │   ├── llm/               # LLM enhancement
 │   │   │   ├── types/             # Type definitions
 │   │   │   └── utils/             # Utilities (audio processing)
-│   │   └── binding.gyp            # Native module build config
 │   └── docs/              # Documentation website
 ```
 
@@ -158,7 +150,6 @@ cuttledoc/
 
 - **Backend Caching**: Sherpa backend instances are reused
 - **Streaming**: Audio processing uses streams for memory efficiency
-- **Native Modules**: Apple backend uses native code for best performance
 - **Model Management**: Models downloaded on-demand and cached
 
 ## Extension Points

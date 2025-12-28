@@ -1,14 +1,7 @@
-import {
-  BACKEND_TYPES,
-  type BackendInfo,
-  type BackendType,
-  CANARY_MODELS,
-  PARAKEET_MODELS,
-  WHISPER_MODELS
-} from "./types.js"
+import { BACKEND_TYPES, type BackendInfo, type BackendType, PARAKEET_MODELS, WHISPER_MODELS } from "./types.js"
 
 /**
- * Supported EU languages for Parakeet/Canary models
+ * Supported EU languages for Parakeet models
  */
 const EU_LANGUAGES = [
   "en",
@@ -61,7 +54,7 @@ export function getBackend(): BackendType {
 export function getAvailableBackends(): readonly BackendInfo[] {
   const backends: BackendInfo[] = []
 
-  // Parakeet (ONNX - cross-platform, fastest)
+  // Parakeet (ONNX - cross-platform, fastest for EU languages)
   backends.push({
     name: BACKEND_TYPES.parakeet,
     isAvailable: true,
@@ -70,16 +63,7 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     requiresDownload: true
   })
 
-  // Canary (ONNX - cross-platform)
-  backends.push({
-    name: BACKEND_TYPES.canary,
-    isAvailable: true,
-    languages: EU_LANGUAGES,
-    models: Object.keys(CANARY_MODELS),
-    requiresDownload: true
-  })
-
-  // Whisper (cross-platform, highest quality)
+  // Whisper (cross-platform, supports 99 languages)
   backends.push({
     name: BACKEND_TYPES.whisper,
     isAvailable: true,

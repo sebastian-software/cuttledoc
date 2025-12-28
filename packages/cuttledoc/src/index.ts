@@ -1,14 +1,12 @@
 import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
 import {
   BACKEND_TYPES,
-  CANARY_MODELS,
   PARAKEET_MODELS,
   WHISPER_MODELS,
   type Backend,
   type BackendInfo,
   type BackendOptions,
   type BackendType,
-  type CanaryModel,
   type ParakeetModel,
   type PartialResult,
   type TranscribeOptions,
@@ -22,13 +20,12 @@ import type { SherpaBackend, SherpaModelType } from "./backends/sherpa/index.js"
 
 // Re-export core types and functions
 export { getAvailableBackends, getBackend, selectBestBackend, setBackend }
-export { BACKEND_TYPES, CANARY_MODELS, PARAKEET_MODELS, WHISPER_MODELS }
+export { BACKEND_TYPES, PARAKEET_MODELS, WHISPER_MODELS }
 export type {
   Backend,
   BackendInfo,
   BackendOptions,
   BackendType,
-  CanaryModel,
   ParakeetModel,
   PartialResult,
   TranscribeOptions,
@@ -90,14 +87,6 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
       return parakeetBackend.transcribe(audioPath, options)
     }
 
-    case BACKEND_TYPES.canary: {
-      // TODO: Canary model not yet available in sherpa-onnx
-      // See: https://github.com/k2-fsa/sherpa-onnx/issues - awaiting canary-1b support
-      throw new Error(
-        "Canary backend is not yet supported. " + "Use 'parakeet' for EU languages or 'whisper' for other languages."
-      )
-    }
-
     case BACKEND_TYPES.whisper: {
       const whisperBackend = await getOrCreateBackend("whisper-medium")
       return whisperBackend.transcribe(audioPath, options)
@@ -113,7 +102,6 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 /** Default models for each backend */
 const DEFAULT_MODELS: Record<Exclude<BackendType, "auto">, string> = {
   parakeet: "parakeet-tdt-0.6b-v3",
-  canary: "canary-1b-v2", // Not yet supported
   whisper: "whisper-medium"
 }
 
@@ -131,10 +119,6 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
       const defaultModel = DEFAULT_MODELS[backend]
       await downloadSherpaModel(model ?? defaultModel)
       return
-    }
-
-    case BACKEND_TYPES.canary: {
-      throw new Error("Canary backend is not yet supported")
     }
 
     case BACKEND_TYPES.auto: {

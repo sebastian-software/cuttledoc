@@ -15,7 +15,6 @@ Local speech-to-text has multiple viable approaches, each with trade-offs:
 
 | Approach          | Pros                       | Cons                           |
 | ----------------- | -------------------------- | ------------------------------ |
-| Apple Speech      | Native, fast, no download  | macOS only                     |
 | Whisper (OpenAI)  | High quality, 99 languages | Large models, slower           |
 | Parakeet (NVIDIA) | Fastest for EU languages   | 25 languages only              |
 | Cloud APIs        | Best quality               | Requires internet, costs money |
@@ -121,50 +120,7 @@ return "whisper-small" // fallback
 
 ---
 
-## ADR-004: Native Addon for Apple Speech
-
-**Status:** Accepted
-**Date:** 2024-12-16
-
-### Context
-
-Apple Speech Framework requires native macOS code. Options:
-
-| Approach               | Complexity | Performance | Maintenance |
-| ---------------------- | ---------- | ----------- | ----------- |
-| N-API + Objective-C++  | High       | Best        | Medium      |
-| Swift executable + IPC | Medium     | Good        | Low         |
-| AppleScript/osascript  | Low        | Poor        | Low         |
-
-### Decision
-
-Use **N-API with Objective-C++** for direct integration:
-
-```cpp
-// speech.mm
-[recognizer recognitionTaskWithRequest:request
-    resultHandler:^(SFSpeechRecognitionResult* result, NSError* error) {
-        // Direct callback to Node.js
-    }];
-```
-
-Reasons:
-
-1. No subprocess overhead
-2. Direct memory sharing
-3. Proper async handling with N-API AsyncWorker
-4. Type-safe interface via TypeScript
-
-### Consequences
-
-- ✅ Best performance, no IPC overhead
-- ✅ Proper error propagation
-- ⚠️ Requires Xcode Command Line Tools to build
-- ⚠️ More complex build setup (binding.gyp)
-
----
-
-## ADR-005: ESM-Only Package
+## ADR-004: ESM-Only Package
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -205,7 +161,7 @@ Reasons:
 
 ---
 
-## ADR-006: Lazy Backend Loading
+## ADR-005: Lazy Backend Loading
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -245,7 +201,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
 
 ---
 
-## ADR-007: Native FFmpeg Bindings for Audio Preprocessing
+## ADR-006: Native FFmpeg Bindings for Audio Preprocessing
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -329,7 +285,7 @@ Reasons:
 
 ---
 
-## ADR-008: TurboRepo for Monorepo Build Pipeline
+## ADR-007: TurboRepo for Monorepo Build Pipeline
 
 **Status:** Accepted
 **Date:** 2025-12-17
@@ -371,20 +327,14 @@ Reasons:
 
 ---
 
-## ADR-009: Cross-Platform CI Matrix Testing
+## ADR-008: Cross-Platform CI Matrix Testing
 
 **Status:** Accepted
 **Date:** 2025-12-17
 
 ### Context
 
-The project supports multiple platforms:
-
-- macOS (with native Apple Speech backend)
-- Windows
-- Linux
-
-We need to ensure compatibility across all platforms.
+The project supports multiple platforms (macOS, Windows, Linux) and we need to ensure compatibility across all.
 
 ### Decision
 
@@ -403,18 +353,11 @@ Test matrix covers:
 - **Node.js versions**: 22, 24
 - **Jobs**: typecheck, test, build
 
-Special handling:
-
-- macOS builds native Apple Speech module (`build:native`)
-- All platforms test TypeScript compilation and tests
-
 ### Consequences
 
 - ✅ Ensures cross-platform compatibility
 - ✅ Catches platform-specific issues early
-- ✅ Validates native module builds on macOS
 - ⚠️ Longer CI runtime (6 combinations per job)
-- ⚠️ Higher CI costs (macOS runners)
 
 ---
 
@@ -422,10 +365,10 @@ Special handling:
 
 ### Potential ADRs
 
-- **ADR-010**: Model caching and download strategy
-- **ADR-011**: Worker thread isolation for heavy processing
-- **ADR-012**: Browser/WebAssembly support
-- **ADR-013**: Streaming transcription API design
+- **ADR-009**: Model caching and download strategy
+- **ADR-010**: Worker thread isolation for heavy processing
+- **ADR-011**: Browser/WebAssembly support
+- **ADR-012**: Streaming transcription API design
 
 ---
 

@@ -4,7 +4,6 @@
 export const BACKEND_TYPES = {
   auto: "auto",
   parakeet: "parakeet",
-  canary: "canary",
   whisper: "whisper"
 } as const
 
@@ -18,15 +17,6 @@ export const PARAKEET_MODELS = {
 } as const
 
 export type ParakeetModel = (typeof PARAKEET_MODELS)[keyof typeof PARAKEET_MODELS]
-
-/**
- * Canary model variants
- */
-export const CANARY_MODELS = {
-  "canary-1b-v2": "canary-1b-v2"
-} as const
-
-export type CanaryModel = (typeof CANARY_MODELS)[keyof typeof CANARY_MODELS]
 
 /**
  * Whisper model variants
@@ -89,7 +79,7 @@ export interface TranscriptionResult {
   text: string
   /** Segments with timestamps */
   segments: readonly TranscriptionSegment[]
-  /** Word-level timestamps (Parakeet/Canary only) */
+  /** Word-level timestamps (Parakeet only) */
   words?: readonly WordTimestamp[]
   /** Audio duration in seconds */
   durationSeconds: number

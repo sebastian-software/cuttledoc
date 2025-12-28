@@ -23,11 +23,6 @@ describe("backend", () => {
       setBackend(BACKEND_TYPES.whisper)
       expect(getBackend()).toBe(BACKEND_TYPES.whisper)
     })
-
-    it("should set and get canary backend", () => {
-      setBackend(BACKEND_TYPES.canary)
-      expect(getBackend()).toBe(BACKEND_TYPES.canary)
-    })
   })
 
   describe("getAvailableBackends", () => {
@@ -43,14 +38,6 @@ describe("backend", () => {
       expect(parakeetBackend).toBeDefined()
       expect(parakeetBackend?.isAvailable).toBe(true)
       expect(parakeetBackend?.requiresDownload).toBe(true)
-    })
-
-    it("should always include canary backend", () => {
-      const backends = getAvailableBackends()
-      const canaryBackend = backends.find((b) => b.name === BACKEND_TYPES.canary)
-      expect(canaryBackend).toBeDefined()
-      expect(canaryBackend?.isAvailable).toBe(true)
-      expect(canaryBackend?.requiresDownload).toBe(true)
     })
 
     it("should always include whisper backend", () => {

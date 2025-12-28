@@ -20,7 +20,7 @@
 
 ## Features
 
-- 🎤 **Multiple Backends**: Apple Speech (macOS only), Whisper, Parakeet
+- 🎤 **Multiple Backends**: Whisper, Parakeet (via sherpa-onnx)
 - 🚀 **Native Performance**: No Python, no subprocess overhead
 - 📱 **Offline**: All processing happens locally
 - 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
@@ -52,7 +52,7 @@ npx cuttledoc video.mp4
 npx cuttledoc podcast.mp3 --enhance -o transcript.md
 
 # Use specific backend and language
-npx cuttledoc meeting.m4a -b apple -l de
+npx cuttledoc meeting.m4a -b parakeet -l de
 
 # Show processing statistics
 npx cuttledoc audio.wav --stats
@@ -65,7 +65,7 @@ import { transcribe } from "cuttledoc"
 
 const result = await transcribe("audio.mp3", {
   language: "en",
-  backend: "auto" // auto, apple, whisper, parakeet
+  backend: "auto" // auto, whisper, parakeet
 })
 
 console.log(result.text)
@@ -96,7 +96,7 @@ cuttledoc <audio-file> [options]
 cuttledoc models [list|download <model>]
 
 Options:
-  -b, --backend <name>    Backend: auto, apple, whisper, parakeet (default: auto)
+  -b, --backend <name>    Backend: auto, whisper, parakeet (default: auto)
   -l, --language <code>   Language code: en, de, fr, es, etc.
   -o, --output <file>     Write output to file
   -e, --enhance           Enhance with LLM (formatting + corrections)
@@ -124,18 +124,16 @@ cuttledoc models download gemma3n:e4b
 
 ## Backends
 
-| Backend          | Platform  | Speed  | Quality | Languages |
-| ---------------- | --------- | ------ | ------- | --------- |
-| Apple Speech     | macOS 14+ | ⚡⚡⚡ | ★★★★    | 60+       |
-| Whisper (medium) | All       | ⚡⚡   | ★★★★★   | 99        |
-| Parakeet v3      | All       | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
+| Backend          | Platform | Speed  | Quality | Languages |
+| ---------------- | -------- | ------ | ------- | --------- |
+| Parakeet v3      | All      | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
+| Whisper (medium) | All      | ⚡⚡   | ★★★★★   | 99        |
 
 ### Backend Selection
 
-- **`auto`** (default): Apple Speech on macOS, Whisper elsewhere
-- **`apple`**: Native macOS Speech Framework, fastest, on-device
-- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual
+- **`auto`** (default): Parakeet for EU languages, Whisper for others
 - **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 26 EU languages
+- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual support
 
 ## Supported Formats
 
@@ -163,11 +161,11 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Typical processing speed on M1 MacBook Pro:
 
-| Input        | Backend     | Transcription | LLM | Total |
-| ------------ | ----------- | ------------- | --- | ----- |
-| 10 min audio | Apple       | 15s           | -   | 15s   |
-| 10 min audio | Whisper     | 45s           | -   | 45s   |
-| 10 min audio | Apple + LLM | 15s           | 20s | 35s   |
+| Input        | Backend        | Transcription | LLM | Total |
+| ------------ | -------------- | ------------- | --- | ----- |
+| 10 min audio | Parakeet       | 20s           | -   | 20s   |
+| 10 min audio | Whisper        | 45s           | -   | 45s   |
+| 10 min audio | Parakeet + LLM | 20s           | 20s | 40s   |
 
 ## Documentation
 
