@@ -50,8 +50,10 @@ The backend system provides a unified interface for speech recognition:
 
 - **Sherpa Backend** (`backends/sherpa/`)
   - Cross-platform ONNX runtime via sherpa-onnx
-  - Supports Whisper and Parakeet models
-  - Model download and management
+  - Two optimized models:
+    - **Parakeet TDT v3** (160 MB) – fastest, 25 languages
+    - **Whisper distil-large-v3** (983 MB) – best quality, 99 languages
+  - Model download from GitHub Releases and Hugging Face
 
 ### 2. Audio Processing
 

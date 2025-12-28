@@ -22,9 +22,9 @@ ARGUMENTS:
 
 OPTIONS:
   -b, --backend <name>    Backend to use: auto, parakeet, whisper (default: auto)
-                          - parakeet: Fast, 25 languages (en, de, fr, es, ...)
-                          - whisper: Best multilingual, 99 languages
-  -m, --model <name>      Speech model (e.g., whisper-medium, parakeet-tdt-0.6b-v3)
+                          - parakeet: Fastest, 25 languages (en, de, fr, es, ...)
+                          - whisper: Best quality, 99 languages (distil-large-v3)
+  -m, --model <name>      Speech model (parakeet-tdt-0.6b-v3, whisper-distil-large-v3)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
   -e, --enhance           Enhance transcript with LLM (formatting, corrections)
@@ -35,18 +35,23 @@ OPTIONS:
   -h, --help              Show this help message
   -v, --version           Show version
 
+MODELS:
+  parakeet-tdt-0.6b-v3       160 MB, fastest, 25 languages
+  whisper-distil-large-v3    983 MB, best quality, 99 languages
+
 EXAMPLES:
-  # Basic transcription
+  # Basic transcription (uses Parakeet for supported languages)
   cuttledoc podcast.mp3
 
-  # Transcribe with Parakeet backend and German language
-  cuttledoc meeting.m4a -b parakeet -l de
+  # Transcribe with Whisper for best quality
+  cuttledoc meeting.m4a -b whisper
 
   # Transcribe and enhance with LLM
   cuttledoc video.mp4 -e -o transcript.md
 
-  # Download a speech model
+  # Download speech models
   cuttledoc models download parakeet-tdt-0.6b-v3
+  cuttledoc models download whisper-distil-large-v3
 
   # List available models
   cuttledoc models list

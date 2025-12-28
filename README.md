@@ -114,28 +114,36 @@ Options:
 # List available models
 cuttledoc models list
 
-# Download a speech model
-cuttledoc models download whisper-medium
-cuttledoc models download parakeet-tdt-0.6b-v3
+# Download speech models
+cuttledoc models download parakeet-tdt-0.6b-v3      # 160 MB, 25 languages
+cuttledoc models download whisper-distil-large-v3   # 983 MB, 99 languages
 
-# Download LLM model
+# Download LLM model (for --enhance)
 cuttledoc models download gemma3n:e4b
 ```
 
 ## Backends
 
-| Backend           | Platform | Speed  | Quality | Languages | Size   |
-| ----------------- | -------- | ------ | ------- | --------- | ------ |
-| Parakeet v3       | All      | ⚡⚡⚡ | ★★★★    | 25        | 160 MB |
-| Whisper distil-v3 | All      | ⚡⚡⚡ | ★★★★☆   | 99        | 983 MB |
-| Whisper medium    | All      | ⚡⚡   | ★★★★☆   | 99        | 500 MB |
-| Whisper large-v3  | All      | ⚡     | ★★★★★   | 99        | 1.6 GB |
+| Backend                     | Speed  | Quality | Languages | Size   |
+| --------------------------- | ------ | ------- | --------- | ------ |
+| **Parakeet v3** (default)   | ⚡⚡⚡ | ★★★★☆   | 25        | 160 MB |
+| **Whisper distil-large-v3** | ⚡⚡⚡ | ★★★★★   | 99        | 983 MB |
 
 ### Backend Selection
 
-- **`auto`** (default): Parakeet for supported languages, Whisper otherwise
-- **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 25 languages (en, de, fr, es, ...)
-- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual support (99 languages)
+- **`auto`** (default): Parakeet for 25 supported languages, Whisper for all others
+- **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, excellent for English/German/European languages
+- **`whisper`**: OpenAI Whisper distil-large-v3 – best quality, 99 languages including Asian/Arabic
+
+### Why These Two Models?
+
+We've reduced the model selection to just two optimized choices:
+
+1. **Parakeet v3** – Best speed-to-quality ratio for common languages (160 MB, 6x realtime)
+2. **Whisper distil-large-v3** – Distilled from large-v3, same quality but 6x faster than original (983 MB)
+
+Models like `whisper-medium` and `whisper-large-v3` were removed as `distil-large-v3` provides
+equivalent or better quality with significantly faster processing.
 
 ## Supported Formats
 

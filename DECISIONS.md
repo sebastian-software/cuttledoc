@@ -83,39 +83,52 @@ Reasons:
 
 ---
 
-## ADR-003: Parakeet v3 INT8 as Default
+## ADR-003: Two-Model Strategy (Parakeet + Whisper distil-large-v3)
 
 **Status:** Accepted
-**Date:** 2024-12-16
+**Date:** 2024-12-16 (initial), 2024-12-28 (simplified)
 
 ### Context
 
-For common languages (en, de, fr, es, it, etc.), multiple models are viable:
+We evaluated multiple speech recognition models for cuttledoc:
 
-| Model            | Size   | Speed   | Quality   | Languages |
-| ---------------- | ------ | ------- | --------- | --------- |
-| Whisper large-v3 | 1.6GB  | Slow    | Best      | 99        |
-| Whisper medium   | 500MB  | Medium  | Good      | 99        |
-| Parakeet v3 INT8 | ~160MB | Fastest | Excellent | 25        |
+| Model                   | Size  | Speed       | Quality | Languages |
+| ----------------------- | ----- | ----------- | ------- | --------- |
+| Parakeet v3 INT8        | 160MB | ⚡⚡⚡ (6x) | ★★★★☆   | 25        |
+| Whisper distil-large-v3 | 983MB | ⚡⚡⚡ (6x) | ★★★★★   | 99        |
+| ~~Whisper medium~~      | 500MB | ⚡⚡ (2x)   | ★★★★☆   | 99        |
+| ~~Whisper large-v3~~    | 1.6GB | ⚡ (1x)     | ★★★★★   | 99        |
+
+Key insight: **Whisper distil-large-v3** is a distilled version of large-v3 that achieves:
+
+- Same quality as large-v3 (756M vs 1.55B parameters)
+- 6x faster than large-v3
+- Better quality than medium at similar speed
 
 ### Decision
 
-Use **Parakeet v3 INT8** as default for supported languages:
+Support only **two models**:
 
 ```typescript
 // Auto-selection logic
-if (isParakeetLanguage(lang) && !userPreferredModel) {
-  return "parakeet-tdt-0.6b-v3-int8"
+if (isParakeetLanguage(lang)) {
+  return "parakeet-tdt-0.6b-v3" // 25 languages, smallest, fastest
 }
-return "whisper-medium" // fallback
+return "whisper-distil-large-v3" // 99 languages, best quality
 ```
+
+Removed models:
+
+- `whisper-medium` – distil-large-v3 is faster with better quality
+- `whisper-large-v3` – distil-large-v3 has same quality, 6x faster
 
 ### Consequences
 
-- ✅ Best speed/quality ratio for 25 languages
-- ✅ Smallest download size
-- ⚠️ ~1.2GB RAM usage at runtime
-- ⚠️ Unsupported languages fall back to Whisper
+- ✅ Simpler model selection (only 2 choices)
+- ✅ Best quality without compromise (distil-large-v3 ≈ large-v3)
+- ✅ Fast by default (both models run at 6x realtime)
+- ✅ Smaller total download options
+- ⚠️ Users who explicitly want `whisper-medium` must use distil-large-v3 instead
 
 ---
 
@@ -182,7 +195,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
     case "whisper": {
       // Only import when needed
       const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      const model = backend === "parakeet" ? "parakeet-tdt-0.6b-v3" : "whisper-medium"
+      const model = backend === "parakeet" ? "parakeet-tdt-0.6b-v3" : "whisper-distil-large-v3"
       return new SherpaBackend({ model }).transcribe(audioPath, options)
     }
   }

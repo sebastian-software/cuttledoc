@@ -88,7 +88,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
     }
 
     case BACKEND_TYPES.whisper: {
-      const whisperBackend = await getOrCreateBackend("whisper-medium")
+      const whisperBackend = await getOrCreateBackend("whisper-distil-large-v3")
       return whisperBackend.transcribe(audioPath, options)
     }
 
@@ -102,7 +102,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 /** Default models for each backend */
 const DEFAULT_MODELS: Record<Exclude<BackendType, "auto">, string> = {
   parakeet: "parakeet-tdt-0.6b-v3",
-  whisper: "whisper-medium"
+  whisper: "whisper-distil-large-v3"
 }
 
 /**

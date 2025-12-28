@@ -22,8 +22,6 @@ export type ParakeetModel = (typeof PARAKEET_MODELS)[keyof typeof PARAKEET_MODEL
  * Whisper model variants
  */
 export const WHISPER_MODELS = {
-  medium: "medium",
-  "large-v3": "large-v3",
   "distil-large-v3": "distil-large-v3"
 } as const
 
