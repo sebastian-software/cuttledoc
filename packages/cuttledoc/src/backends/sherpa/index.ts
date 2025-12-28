@@ -9,6 +9,7 @@ import {
 } from "../../types.js"
 import { isFFmpegAvailable, preprocessAudio } from "../../utils/audio.js"
 
+import { getModelsDir } from "./download.js"
 import {
   SHERPA_MODELS,
   type SherpaModelInfo,
@@ -17,8 +18,6 @@ import {
   type SherpaOfflineRecognizer,
   type SherpaRecognizerConfig
 } from "./types.js"
-
-import { getModelsDir } from "./download.js"
 
 /**
  * Load the sherpa-onnx module
