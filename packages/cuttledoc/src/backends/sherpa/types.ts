@@ -102,7 +102,8 @@ export interface SherpaModule {
 export const SHERPA_MODEL_TYPES = {
   "parakeet-tdt-0.6b-v3": "parakeet-tdt-0.6b-v3",
   "whisper-medium": "whisper-medium",
-  "whisper-large-v3": "whisper-large-v3"
+  "whisper-large-v3": "whisper-large-v3",
+  "whisper-distil-large-v3": "whisper-distil-large-v3"
 } as const
 
 export type SherpaModelType = (typeof SHERPA_MODEL_TYPES)[keyof typeof SHERPA_MODEL_TYPES]
@@ -112,6 +113,9 @@ export type SherpaModelType = (typeof SHERPA_MODEL_TYPES)[keyof typeof SHERPA_MO
  */
 export interface SherpaModelInfo {
   type: "transducer" | "whisper"
+  /** Download source: github (tar.bz2) or huggingface (individual files) */
+  source: "github" | "huggingface"
+  /** For github: full URL to tar.bz2. For huggingface: repo name (e.g., "csukuangfj/sherpa-onnx-whisper-distil-large-v3") */
   downloadUrl: string
   folderName: string
   files: {
@@ -131,6 +135,7 @@ export interface SherpaModelInfo {
 export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
   "parakeet-tdt-0.6b-v3": {
     type: "transducer",
+    source: "github",
     downloadUrl:
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2",
     folderName: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
@@ -172,6 +177,7 @@ export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
   },
   "whisper-medium": {
     type: "whisper",
+    source: "github",
     downloadUrl:
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-medium.tar.bz2",
     folderName: "sherpa-onnx-whisper-medium",
@@ -185,6 +191,7 @@ export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
   },
   "whisper-large-v3": {
     type: "whisper",
+    source: "github",
     downloadUrl:
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-large-v3.tar.bz2",
     folderName: "sherpa-onnx-whisper-large-v3",
@@ -195,5 +202,18 @@ export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
     },
     languages: ["multilingual"],
     sizeBytes: 1_600_000_000
+  },
+  "whisper-distil-large-v3": {
+    type: "whisper",
+    source: "huggingface",
+    downloadUrl: "csukuangfj/sherpa-onnx-whisper-distil-large-v3",
+    folderName: "sherpa-onnx-whisper-distil-large-v3",
+    files: {
+      encoder: "distil-large-v3-encoder.int8.onnx",
+      decoder: "distil-large-v3-decoder.int8.onnx",
+      tokens: "distil-large-v3-tokens.txt"
+    },
+    languages: ["multilingual"],
+    sizeBytes: 983_000_000 // ~668MB encoder + ~315MB decoder
   }
 } as const

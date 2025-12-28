@@ -124,11 +124,12 @@ cuttledoc models download gemma3n:e4b
 
 ## Backends
 
-| Backend          | Platform | Speed  | Quality | Languages |
-| ---------------- | -------- | ------ | ------- | --------- |
-| Parakeet v3      | All      | ⚡⚡⚡ | ★★★★    | 25        |
-| Whisper medium   | All      | ⚡⚡   | ★★★★☆   | 99        |
-| Whisper large-v3 | All      | ⚡     | ★★★★★   | 99        |
+| Backend           | Platform | Speed  | Quality | Languages | Size   |
+| ----------------- | -------- | ------ | ------- | --------- | ------ |
+| Parakeet v3       | All      | ⚡⚡⚡ | ★★★★    | 25        | 160 MB |
+| Whisper distil-v3 | All      | ⚡⚡⚡ | ★★★★☆   | 99        | 983 MB |
+| Whisper medium    | All      | ⚡⚡   | ★★★★☆   | 99        | 500 MB |
+| Whisper large-v3  | All      | ⚡     | ★★★★★   | 99        | 1.6 GB |
 
 ### Backend Selection
 

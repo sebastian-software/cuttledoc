@@ -65,10 +65,25 @@ export async function downloadSherpaModel(
     mkdirSync(modelsDir, { recursive: true })
   }
 
+  if (modelInfo.source === "huggingface") {
+    await downloadFromHuggingFace(modelInfo, modelsDir, options.onProgress)
+  } else {
+    await downloadFromGitHub(modelInfo, modelsDir, options.onProgress)
+  }
+}
+
+/**
+ * Download model from GitHub releases (tar.bz2 archive)
+ */
+async function downloadFromGitHub(
+  modelInfo: (typeof SHERPA_MODELS)[SherpaModelType],
+  modelsDir: string,
+  onProgress?: (progress: { downloaded: number; total: number }) => void
+): Promise<void> {
   const archivePath = join(modelsDir, `${modelInfo.folderName}.tar.bz2`)
 
   // Download the archive
-  await downloadFile(modelInfo.downloadUrl, archivePath, options.onProgress)
+  await downloadFile(modelInfo.downloadUrl, archivePath, onProgress)
 
   // Extract the archive
   try {
@@ -86,6 +101,61 @@ export async function downloadSherpaModel(
     execSync(`rm "${archivePath}"`, { stdio: "pipe" })
   } catch {
     // Ignore cleanup errors
+  }
+}
+
+/**
+ * Download model from Hugging Face (individual files)
+ */
+async function downloadFromHuggingFace(
+  modelInfo: (typeof SHERPA_MODELS)[SherpaModelType],
+  modelsDir: string,
+  onProgress?: (progress: { downloaded: number; total: number }) => void
+): Promise<void> {
+  const modelDir = join(modelsDir, modelInfo.folderName)
+
+  // Create model directory
+  if (!existsSync(modelDir)) {
+    mkdirSync(modelDir, { recursive: true })
+  }
+
+  // Files to download
+  const filesToDownload = [
+    modelInfo.files.encoder,
+    modelInfo.files.decoder,
+    modelInfo.files.tokens,
+    ...(modelInfo.files.joiner !== undefined ? [modelInfo.files.joiner] : [])
+  ]
+
+  // Calculate total size for progress
+  let totalDownloaded = 0
+  const totalSize = modelInfo.sizeBytes
+
+  for (const fileName of filesToDownload) {
+    const fileUrl = `https://huggingface.co/${modelInfo.downloadUrl}/resolve/main/${fileName}`
+    const destPath = join(modelDir, fileName)
+
+    // Skip if file already exists
+    if (existsSync(destPath)) {
+      continue
+    }
+
+    await downloadFile(fileUrl, destPath, (progress) => {
+      if (onProgress !== undefined) {
+        onProgress({
+          downloaded: totalDownloaded + progress.downloaded,
+          total: totalSize
+        })
+      }
+    })
+
+    // Update total for next file
+    const { statSync } = await import("node:fs")
+    try {
+      totalDownloaded += statSync(destPath).size
+    } catch {
+      // Ignore stat errors
+    }
   }
 }
 
