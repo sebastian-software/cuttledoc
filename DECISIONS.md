@@ -429,7 +429,3 @@ During prototyping, we discovered several significant issues:
 - **ADR-010**: Worker thread isolation for heavy processing
 - **ADR-011**: Browser/WebAssembly support
 - **ADR-012**: Streaming transcription API design
-
----
-
-_Last updated: 2024-12-28_
