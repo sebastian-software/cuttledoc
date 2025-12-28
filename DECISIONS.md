@@ -16,7 +16,7 @@ Local speech-to-text has multiple viable approaches, each with trade-offs:
 | Approach          | Pros                       | Cons                           |
 | ----------------- | -------------------------- | ------------------------------ |
 | Whisper (OpenAI)  | High quality, 99 languages | Large models, slower           |
-| Parakeet (NVIDIA) | Fastest for EU languages   | 25 languages only              |
+| Parakeet (NVIDIA) | Fastest, 25 languages      | Limited language support       |
 | Cloud APIs        | Best quality               | Requires internet, costs money |
 
 ### Decision
@@ -83,40 +83,39 @@ Reasons:
 
 ---
 
-## ADR-003: Parakeet v3 INT8 as Default for EU Languages
+## ADR-003: Parakeet v3 INT8 as Default
 
 **Status:** Accepted
 **Date:** 2024-12-16
 
 ### Context
 
-For European languages (de, en, fr, es, it, etc.), multiple models are viable:
+For common languages (en, de, fr, es, it, etc.), multiple models are viable:
 
 | Model            | Size   | Speed   | Quality   | Languages |
 | ---------------- | ------ | ------- | --------- | --------- |
-| Whisper large-v3 | 3GB    | Slow    | Best      | 99        |
-| Whisper small    | 466MB  | Medium  | Good      | 99        |
-| Parakeet v3 FP32 | 600MB  | Fast    | Excellent | 25 EU     |
-| Parakeet v3 INT8 | ~150MB | Fastest | Excellent | 25 EU     |
+| Whisper large-v3 | 1.6GB  | Slow    | Best      | 99        |
+| Whisper medium   | 500MB  | Medium  | Good      | 99        |
+| Parakeet v3 INT8 | ~160MB | Fastest | Excellent | 25        |
 
 ### Decision
 
-Use **Parakeet v3 INT8** as default for EU languages:
+Use **Parakeet v3 INT8** as default for supported languages:
 
 ```typescript
 // Auto-selection logic
-if (isEuropeanLanguage(lang) && !userPreferredModel) {
+if (isParakeetLanguage(lang) && !userPreferredModel) {
   return "parakeet-tdt-0.6b-v3-int8"
 }
-return "whisper-small" // fallback
+return "whisper-medium" // fallback
 ```
 
 ### Consequences
 
-- ✅ Best speed/quality ratio for EU languages
-- ✅ Smaller download than Whisper large
+- ✅ Best speed/quality ratio for 25 languages
+- ✅ Smallest download size
 - ⚠️ ~1.2GB RAM usage at runtime
-- ⚠️ Non-EU languages fall back to Whisper
+- ⚠️ Unsupported languages fall back to Whisper
 
 ---
 

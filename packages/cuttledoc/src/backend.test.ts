@@ -64,7 +64,7 @@ describe("backend", () => {
   })
 
   describe("selectBestBackend", () => {
-    it("should select parakeet for EU languages", () => {
+    it("should select parakeet for supported languages", () => {
       expect(selectBestBackend("de")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("en")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("fr")).toBe(BACKEND_TYPES.parakeet)
@@ -76,7 +76,7 @@ describe("backend", () => {
       expect(backend).toBe(BACKEND_TYPES.parakeet)
     })
 
-    it("should select whisper for non-EU languages", () => {
+    it("should select whisper for unsupported languages", () => {
       expect(selectBestBackend("ja")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("zh")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("ar")).toBe(BACKEND_TYPES.whisper)

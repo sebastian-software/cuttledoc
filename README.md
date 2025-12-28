@@ -126,14 +126,15 @@ cuttledoc models download gemma3n:e4b
 
 | Backend          | Platform | Speed  | Quality | Languages |
 | ---------------- | -------- | ------ | ------- | --------- |
-| Parakeet v3      | All      | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
-| Whisper (medium) | All      | ⚡⚡   | ★★★★★   | 99        |
+| Parakeet v3      | All      | ⚡⚡⚡ | ★★★★    | 25        |
+| Whisper medium   | All      | ⚡⚡   | ★★★★☆   | 99        |
+| Whisper large-v3 | All      | ⚡     | ★★★★★   | 99        |
 
 ### Backend Selection
 
-- **`auto`** (default): Parakeet for EU languages, Whisper for others
-- **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 26 EU languages
-- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual support
+- **`auto`** (default): Parakeet for supported languages, Whisper otherwise
+- **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 25 languages (en, de, fr, es, ...)
+- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual support (99 languages)
 
 ## Supported Formats
 

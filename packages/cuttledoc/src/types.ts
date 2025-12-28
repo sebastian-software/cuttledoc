@@ -22,11 +22,8 @@ export type ParakeetModel = (typeof PARAKEET_MODELS)[keyof typeof PARAKEET_MODEL
  * Whisper model variants
  */
 export const WHISPER_MODELS = {
-  tiny: "tiny",
-  base: "base",
-  small: "small",
   medium: "medium",
-  large: "large"
+  "large-v3": "large-v3"
 } as const
 
 export type WhisperModel = (typeof WHISPER_MODELS)[keyof typeof WHISPER_MODELS]

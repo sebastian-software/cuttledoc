@@ -22,7 +22,7 @@ ARGUMENTS:
 
 OPTIONS:
   -b, --backend <name>    Backend to use: auto, parakeet, whisper (default: auto)
-                          - parakeet: Fast, 26 EU languages
+                          - parakeet: Fast, 25 languages (en, de, fr, es, ...)
                           - whisper: Best multilingual, 99 languages
   -m, --model <name>      Speech model (e.g., whisper-medium, parakeet-tdt-0.6b-v3)
   -l, --language <code>   Language code (e.g., en, de, fr)

@@ -1,35 +1,35 @@
 import { BACKEND_TYPES, type BackendInfo, type BackendType, PARAKEET_MODELS, WHISPER_MODELS } from "./types.js"
 
 /**
- * Supported EU languages for Parakeet models
+ * Languages supported by Parakeet TDT v3 (25 languages)
+ * Source: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
  */
-const EU_LANGUAGES = [
-  "en",
-  "de",
-  "fr",
-  "es",
-  "it",
-  "pt",
-  "nl",
-  "pl",
-  "cs",
-  "sk",
-  "hu",
-  "ro",
-  "bg",
-  "el",
-  "sv",
-  "da",
-  "fi",
-  "no",
-  "hr",
-  "sl",
-  "et",
-  "lv",
-  "lt",
-  "mt",
-  "ru",
-  "uk"
+const PARAKEET_LANGUAGES = [
+  "en", // English
+  "de", // German
+  "fr", // French
+  "es", // Spanish
+  "it", // Italian
+  "pt", // Portuguese
+  "nl", // Dutch
+  "pl", // Polish
+  "cs", // Czech
+  "sk", // Slovak
+  "hu", // Hungarian
+  "ro", // Romanian
+  "bg", // Bulgarian
+  "el", // Greek
+  "sv", // Swedish
+  "da", // Danish
+  "fi", // Finnish
+  "no", // Norwegian
+  "hr", // Croatian
+  "sl", // Slovenian
+  "et", // Estonian
+  "lv", // Latvian
+  "lt", // Lithuanian
+  "mt", // Maltese
+  "uk" // Ukrainian
 ] as const
 
 let currentBackend: BackendType = BACKEND_TYPES.auto
@@ -54,20 +54,20 @@ export function getBackend(): BackendType {
 export function getAvailableBackends(): readonly BackendInfo[] {
   const backends: BackendInfo[] = []
 
-  // Parakeet (ONNX - cross-platform, fastest for EU languages)
+  // Parakeet (ONNX - cross-platform, fastest, 25 languages)
   backends.push({
     name: BACKEND_TYPES.parakeet,
     isAvailable: true,
-    languages: EU_LANGUAGES,
+    languages: PARAKEET_LANGUAGES,
     models: Object.keys(PARAKEET_MODELS),
     requiresDownload: true
   })
 
-  // Whisper (cross-platform, supports 99 languages)
+  // Whisper (cross-platform, 99 languages)
   backends.push({
     name: BACKEND_TYPES.whisper,
     isAvailable: true,
-    languages: EU_LANGUAGES, // Simplified - Whisper supports 99 languages
+    languages: ["multilingual"], // Whisper supports 99 languages
     models: Object.keys(WHISPER_MODELS),
     requiresDownload: true
   })
@@ -76,14 +76,15 @@ export function getAvailableBackends(): readonly BackendInfo[] {
 }
 
 /**
- * Auto-select the best available backend based on system and language
+ * Auto-select the best available backend based on language
  */
 export function selectBestBackend(language?: string): BackendType {
-  // For EU languages, prefer Parakeet (fastest, good quality)
+  // For Parakeet-supported languages, prefer Parakeet (fastest, good quality)
   const langCode = language?.split("-")[0]
-  const isEuLanguage = langCode === undefined || EU_LANGUAGES.includes(langCode as (typeof EU_LANGUAGES)[number])
+  const isParakeetLanguage =
+    langCode === undefined || PARAKEET_LANGUAGES.includes(langCode as (typeof PARAKEET_LANGUAGES)[number])
 
-  if (isEuLanguage) {
+  if (isParakeetLanguage) {
     return BACKEND_TYPES.parakeet
   }
 
