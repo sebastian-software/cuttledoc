@@ -1,15 +1,47 @@
 # Phi-4-multimodal ASR Prototype
 
-Quick & dirty prototype to evaluate Microsoft's Phi-4-multimodal for speech recognition.
+Experimental prototype to evaluate Microsoft's Phi-4-multimodal for speech recognition on Apple Silicon.
 
-## Goal
+## Status: ✅ Works on Apple Silicon (MPS)
 
-Test if Phi-4-multimodal is practical for cuttledoc integration:
+Successfully running on Apple Silicon with Metal Performance Shaders (MPS).
 
-- Does it work on CPU?
-- What's the inference speed (RTF)?
-- What's the quality (WER)?
-- How much RAM does it need?
+## Results
+
+### Performance (German fairy tale, 103s audio)
+
+| Metric         | Value                            |
+| -------------- | -------------------------------- |
+| **Device**     | mps (Metal)                      |
+| **RTF**        | 0.73x (27% faster than realtime) |
+| **Inference**  | 75.2s                            |
+| **Model Load** | 24.6s                            |
+| **WER**        | 14.16%                           |
+| **RAM**        | ~12 GB                           |
+
+### Quality Comparison
+
+| Model                | WER       | RTF       | Notes              |
+| -------------------- | --------- | --------- | ------------------ |
+| whisper-tiny         | 13.6%     | ~0.13x    | Baseline           |
+| whisper-base         | 8.1%      | ~0.25x    |                    |
+| whisper-small        | 5.5%      | ~0.57x    |                    |
+| parakeet-v3          | 5.5%      | ~0.17x    | Best speed/quality |
+| **Phi-4-multimodal** | **14.2%** | **0.73x** | 6B params, MPS     |
+
+### Key Findings
+
+1. **Phi-4 runs on Apple Silicon** with MPS - no NVIDIA GPU required
+2. **Quality is comparable to whisper-tiny** (not large-v3 as hoped)
+3. **Speed is slower** than specialized ASR models
+4. **RAM usage is high** (~12 GB) due to 6B parameter model
+
+### Technical Workarounds Required
+
+- `transformers==4.48.2` (specific version required)
+- `peft==0.13.2` (specific version required)
+- `attn_implementation="eager"` (FlashAttention2 disabled)
+- Chat template for proper prompt formatting
 
 ## Setup
 
@@ -27,46 +59,30 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-# Basic transcription
-python transcribe.py ../path/to/audio.wav
+# Use patched version for Apple Silicon
+python transcribe_patched.py audio.ogg --device mps
 
-# With CUDA (if available)
-python transcribe.py audio.wav --device cuda
-
-# With WER calculation (needs reference text)
-python transcribe.py audio.wav --reference reference.txt
+# With WER calculation
+python transcribe_patched.py audio.ogg --device mps --reference reference.txt
 ```
 
-## Test with cuttledoc fixtures
+## Conclusion
 
-```bash
-# German fairytale
-python transcribe.py ../../packages/cuttledoc/fixtures/fairytale-de.ogg \
-  --reference ../../packages/cuttledoc/fixtures/fairytale-de.md
+Phi-4-multimodal is **not practical for cuttledoc** at this time:
 
-# English sample (if exists)
-python transcribe.py ../../packages/cuttledoc/fixtures/sample-en.ogg \
-  --reference ../../packages/cuttledoc/fixtures/sample-en.md
-```
+- ❌ Slower than dedicated ASR models
+- ❌ Similar quality to whisper-tiny (not large-v3)
+- ❌ High RAM usage (12 GB)
+- ❌ Complex setup (specific versions, workarounds)
+- ❌ No Node.js bindings
 
-## Expected Results
+**Recommendation**: Stay with current two-model strategy:
 
-| Metric    | Target  | Notes                            |
-| --------- | ------- | -------------------------------- |
-| WER       | < 6%    | Leaderboard shows 4.6%           |
-| RTF       | < 1.0   | Faster than realtime             |
-| RAM       | < 16 GB | Practical for local use          |
-| Load time | < 60s   | First load (model caching helps) |
+- `parakeet-tdt-0.6b-v3` (25 languages, fast, small)
+- `whisper-distil-large-v3` (99 languages, best quality)
 
-## Next Steps
+## Next Steps (if pursuing Phi-4)
 
-If prototype is successful:
-
-1. Export to ONNX for CPU
-2. Create Node.js bindings
-3. Integrate into cuttledoc as backend
-
-If not practical:
-
-- Document findings
-- Consider alternative approaches (API, smaller model)
+1. Wait for Microsoft to add CPU support
+2. Wait for ONNX export with Node.js bindings
+3. Consider using as LLM enhancement (not primary ASR)
