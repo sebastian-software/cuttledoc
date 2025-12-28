@@ -26,7 +26,7 @@ Implement a **unified API with pluggable backends**:
 ```typescript
 const result = await transcribe("audio.wav", {
   language: "de",
-  backend: "auto" // or "apple", "sherpa"
+  backend: "auto" // or "parakeet", "whisper"
 })
 ```
 
@@ -179,14 +179,12 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
   const backend = options.backend ?? selectBestBackend()
 
   switch (backend) {
-    case "apple": {
+    case "parakeet":
+    case "whisper": {
       // Only import when needed
-      const { AppleBackend } = await import("./backends/apple/index.js")
-      return new AppleBackend().transcribe(audioPath, options)
-    }
-    case "sherpa": {
       const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      // ...
+      const model = backend === "parakeet" ? "parakeet-tdt-0.6b-v3" : "whisper-medium"
+      return new SherpaBackend({ model }).transcribe(audioPath, options)
     }
   }
 }
@@ -361,6 +359,68 @@ Test matrix covers:
 
 ---
 
+## Rejected / Superseded Decisions
+
+### ADR-R01: Apple Speech Framework Backend (Rejected)
+
+**Status:** Rejected
+**Date:** 2024-12-16 (proposed) → 2024-12-28 (rejected)
+
+#### Context
+
+We initially planned to integrate Apple's native Speech Framework (`SFSpeechRecognizer`) as a backend for macOS users. The appeal was:
+
+- **No model download** - Uses pre-installed system models
+- **Neural Engine acceleration** - Optimized for Apple Silicon
+- **60+ languages** - Broad language support out of the box
+
+#### Investigation Results
+
+During prototyping, we discovered several significant issues:
+
+1. **Online/Offline Behavior Inconsistency**
+   - For short audio (<1 min), Apple uses on-device recognition
+   - For longer content, it silently switches to Apple's cloud servers
+   - No reliable way to force offline-only processing
+   - This violates our "offline-first" principle
+
+2. **Complex Native Integration**
+   - Requires N-API bindings with Objective-C++ (`speech.mm`)
+   - Needs `node-gyp` build step with Xcode Command Line Tools
+   - Platform-specific `binding.gyp` configuration
+   - Adds maintenance burden for macOS-only code
+
+3. **No Performance Advantage**
+   - Benchmarks showed Parakeet v3 matches or exceeds Apple Speech speed
+   - Whisper provides better accuracy for difficult audio
+   - Apple Speech quality comparable but not superior
+
+4. **Permission Complexity**
+   - Requires user to grant microphone/speech recognition permissions
+   - Permission prompts interrupt automated workflows
+   - No programmatic way to check permission status reliably
+
+#### Decision
+
+**Reject** Apple Speech Framework integration in favor of cross-platform sherpa-onnx backends (Parakeet, Whisper).
+
+#### Consequences
+
+- ✅ Simpler codebase - no native Objective-C++ code
+- ✅ Consistent behavior across all platforms
+- ✅ Guaranteed offline operation
+- ✅ No macOS-specific build requirements
+- ⚠️ macOS users must download models (~150MB for Parakeet)
+- ⚠️ No Neural Engine acceleration (CPU/GPU via ONNX instead)
+
+#### Lessons Learned
+
+- "Native" doesn't always mean "better" - cross-platform solutions can match or exceed native performance
+- Online fallback behavior in system APIs is a hidden complexity
+- The overhead of maintaining platform-specific native code rarely justifies marginal benefits
+
+---
+
 ## Future Considerations
 
 ### Potential ADRs
@@ -372,4 +432,4 @@ Test matrix covers:
 
 ---
 
-_Last updated: 2025-12-17_
+_Last updated: 2024-12-28_
