@@ -100,7 +100,6 @@ export interface SherpaModule {
  * Supported model types for sherpa backend
  */
 export const SHERPA_MODEL_TYPES = {
-  "parakeet-tdt-0.6b-v2": "parakeet-tdt-0.6b-v2",
   "parakeet-tdt-0.6b-v3": "parakeet-tdt-0.6b-v3",
   "whisper-tiny": "whisper-tiny",
   "whisper-base": "whisper-base",
@@ -133,48 +132,6 @@ export interface SherpaModelInfo {
  * Model registry with download URLs and file paths
  */
 export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
-  "parakeet-tdt-0.6b-v2": {
-    type: "transducer",
-    downloadUrl:
-      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8.tar.bz2",
-    folderName: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8",
-    files: {
-      encoder: "encoder.int8.onnx",
-      decoder: "decoder.int8.onnx",
-      joiner: "joiner.int8.onnx",
-      tokens: "tokens.txt"
-    },
-    modelType: "nemo_transducer",
-    languages: [
-      "en",
-      "de",
-      "fr",
-      "es",
-      "it",
-      "pt",
-      "nl",
-      "pl",
-      "cs",
-      "sk",
-      "hu",
-      "ro",
-      "bg",
-      "el",
-      "sv",
-      "da",
-      "fi",
-      "no",
-      "hr",
-      "sl",
-      "et",
-      "lv",
-      "lt",
-      "mt",
-      "ru",
-      "uk"
-    ],
-    sizeBytes: 160_000_000
-  },
   "parakeet-tdt-0.6b-v3": {
     type: "transducer",
     downloadUrl:

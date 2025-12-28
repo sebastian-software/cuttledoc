@@ -86,6 +86,10 @@ export function parseArgs(argv: string[]): CLIArgs {
       args.command = "models"
       args.positional = argv.slice(i + 1)
       break
+    } else if (arg === "benchmark") {
+      args.command = "benchmark"
+      args.positional = argv.slice(i + 1)
+      break
     }
     // Positional arguments
     else if (!arg.startsWith("-")) {

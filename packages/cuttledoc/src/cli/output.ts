@@ -15,6 +15,7 @@ cuttledoc - Video to document transcription with AI
 USAGE:
   cuttledoc <audio-file> [options]
   cuttledoc models [list|download <model>]
+  cuttledoc benchmark [run|report]
 
 ARGUMENTS:
   <audio-file>      Audio or video file to transcribe (mp3, m4a, mp4, wav, etc.)
