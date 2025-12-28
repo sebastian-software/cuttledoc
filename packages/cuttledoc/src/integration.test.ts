@@ -4,8 +4,9 @@ import { fileURLToPath } from "node:url"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { transcribe, cleanup, BACKEND_TYPES } from "./index.js"
 import { isModelDownloaded } from "./backends/sherpa/download.js"
+
+import { cleanup, transcribe, BACKEND_TYPES } from "./index.js"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 const fixturesDir = resolve(__dirname, "../fixtures")

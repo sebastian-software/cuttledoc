@@ -64,7 +64,7 @@ describe("cli output", () => {
     it("should print version", () => {
       printVersion()
 
-      expect(mockConsoleLog).toHaveBeenCalledWith("cuttledoc v0.1.0")
+      expect(mockConsoleLog).toHaveBeenCalledWith("cuttledoc v1.0.0")
     })
   })
 

@@ -18,7 +18,7 @@ import {
   type WordTimestamp
 } from "./types.js"
 
-import type { SherpaBackend } from "./backends/sherpa/index.js"
+import type { SherpaBackend, SherpaModelType } from "./backends/sherpa/index.js"
 
 // Re-export core types and functions
 export { getAvailableBackends, getBackend, selectBestBackend, setBackend }
@@ -55,8 +55,22 @@ export {
 export { LLM_MODELS, type LLMModelId } from "./llm/types.js"
 export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "./llm/processor.js"
 
-// Cached backend instances for reuse
-let sherpaBackendInstance: SherpaBackend | null = null
+// Cached backend instances by model type
+const backendCache = new Map<SherpaModelType, SherpaBackend>()
+
+/**
+ * Get or create a cached backend instance for a model
+ */
+async function getOrCreateBackend(model: SherpaModelType): Promise<SherpaBackend> {
+  let backend = backendCache.get(model)
+  if (backend === undefined) {
+    const { SherpaBackend } = await import("./backends/sherpa/index.js")
+    backend = new SherpaBackend({ model })
+    await backend.initialize()
+    backendCache.set(model, backend)
+  }
+  return backend
+}
 
 /**
  * Transcribe an audio file using the configured or best available backend
@@ -72,35 +86,21 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      if (sherpaBackendInstance === null) {
-        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
-        await sherpaBackendInstance.initialize()
-      }
-      return sherpaBackendInstance.transcribe(audioPath, options)
+      const parakeetBackend = await getOrCreateBackend("parakeet-tdt-0.6b-v3")
+      return parakeetBackend.transcribe(audioPath, options)
     }
 
     case BACKEND_TYPES.canary: {
-      // Canary uses the same sherpa backend with a different model
-      // For now, fall back to parakeet v3
-      const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      if (sherpaBackendInstance === null) {
-        sherpaBackendInstance = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
-        await sherpaBackendInstance.initialize()
-      }
-      return sherpaBackendInstance.transcribe(audioPath, options)
+      // TODO: Canary model not yet available in sherpa-onnx
+      // See: https://github.com/k2-fsa/sherpa-onnx/issues - awaiting canary-1b support
+      throw new Error(
+        "Canary backend is not yet supported. " + "Use 'parakeet' for EU languages or 'whisper' for other languages."
+      )
     }
 
     case BACKEND_TYPES.whisper: {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      // Create a new instance for whisper with different model
-      const whisperBackend = new SherpaBackend({ model: "whisper-medium" })
-      await whisperBackend.initialize()
-      try {
-        return await whisperBackend.transcribe(audioPath, options)
-      } finally {
-        await whisperBackend.dispose()
-      }
+      const whisperBackend = await getOrCreateBackend("whisper-medium")
+      return whisperBackend.transcribe(audioPath, options)
     }
 
     case BACKEND_TYPES.auto: {
@@ -110,24 +110,35 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
   }
 }
 
+/** Default models for each backend */
+const DEFAULT_MODELS: Record<Exclude<BackendType, "auto">, string> = {
+  parakeet: "parakeet-tdt-0.6b-v3",
+  canary: "canary-1b-v2", // Not yet supported
+  whisper: "whisper-medium"
+}
+
 /**
  * Download a model for the specified backend
  *
  * @param backend - Backend to download model for
- * @param model - Specific model variant to download
+ * @param model - Specific model variant to download (defaults to recommended model for backend)
  */
 export async function downloadModel(backend: BackendType, model?: string): Promise<void> {
   switch (backend) {
     case BACKEND_TYPES.parakeet:
-    case BACKEND_TYPES.canary:
     case BACKEND_TYPES.whisper: {
       const { downloadSherpaModel } = await import("./backends/sherpa/download.js")
-      await downloadSherpaModel(model ?? "parakeet-tdt-0.6b-v3")
+      const defaultModel = DEFAULT_MODELS[backend]
+      await downloadSherpaModel(model ?? defaultModel)
       return
     }
 
+    case BACKEND_TYPES.canary: {
+      throw new Error("Canary backend is not yet supported")
+    }
+
     case BACKEND_TYPES.auto: {
-      throw new Error("Cannot download model for 'auto' backend")
+      throw new Error("Cannot download model for 'auto' backend - specify a backend explicitly")
     }
   }
 }
@@ -136,8 +147,10 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
  * Clean up all cached backend instances
  */
 export async function cleanup(): Promise<void> {
-  if (sherpaBackendInstance !== null) {
-    await sherpaBackendInstance.dispose()
-    sherpaBackendInstance = null
+  const disposePromises: Promise<void>[] = []
+  for (const backend of backendCache.values()) {
+    disposePromises.push(backend.dispose())
   }
+  await Promise.all(disposePromises)
+  backendCache.clear()
 }

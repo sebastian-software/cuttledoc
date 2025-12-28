@@ -9,8 +9,10 @@ import { SHERPA_MODELS, type SherpaModelType } from "./types.js"
 /**
  * Get the models directory path
  */
-function getModelsDir(): string {
-  return process.env["LOCAL_TRANSCRIBE_MODELS_DIR"] ?? join(process.cwd(), "models")
+export function getModelsDir(): string {
+  return (
+    process.env["CUTTLEDOC_MODELS_DIR"] ?? process.env["LOCAL_TRANSCRIBE_MODELS_DIR"] ?? join(process.cwd(), "models")
+  )
 }
 
 /**

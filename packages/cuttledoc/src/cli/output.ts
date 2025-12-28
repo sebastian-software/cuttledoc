@@ -3,6 +3,8 @@
  * CLI output helpers
  */
 
+import { formatDuration } from "../types/stats.js"
+
 /**
  * Print help message
  */
@@ -50,9 +52,11 @@ EXAMPLES:
 
 /**
  * Print version
+ * Version is read from package.json at build time
  */
 export function printVersion(): void {
-  console.log("cuttledoc v0.1.0")
+  // Version injected by tsup at build time
+  console.log(`cuttledoc v${process.env["npm_package_version"] ?? "1.0.0"}`)
 }
 
 /**
@@ -112,18 +116,4 @@ export function printStats(stats: {
     console.log(`  Total time:     ${stats.totalTimeSeconds.toFixed(1)}s (with LLM)`)
   }
   console.log()
-}
-
-/**
- * Format seconds as HH:MM:SS
- */
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-
-  if (h > 0) {
-    return `${h.toString()}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-  }
-  return `${m.toString()}:${s.toString().padStart(2, "0")}`
 }

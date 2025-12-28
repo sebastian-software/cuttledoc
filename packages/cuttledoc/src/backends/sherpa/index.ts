@@ -18,13 +18,7 @@ import {
   type SherpaRecognizerConfig
 } from "./types.js"
 
-/**
- * Get the models directory path
- */
-function getModelsDir(): string {
-  // Default to ./models in the package root
-  return process.env["LOCAL_TRANSCRIBE_MODELS_DIR"] ?? join(process.cwd(), "models")
-}
+import { getModelsDir } from "./download.js"
 
 /**
  * Load the sherpa-onnx module
@@ -143,7 +137,7 @@ export class SherpaBackend implements Backend {
    * Supports any audio format when @mmomtchev/ffmpeg is installed.
    * Falls back to WAV-only support without ffmpeg.
    */
-  async transcribe(audioPath: string, _options: TranscribeOptions = {}): Promise<TranscriptionResult> {
+  async transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
     if (!this.isInitialized || this.sherpa === null || this.recognizer === null) {
       await this.initialize()
     }
@@ -203,13 +197,19 @@ export class SherpaBackend implements Backend {
       })
     }
 
+    // Determine the correct backend type based on model
+    const backendType = this.modelType.startsWith("whisper") ? BACKEND_TYPES.whisper : BACKEND_TYPES.parakeet
+
+    // Use detected language from result, or fallback to requested language, or "auto"
+    const detectedLanguage = result.lang ?? options.language ?? "auto"
+
     return {
       text: result.text,
       segments,
       durationSeconds,
       processingTimeSeconds: (performance.now() - startTime) / 1000,
-      language: result.lang ?? "auto",
-      backend: BACKEND_TYPES.parakeet // Use parakeet as the backend type for sherpa
+      language: detectedLanguage,
+      backend: backendType
     }
   }
 

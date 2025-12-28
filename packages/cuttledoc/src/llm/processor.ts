@@ -60,7 +60,11 @@ async function loadLlamaModule(): Promise<LlamaModule> {
  * Get the models directory for LLM models
  */
 function getModelsDir(): string {
-  return process.env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"] ?? join(process.cwd(), "models", "llm")
+  return (
+    process.env["CUTTLEDOC_LLM_MODELS_DIR"] ??
+    process.env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"] ??
+    join(process.cwd(), "models", "llm")
+  )
 }
 
 /**
