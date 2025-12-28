@@ -1,0 +1,8 @@
+# Phi-4-multimodal ASR Prototype Dependencies
+torch>=2.0.0
+transformers>=4.40.0
+soundfile>=0.12.0
+librosa>=0.10.0
+jiwer>=3.0.0  # For WER calculation
+accelerate>=0.26.0  # For efficient model loading
+
