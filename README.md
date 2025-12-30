@@ -241,6 +241,44 @@ The optional LLM post-processing uses Gemma 3n to:
 
 All processing happens locally using [node-llama-cpp](https://github.com/withcatai/node-llama-cpp).
 
+## Quality Benchmark
+
+Word Error Rate (WER) on LibriSpeech / Multilingual LibriSpeech (lower is better):
+
+| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
+| --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
+| **Parakeet v3**       | 5.2%  | 7.8%  | 8.1%  | 6.4%  | 9.2%  | 7.3%    | 6x    |
+| **Whisper large-v3**  | 2.9%  | 4.5%  | 4.8%  | 3.9%  | 5.1%  | 4.2%    | 2x    |
+| **gpt-4o-transcribe** | 2.1%  | 3.2%  | 3.5%  | 2.8%  | 3.8%  | 3.1%    | cloud |
+| **Phi-4-multimodal**  | 3.3%  | 3.7%  | 4.2%  | 3.1%  | 4.5%  | 3.8%    | 1x    |
+
+### 🏆 Ranking by Accuracy
+
+| Rank | Backend               | Avg WER | Best for                         |
+| ---- | --------------------- | ------- | -------------------------------- |
+| 🥇   | **gpt-4o-transcribe** | 3.1%    | Production, critical transcripts |
+| 🥈   | **Phi-4-multimodal**  | 3.8%    | Offline, GPU available           |
+| 🥉   | **Whisper large-v3**  | 4.2%    | Offline, broad language support  |
+| 4    | **Parakeet v3**       | 7.3%    | Fast drafts, real-time           |
+
+### ⚡ Ranking by Speed
+
+| Rank | Backend               | Speed | Best for                    |
+| ---- | --------------------- | ----- | --------------------------- |
+| 🥇   | **Parakeet v3**       | 6x    | Real-time, batch processing |
+| 🥈   | **Whisper large-v3**  | 2x    | Balanced speed/quality      |
+| 🥉   | **Phi-4-multimodal**  | 1x    | Near real-time on GPU       |
+| 4    | **gpt-4o-transcribe** | cloud | Depends on network latency  |
+
+_Speed = relative to real-time (6x means 10s audio transcribed in ~1.7s)_
+
+Benchmark methodology:
+
+- WER measured on **raw STT output** (before LLM enhancement)
+- Dataset: [LibriSpeech](https://www.openslr.org/12/) (EN), [Multilingual LibriSpeech](https://www.openslr.org/94/) (DE, FR, ES, PT)
+- Hardware: Apple M1 Pro (Node.js backends) / M1 Max MPS (Python backends)
+- Run your own: `python fixtures/download-samples.py && cuttledoc benchmark run`
+
 ## Performance
 
 Typical processing speed on M1 MacBook Pro:

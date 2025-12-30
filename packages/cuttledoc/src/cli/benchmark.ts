@@ -111,7 +111,11 @@ function findFixtures(fixturesDir: string, language?: string): { audio: string; 
       }
     }
 
-    const refPath = join(fixturesDir, `${baseName}.md`)
+    // Try .md first, then .txt
+    let refPath = join(fixturesDir, `${baseName}.md`)
+    if (!existsSync(refPath)) {
+      refPath = join(fixturesDir, `${baseName}.txt`)
+    }
     if (existsSync(refPath)) {
       fixtures.push({
         audio: join(fixturesDir, file),

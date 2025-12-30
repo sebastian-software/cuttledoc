@@ -6,28 +6,23 @@ This directory is for audio files used in integration testing and WER benchmarks
 
 To run integration tests and benchmarks, you need audio files with matching reference transcripts.
 
-### Recommended: FLEURS Dataset
+### Quick Start: Download LibriSpeech Samples
 
-For standardized WER benchmarking, we recommend using samples from the [FLEURS dataset](https://huggingface.co/datasets/google/fleurs) (Google's multilingual speech benchmark):
+We provide a script to download samples from [LibriSpeech](https://www.openslr.org/12/) and [Multilingual LibriSpeech](https://www.openslr.org/94/) (public domain speech datasets):
 
 ```bash
-# Download FLEURS samples using Hugging Face datasets
-pip install datasets soundfile
+# Install dependencies (use venv for macOS)
+python3 -m venv .venv && source .venv/bin/activate
+pip install 'datasets[audio]' soundfile
 
-# Python script to extract test samples
-python -c "
-from datasets import load_dataset
-import soundfile as sf
+# Download samples for all 5 benchmark languages (EN, DE, FR, ES, PT)
+python download-samples.py
 
-# Load German test split (or any of the 102 languages)
-ds = load_dataset('google/fleurs', 'de_de', split='test[:10]')
-
-for i, sample in enumerate(ds):
-    sf.write(f'fleurs-de-{i:03d}.wav', sample['audio']['array'], sample['audio']['sampling_rate'])
-    with open(f'fleurs-de-{i:03d}.txt', 'w') as f:
-        f.write(sample['transcription'])
-"
+# Or download specific language
+python download-samples.py --lang de --samples 10
 ```
+
+Supported languages: 🇬🇧 en, 🇩🇪 de, 🇫🇷 fr, 🇪🇸 es, 🇧🇷 pt (via LibriSpeech / Multilingual LibriSpeech)
 
 ### File Naming Convention
 
@@ -38,8 +33,8 @@ for i, sample in enumerate(ds):
 
 Examples:
 
-- `fleurs-de-001.wav` + `fleurs-de-001.md`
-- `librispeech-en-001.ogg` + `librispeech-en-001.md`
+- `librispeech-de-001.wav` + `librispeech-de-001.txt`
+- `librispeech-en-001.wav` + `librispeech-en-001.txt`
 
 ### Running Benchmarks
 
@@ -56,8 +51,8 @@ cuttledoc benchmark run parakeet-tdt-0.6b-v3 whisper-large-v3
 
 ## License Note
 
-Audio fixtures are not included in the repository. Use properly licensed datasets:
+Audio fixtures are not included in the repository (too large). Use properly licensed datasets:
 
-- **FLEURS**: Apache 2.0 license
+- **FLEURS**: Apache 2.0 license (Google)
 - **LibriSpeech**: Public domain
-- **Common Voice**: CC0 license
+- **Common Voice**: CC0 license (Mozilla)

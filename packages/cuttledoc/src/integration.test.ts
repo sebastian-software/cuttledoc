@@ -81,17 +81,17 @@ describe("integration", () => {
       "should transcribe audio when fixtures are available",
       async () => {
         // Skip if no fixtures are available
-        // Users should add their own test audio from FLEURS or other datasets
-        const hasEnglishFixture = await fixtureExists("test-en.ogg")
-        const hasEnglishReference = await fixtureExists("test-en.md")
+        // Users can download samples: python fixtures/download-fleurs.py
+        const hasEnglishFixture = await fixtureExists("librispeech-en-000.wav")
+        const hasEnglishReference = await fixtureExists("librispeech-en-000.txt")
 
         if (!hasEnglishFixture || !hasEnglishReference) {
-          console.log("Skipping: No test fixtures found. See fixtures/README.md for setup instructions.")
+          console.log("Skipping: No fixtures found. Run: python fixtures/download-fleurs.py")
           return
         }
 
-        const audioPath = resolve(fixturesDir, "test-en.ogg")
-        const expectedText = await readFile(resolve(fixturesDir, "test-en.md"), "utf-8")
+        const audioPath = resolve(fixturesDir, "librispeech-en-000.wav")
+        const expectedText = await readFile(resolve(fixturesDir, "librispeech-en-000.txt"), "utf-8")
 
         const { SherpaBackend } = await import("./backends/sherpa/index.js")
         const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
@@ -118,14 +118,14 @@ describe("integration", () => {
       "should auto-select Parakeet backend for supported languages",
       async () => {
         // Skip if no fixtures are available
-        const hasFixture = await fixtureExists("test-en.ogg")
+        const hasFixture = await fixtureExists("librispeech-en-000.wav")
 
         if (!hasFixture) {
-          console.log("Skipping: No test fixtures found. See fixtures/README.md for setup instructions.")
+          console.log("Skipping: No fixtures found. Run: python fixtures/download-fleurs.py")
           return
         }
 
-        const audioPath = resolve(fixturesDir, "test-en.ogg")
+        const audioPath = resolve(fixturesDir, "librispeech-en-000.wav")
 
         const result = await transcribe(audioPath, { language: "en" })
 
