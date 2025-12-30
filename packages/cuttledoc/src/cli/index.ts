@@ -26,6 +26,7 @@ import {
 import { enhanceTranscript } from "../llm/index.js"
 
 import { parseArgs } from "./args.js"
+import { runBenchmark } from "./benchmark.js"
 import { printHelp, printModels, printStats, printVersion } from "./output.js"
 
 async function main(): Promise<void> {
@@ -45,6 +46,11 @@ async function main(): Promise<void> {
   // Handle subcommands
   if (args.command === "models") {
     await handleModelsCommand(args)
+    return
+  }
+
+  if (args.command === "benchmark") {
+    await runBenchmark(args.positional)
     return
   }
 
@@ -141,9 +147,15 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   const backend = backendArg in BACKEND_TYPES ? (backendArg as BackendType) : "auto"
 
   // Run transcription
-  const transcribeOptions: { backend: BackendType; language?: string } = { backend }
+  const transcribeOptions: { backend: BackendType; language?: string; apiKey?: string; model?: string } = { backend }
   if (args.language !== undefined) {
     transcribeOptions.language = args.language
+  }
+  if (args.apiKey !== undefined) {
+    transcribeOptions.apiKey = args.apiKey
+  }
+  if (args.model !== undefined) {
+    transcribeOptions.model = args.model
   }
   const result = await transcribe(inputFile, transcribeOptions)
 

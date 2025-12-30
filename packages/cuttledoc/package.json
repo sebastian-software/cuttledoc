@@ -7,24 +7,21 @@
     "cuttledoc": "./dist/cli.js"
   },
   "files": [
-    "dist",
-    "build/Release",
-    "binding.gyp",
-    "src/backends/apple/native"
+    "dist"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./llm": {
+      "types": "./dist/llm/index.d.ts",
       "import": "./dist/llm/index.js",
-      "require": "./dist/llm/index.cjs",
-      "types": "./dist/llm/index.d.ts"
+      "require": "./dist/llm/index.cjs"
     }
   },
   "engines": {
@@ -32,16 +29,13 @@
   },
   "scripts": {
     "build": "tsup",
-    "build:native": "node-gyp rebuild",
-    "build:all": "pnpm run build:native && pnpm run build",
-    "install": "node-gyp rebuild || echo 'Native module build skipped (not on macOS or node-gyp not available)'",
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "clean": "rm -rf dist build",
+    "clean": "rm -rf dist",
     "release": "release-it --npm.otp=$(op item get 'npmjs' --otp)",
     "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)"
   },
@@ -49,7 +43,6 @@
     "speech-recognition",
     "transcription",
     "whisper",
-    "apple-speech",
     "parakeet",
     "sherpa-onnx",
     "local",
@@ -63,16 +56,13 @@
   "license": "MIT",
   "dependencies": {
     "@mmomtchev/ffmpeg": "^2.0.1",
-    "node-addon-api": "^8.5.0",
     "node-llama-cpp": "^3.14.5"
-  },
-  "optionalDependencies": {
-    "sherpa-onnx-node": "^1.12.19",
-    "node-gyp": "^10.0.0"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.4",
-    "release-it": "^19.1.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "release-it": "^19.2.2",
+    "sherpa-onnx-node": "^1.12.20",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"

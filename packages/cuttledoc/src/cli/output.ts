@@ -3,6 +3,8 @@
  * CLI output helpers
  */
 
+import { formatDuration } from "../types/stats.js"
+
 /**
  * Print help message
  */
@@ -13,13 +15,22 @@ cuttledoc - Video to document transcription with AI
 USAGE:
   cuttledoc <audio-file> [options]
   cuttledoc models [list|download <model>]
+  cuttledoc benchmark [run|report]
 
 ARGUMENTS:
   <audio-file>      Audio or video file to transcribe (mp3, m4a, mp4, wav, etc.)
 
 OPTIONS:
-  -b, --backend <name>    Backend to use: auto, apple, sherpa (default: auto)
-  -m, --model <name>      Speech model (e.g., whisper-medium, parakeet-tdt-0.6b-v3)
+  -b, --backend <name>    Backend to use: auto, parakeet, whisper, openai (default: auto)
+                          - parakeet: Fastest, 25 languages (en, de, fr, es, ...)
+                          - whisper: Best quality, 99 languages (large-v3)
+                          - openai: Cloud API, best quality, 50+ languages
+  -m, --model <name>      Speech model:
+                          - parakeet-tdt-0.6b-v3 (default for parakeet)
+                          - whisper-large-v3 (default for whisper)
+                          - gpt-4o-transcribe (default for openai)
+                          - gpt-4o-mini-transcribe (faster/cheaper for openai)
+  --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
   -e, --enhance           Enhance transcript with LLM (formatting, corrections)
@@ -30,18 +41,42 @@ OPTIONS:
   -h, --help              Show this help message
   -v, --version           Show version
 
+LOCAL MODELS (offline, no API key required):
+  parakeet-tdt-0.6b-v3    160 MB, fastest, 25 languages
+  whisper-large-v3        1.6 GB, best quality, 99 languages
+
+CLOUD MODELS (requires OPENAI_API_KEY):
+  gpt-4o-transcribe       Best quality, improved WER over Whisper, 50+ languages
+  gpt-4o-mini-transcribe  Faster and cheaper, good quality
+
+  OpenAI's next-gen audio models offer improved word error rates and better
+  language recognition compared to original Whisper models.
+  See: https://openai.com/index/introducing-our-next-generation-audio-models/
+
+  Note: Distil-Whisper models are English-only (https://huggingface.co/distil-whisper)
+
 EXAMPLES:
-  # Basic transcription
+  # Basic transcription (uses Parakeet for supported languages)
   cuttledoc podcast.mp3
 
-  # Transcribe with Apple backend and German language
-  cuttledoc meeting.m4a -b apple -l de
+  # Transcribe with Whisper for best quality
+  cuttledoc meeting.m4a -b whisper
+
+  # Transcribe with OpenAI cloud API (best quality)
+  cuttledoc meeting.m4a -b openai --api-key sk-...
+  # Or set OPENAI_API_KEY environment variable:
+  export OPENAI_API_KEY=sk-...
+  cuttledoc meeting.m4a -b openai
+
+  # Use the faster/cheaper OpenAI model
+  cuttledoc meeting.m4a -b openai -m gpt-4o-mini-transcribe
 
   # Transcribe and enhance with LLM
   cuttledoc video.mp4 -e -o transcript.md
 
-  # Download a speech model
+  # Download speech models
   cuttledoc models download parakeet-tdt-0.6b-v3
+  cuttledoc models download whisper-large-v3
 
   # List available models
   cuttledoc models list
@@ -50,9 +85,11 @@ EXAMPLES:
 
 /**
  * Print version
+ * Version is read from package.json at build time
  */
 export function printVersion(): void {
-  console.log("cuttledoc v0.1.0")
+  // Version injected by tsup at build time
+  console.log(`cuttledoc v${process.env["npm_package_version"] ?? "1.0.0"}`)
 }
 
 /**
@@ -112,18 +149,4 @@ export function printStats(stats: {
     console.log(`  Total time:     ${stats.totalTimeSeconds.toFixed(1)}s (with LLM)`)
   }
   console.log()
-}
-
-/**
- * Format seconds as HH:MM:SS
- */
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-
-  if (h > 0) {
-    return `${h.toString()}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-  }
-  return `${m.toString()}:${s.toString().padStart(2, "0")}`
 }

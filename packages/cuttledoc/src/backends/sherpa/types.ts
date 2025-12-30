@@ -100,12 +100,7 @@ export interface SherpaModule {
  * Supported model types for sherpa backend
  */
 export const SHERPA_MODEL_TYPES = {
-  "parakeet-tdt-0.6b-v2": "parakeet-tdt-0.6b-v2",
   "parakeet-tdt-0.6b-v3": "parakeet-tdt-0.6b-v3",
-  "whisper-tiny": "whisper-tiny",
-  "whisper-base": "whisper-base",
-  "whisper-small": "whisper-small",
-  "whisper-medium": "whisper-medium",
   "whisper-large-v3": "whisper-large-v3"
 } as const
 
@@ -116,6 +111,9 @@ export type SherpaModelType = (typeof SHERPA_MODEL_TYPES)[keyof typeof SHERPA_MO
  */
 export interface SherpaModelInfo {
   type: "transducer" | "whisper"
+  /** Download source: github (tar.bz2) or huggingface (individual files) */
+  source: "github" | "huggingface"
+  /** For github: full URL to tar.bz2. For huggingface: repo name (e.g., "csukuangfj/sherpa-onnx-whisper-distil-large-v3") */
   downloadUrl: string
   folderName: string
   files: {
@@ -133,50 +131,9 @@ export interface SherpaModelInfo {
  * Model registry with download URLs and file paths
  */
 export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
-  "parakeet-tdt-0.6b-v2": {
-    type: "transducer",
-    downloadUrl:
-      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8.tar.bz2",
-    folderName: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8",
-    files: {
-      encoder: "encoder.int8.onnx",
-      decoder: "decoder.int8.onnx",
-      joiner: "joiner.int8.onnx",
-      tokens: "tokens.txt"
-    },
-    modelType: "nemo_transducer",
-    languages: [
-      "en",
-      "de",
-      "fr",
-      "es",
-      "it",
-      "pt",
-      "nl",
-      "pl",
-      "cs",
-      "sk",
-      "hu",
-      "ro",
-      "bg",
-      "el",
-      "sv",
-      "da",
-      "fi",
-      "no",
-      "hr",
-      "sl",
-      "et",
-      "lv",
-      "lt",
-      "mt",
-      "ru",
-      "uk"
-    ],
-    sizeBytes: 160_000_000
-  },
   "parakeet-tdt-0.6b-v3": {
     type: "transducer",
+    source: "github",
     downloadUrl:
       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2",
     folderName: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
@@ -188,88 +145,38 @@ export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
     },
     modelType: "nemo_transducer",
     languages: [
-      "en",
-      "de",
-      "fr",
-      "es",
-      "it",
-      "pt",
-      "nl",
-      "pl",
-      "cs",
-      "sk",
-      "hu",
-      "ro",
-      "bg",
-      "el",
-      "sv",
-      "da",
-      "fi",
-      "no",
-      "hr",
-      "sl",
-      "et",
-      "lv",
-      "lt",
-      "mt",
-      "ru",
-      "uk"
+      "en", // English
+      "de", // German
+      "fr", // French
+      "es", // Spanish
+      "it", // Italian
+      "pt", // Portuguese
+      "nl", // Dutch
+      "pl", // Polish
+      "cs", // Czech
+      "sk", // Slovak
+      "hu", // Hungarian
+      "ro", // Romanian
+      "bg", // Bulgarian
+      "el", // Greek
+      "sv", // Swedish
+      "da", // Danish
+      "fi", // Finnish
+      "no", // Norwegian
+      "hr", // Croatian
+      "sl", // Slovenian
+      "et", // Estonian
+      "lv", // Latvian
+      "lt", // Lithuanian
+      "mt", // Maltese
+      "uk" // Ukrainian
     ],
     sizeBytes: 160_000_000
   },
-  "whisper-tiny": {
-    type: "whisper",
-    downloadUrl: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2",
-    folderName: "sherpa-onnx-whisper-tiny",
-    files: {
-      encoder: "tiny-encoder.int8.onnx",
-      decoder: "tiny-decoder.int8.onnx",
-      tokens: "tiny-tokens.txt"
-    },
-    languages: ["multilingual"],
-    sizeBytes: 40_000_000
-  },
-  "whisper-base": {
-    type: "whisper",
-    downloadUrl: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.tar.bz2",
-    folderName: "sherpa-onnx-whisper-base",
-    files: {
-      encoder: "base-encoder.int8.onnx",
-      decoder: "base-decoder.int8.onnx",
-      tokens: "base-tokens.txt"
-    },
-    languages: ["multilingual"],
-    sizeBytes: 80_000_000
-  },
-  "whisper-small": {
-    type: "whisper",
-    downloadUrl: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-small.tar.bz2",
-    folderName: "sherpa-onnx-whisper-small",
-    files: {
-      encoder: "small-encoder.int8.onnx",
-      decoder: "small-decoder.int8.onnx",
-      tokens: "small-tokens.txt"
-    },
-    languages: ["multilingual"],
-    sizeBytes: 250_000_000
-  },
-  "whisper-medium": {
-    type: "whisper",
-    downloadUrl:
-      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-medium.tar.bz2",
-    folderName: "sherpa-onnx-whisper-medium",
-    files: {
-      encoder: "medium-encoder.int8.onnx",
-      decoder: "medium-decoder.int8.onnx",
-      tokens: "medium-tokens.txt"
-    },
-    languages: ["multilingual"],
-    sizeBytes: 500_000_000
-  },
   "whisper-large-v3": {
     type: "whisper",
-    downloadUrl:
-      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-large-v3.tar.bz2",
+    source: "huggingface",
+    downloadUrl: "csukuangfj/sherpa-onnx-whisper-large-v3",
     folderName: "sherpa-onnx-whisper-large-v3",
     files: {
       encoder: "large-v3-encoder.int8.onnx",
@@ -277,6 +184,6 @@ export const SHERPA_MODELS: Record<SherpaModelType, SherpaModelInfo> = {
       tokens: "large-v3-tokens.txt"
     },
     languages: ["multilingual"],
-    sizeBytes: 1_600_000_000
+    sizeBytes: 1_600_000_000 // ~1.6GB total (encoder + decoder)
   }
 } as const

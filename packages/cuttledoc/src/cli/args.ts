@@ -18,6 +18,7 @@ export interface CLIArgs {
   language: string | undefined
   output: string | undefined
   llmModel: string | undefined
+  apiKey: string | undefined
 
   // Subcommand
   command: string | undefined
@@ -42,6 +43,7 @@ export function parseArgs(argv: string[]): CLIArgs {
     language: undefined,
     output: undefined,
     llmModel: undefined,
+    apiKey: undefined,
     command: undefined,
     positional: []
   }
@@ -80,10 +82,16 @@ export function parseArgs(argv: string[]): CLIArgs {
       args.output = argv[++i]
     } else if (arg === "--llm-model") {
       args.llmModel = argv[++i]
+    } else if (arg === "--api-key") {
+      args.apiKey = argv[++i]
     }
     // Subcommands
     else if (arg === "models") {
       args.command = "models"
+      args.positional = argv.slice(i + 1)
+      break
+    } else if (arg === "benchmark") {
+      args.command = "benchmark"
       args.positional = argv.slice(i + 1)
       break
     }
