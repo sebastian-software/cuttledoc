@@ -37,7 +37,7 @@ export class OpenAIBackend implements Backend {
   private model: OpenAITranscribeModel = DEFAULT_OPENAI_MODEL
 
   constructor(options?: { apiKey?: string | undefined; model?: OpenAITranscribeModel }) {
-    this.apiKey = options?.apiKey ?? process.env.OPENAI_API_KEY ?? null
+    this.apiKey = options?.apiKey ?? process.env["OPENAI_API_KEY"] ?? null
     this.model = options?.model ?? DEFAULT_OPENAI_MODEL
   }
 
@@ -50,7 +50,7 @@ export class OpenAIBackend implements Backend {
   }
 
   async transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
-    const apiKey = options.apiKey ?? this.apiKey ?? process.env.OPENAI_API_KEY
+    const apiKey = options.apiKey ?? this.apiKey ?? process.env["OPENAI_API_KEY"]
     if (!apiKey) {
       throw new Error(
         "OpenAI API key required. Provide via options.apiKey, constructor, or OPENAI_API_KEY environment variable."
@@ -113,21 +113,29 @@ export class OpenAIBackend implements Backend {
     const processingTimeSeconds = (performance.now() - startTime) / 1000
 
     // gpt-4o-transcribe returns only text in json format, no segments/timestamps
-    return {
-      text: result.text,
-      segments: result.segments
-        ? result.segments.map((seg) => ({
+    const segments = result.segments
+      ? result.segments.map((seg) => {
+          const base = {
             text: seg.text,
             startSeconds: seg.start,
-            endSeconds: seg.end,
-            confidence: seg.avg_logprob !== undefined ? Math.exp(seg.avg_logprob) : undefined
-          }))
-        : [{ text: result.text, startSeconds: 0, endSeconds: 0 }],
-      words: result.words?.map((word) => ({
-        word: word.word,
-        startSeconds: word.start,
-        endSeconds: word.end
-      })),
+            endSeconds: seg.end
+          }
+          if (seg.avg_logprob !== undefined) {
+            return { ...base, confidence: Math.exp(seg.avg_logprob) }
+          }
+          return base
+        })
+      : [{ text: result.text, startSeconds: 0, endSeconds: 0 }]
+
+    return {
+      text: result.text,
+      segments,
+      words:
+        result.words?.map((word) => ({
+          word: word.word,
+          startSeconds: word.start,
+          endSeconds: word.end
+        })) ?? [],
       durationSeconds: result.duration ?? 0,
       processingTimeSeconds,
       language: result.language ?? options.language ?? "auto",

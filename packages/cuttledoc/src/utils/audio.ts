@@ -40,9 +40,12 @@ export function normalizeAudio(samples: Float32Array, targetPeak = 0.9): Float32
   // Find current peak
   let currentPeak = 0
   for (let i = 0; i < samples.length; i++) {
-    const abs = Math.abs(samples[i])
-    if (abs > currentPeak) {
-      currentPeak = abs
+    const sample = samples[i]
+    if (sample !== undefined) {
+      const abs = Math.abs(sample)
+      if (abs > currentPeak) {
+        currentPeak = abs
+      }
     }
   }
 
@@ -55,7 +58,10 @@ export function normalizeAudio(samples: Float32Array, targetPeak = 0.9): Float32
   const gain = targetPeak / currentPeak
   const normalized = new Float32Array(samples.length)
   for (let i = 0; i < samples.length; i++) {
-    normalized[i] = samples[i] * gain
+    const sample = samples[i]
+    if (sample !== undefined) {
+      normalized[i] = sample * gain
+    }
   }
 
   return normalized

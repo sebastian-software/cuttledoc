@@ -119,7 +119,7 @@ function buildConfig(
     baseConfig.modelConfig.whisper = {
       encoder: join(basePath, modelInfo.files.encoder),
       decoder: join(basePath, modelInfo.files.decoder),
-      language,
+      language: language ?? "en",
       task: "transcribe"
     }
   }

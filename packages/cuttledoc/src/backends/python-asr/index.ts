@@ -14,7 +14,6 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import {
-  BACKEND_TYPES,
   type Backend,
   type TranscribeOptions,
   type TranscriptionResult,
