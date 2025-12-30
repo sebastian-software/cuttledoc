@@ -1,31 +1,28 @@
 <p align="center">
-  <img src="packages/docs/public/logo.svg" width="150" height="150" alt="cuttledoc logo">
+  <img src="packages/docs/app/assets/logo.svg" width="150" height="150" alt="cuttledoc logo">
 </p>
 
 <h1 align="center">cuttledoc</h1>
 
 <p align="center">
-  <strong>Fast, offline speech-to-text transcription for Node.js with multiple backend support.</strong>
+  <strong>Fast speech-to-text transcription for Node.js with multiple backend support (local + cloud).</strong>
 </p>
 
 [![CI](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sebastian-software/cuttledoc/branch/main/graph/badge.svg)](https://codecov.io/gh/sebastian-software/cuttledoc)
 [![npm version](https://badge.fury.io/js/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
 [![npm downloads](https://img.shields.io/npm/dm/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-green.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-10%2B-orange.svg)](https://pnpm.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Bundle size](https://img.shields.io/bundlephobia/minzip/cuttledoc)](https://bundlephobia.com/package/cuttledoc)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/sebastian-software/cuttledoc)
-[![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
-[![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)](https://github.com/sebastian-software/cuttledoc)
-[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/sebastian-software/cuttledoc)
 
 ## Features
 
-- 🎤 **Multiple Backends**: Apple Speech (macOS only), Whisper, Parakeet
-- 🚀 **Native Performance**: No Python, no subprocess overhead
-- 📱 **Offline**: All processing happens locally
+- 🎤 **Multiple Backends**: Local (Whisper, Parakeet) and Cloud (OpenAI gpt-4o-transcribe)
+- 🚀 **Native Performance**: No Python for core backends, optional Python for Phi-4/Canary
+- 📱 **Offline & Online**: Choose between local processing or cloud API
 - 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
 - 🤖 **LLM Enhancement**: Auto-correct and format transcripts (using Gemma 3n)
 - 📊 **Detailed Stats**: Processing time, word count, confidence scores
@@ -48,14 +45,21 @@ pnpm add cuttledoc
 ### CLI
 
 ```bash
-# Basic transcription
+# Basic transcription (uses local Parakeet)
 npx cuttledoc video.mp4
 
 # With LLM enhancement (adds formatting, TLDR, corrections)
 npx cuttledoc podcast.mp3 --enhance -o transcript.md
 
 # Use specific backend and language
-npx cuttledoc meeting.m4a -b apple -l de
+npx cuttledoc meeting.m4a -b parakeet -l de
+
+# Use OpenAI cloud API (best quality)
+export OPENAI_API_KEY=sk-...
+npx cuttledoc meeting.m4a -b openai
+
+# Or pass API key directly
+npx cuttledoc meeting.m4a -b openai --api-key sk-...
 
 # Show processing statistics
 npx cuttledoc audio.wav --stats
@@ -66,14 +70,21 @@ npx cuttledoc audio.wav --stats
 ```typescript
 import { transcribe } from "cuttledoc"
 
+// Local transcription (offline)
 const result = await transcribe("audio.mp3", {
   language: "en",
-  backend: "auto" // auto, apple, whisper, parakeet
+  backend: "auto" // auto, whisper, parakeet, phi4
 })
 
 console.log(result.text)
 console.log(`Duration: ${result.durationSeconds}s`)
-console.log(`Confidence: ${result.confidence}`)
+
+// Cloud transcription (OpenAI)
+const cloudResult = await transcribe("audio.mp3", {
+  backend: "openai",
+  apiKey: process.env.OPENAI_API_KEY, // or pass directly
+  model: "gpt-4o-transcribe" // or "gpt-4o-mini-transcribe"
+})
 ```
 
 ### With LLM Enhancement
@@ -99,7 +110,9 @@ cuttledoc <audio-file> [options]
 cuttledoc models [list|download <model>]
 
 Options:
-  -b, --backend <name>    Backend: auto, apple, whisper, parakeet (default: auto)
+  -b, --backend <name>    Backend: auto, whisper, parakeet, openai (default: auto)
+  -m, --model <name>      Model: gpt-4o-transcribe, gpt-4o-mini-transcribe, etc.
+  --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code: en, de, fr, es, etc.
   -o, --output <file>     Write output to file
   -e, --enhance           Enhance with LLM (formatting + corrections)
@@ -117,28 +130,94 @@ Options:
 # List available models
 cuttledoc models list
 
-# Download a speech model
-cuttledoc models download whisper-medium
-cuttledoc models download parakeet-tdt-0.6b-v3
+# Download speech models
+cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
+cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
-# Download LLM model
+# Download LLM model (for --enhance)
 cuttledoc models download gemma3n:e4b
 ```
 
 ## Backends
 
-| Backend          | Platform  | Speed  | Quality | Languages |
-| ---------------- | --------- | ------ | ------- | --------- |
-| Apple Speech     | macOS 14+ | ⚡⚡⚡ | ★★★★    | 60+       |
-| Whisper (medium) | All       | ⚡⚡   | ★★★★★   | 99        |
-| Parakeet v3      | All       | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
+### Local Backends (Offline, No API Key)
+
+| Backend                   | Speed  | Quality | Languages | Size   | Requires    |
+| ------------------------- | ------ | ------- | --------- | ------ | ----------- |
+| **Parakeet v3** (default) | ⚡⚡⚡ | ★★★★☆   | 25        | 160 MB | Node.js     |
+| **Whisper large-v3**      | ⚡⚡   | ★★★★★   | 99        | 1.6 GB | Node.js     |
+| **Phi-4-multimodal**      | ⚡⚡   | ★★★★★   | 8         | 12 GB  | Python, GPU |
+| **Canary-1B-v2**          | ⚡⚡   | ★★★★★   | 26        | 1 GB   | Python, GPU |
+
+### Cloud Backends (Requires API Key)
+
+| Backend                    | Speed    | Quality | Languages | Cost        |
+| -------------------------- | -------- | ------- | --------- | ----------- |
+| **gpt-4o-transcribe**      | ⚡⚡⚡   | ★★★★★+  | 50+       | ~$0.006/min |
+| **gpt-4o-mini-transcribe** | ⚡⚡⚡⚡ | ★★★★★   | 50+       | ~$0.003/min |
+
+OpenAI's next-generation audio models offer improved WER (Word Error Rate) over local Whisper:
+
+- Better language recognition and accuracy
+- Handles accents and challenging audio better
+- See: [Introducing next-generation audio models](https://openai.com/index/introducing-our-next-generation-audio-models/)
 
 ### Backend Selection
 
-- **`auto`** (default): Apple Speech on macOS, Whisper elsewhere
-- **`apple`**: Native macOS Speech Framework, fastest, on-device
-- **`whisper`**: OpenAI Whisper via sherpa-onnx, best multilingual
-- **`parakeet`**: NVIDIA Parakeet v3, fast and accurate for 26 EU languages
+- **`auto`** (default): Parakeet for 25 supported languages, Whisper for all others
+- **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, excellent for English/German/European languages
+- **`whisper`**: OpenAI Whisper large-v3 – best quality, 99 languages including Asian/Arabic
+- **`openai`**: OpenAI cloud API – best accuracy, requires `OPENAI_API_KEY`
+- **`phi4`**: Microsoft Phi-4-multimodal – best accuracy for EN/DE/ES (requires Python + MPS/CUDA)
+- **`canary`**: NVIDIA Canary-1B-v2 – excellent for EU languages including RU/UK (requires Python + CUDA)
+
+### Why These Models?
+
+We offer multiple backends for different use cases:
+
+**Local (Offline):**
+
+1. **Parakeet v3** – Best speed-to-quality ratio for common languages (160 MB, 6x realtime)
+2. **Whisper large-v3** – Full multilingual model, 99 languages (1.6 GB, 2x realtime)
+3. **Phi-4-multimodal** – Lowest WER for: EN, DE, FR, ES, IT, PT, ZH, JA (~12 GB, 1x realtime)
+4. **Canary-1B-v2** – NVIDIA's latest, 26 EU languages + RU/UK (~1 GB, fast on CUDA)
+
+**Cloud (Requires API Key):** 5. **gpt-4o-transcribe** – OpenAI's best, improved WER over Whisper, 50+ languages 6. **gpt-4o-mini-transcribe** – Faster and cheaper, still better than Whisper
+
+> **Note on Distil-Whisper**: The distilled Whisper models (`distil-large-v3`, `distil-large-v3.5`)
+> are [English-only](https://huggingface.co/distil-whisper) and ignore the language parameter.
+> We use the full `whisper-large-v3` for true multilingual support.
+
+### Python Backend Requirements (Phi-4, Canary)
+
+To use the `phi4` or `canary` backends, you need Python with the appropriate libraries:
+
+**Phi-4:**
+
+```bash
+pip install torch transformers librosa soundfile
+```
+
+- ~12GB model, downloaded automatically from Hugging Face
+- Best on Apple Silicon (MPS) or NVIDIA GPU (CUDA)
+
+**Canary:**
+
+```bash
+pip install "nemo_toolkit[asr] @ git+https://github.com/NVIDIA/NeMo.git"
+```
+
+- ~1GB model, downloaded automatically
+- Best on NVIDIA GPU (CUDA), CPU fallback available
+
+### Long Audio Support
+
+Whisper has a 30-second context window limit. For longer audio:
+
+- **Parakeet**: No limit, processes entire audio at once
+- **Whisper**: Uses Silero VAD (Voice Activity Detection) to automatically split audio at natural pauses
+
+This happens transparently - just pass your audio file and get the complete transcript.
 
 ## Supported Formats
 
@@ -166,11 +245,14 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Typical processing speed on M1 MacBook Pro:
 
-| Input        | Backend     | Transcription | LLM | Total |
-| ------------ | ----------- | ------------- | --- | ----- |
-| 10 min audio | Apple       | 15s           | -   | 15s   |
-| 10 min audio | Whisper     | 45s           | -   | 45s   |
-| 10 min audio | Apple + LLM | 15s           | 20s | 35s   |
+| Input        | Backend        | Transcription | LLM | Total |
+| ------------ | -------------- | ------------- | --- | ----- |
+| 10 min audio | Parakeet       | 20s           | -   | 20s   |
+| 10 min audio | Whisper        | 45s           | -   | 45s   |
+| 10 min audio | Phi-4 (MPS)    | ~10min        | -   | ~10m  |
+| 10 min audio | Parakeet + LLM | 20s           | 20s | 40s   |
+
+Note: Phi-4 runs near real-time on Apple Silicon (MPS) or NVIDIA GPU. The first invocation has ~15s model loading overhead.
 
 ## Documentation
 
@@ -234,5 +316,8 @@ MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 - [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) - Speech recognition engine
 - [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) - LLM inference
 - [@mmomtchev/ffmpeg](https://github.com/mmomtchev/ffmpeg) - Native FFmpeg bindings
-- [Whisper](https://github.com/openai/whisper) - OpenAI's speech recognition model
+- [OpenAI Whisper](https://github.com/openai/whisper) - Speech recognition model
+- [OpenAI GPT-4o Transcribe](https://openai.com/index/introducing-our-next-generation-audio-models/) - Next-gen cloud ASR
+- [Phi-4-multimodal](https://huggingface.co/microsoft/Phi-4-multimodal-instruct) - Microsoft's multimodal LLM
+- [Canary-1B-v2](https://huggingface.co/nvidia/canary-1b-v2) - NVIDIA's multilingual ASR model
 - [Gemma](https://ai.google.dev/gemma) - Google's open-weight LLM

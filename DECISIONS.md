@@ -15,9 +15,8 @@ Local speech-to-text has multiple viable approaches, each with trade-offs:
 
 | Approach          | Pros                       | Cons                           |
 | ----------------- | -------------------------- | ------------------------------ |
-| Apple Speech      | Native, fast, no download  | macOS only                     |
 | Whisper (OpenAI)  | High quality, 99 languages | Large models, slower           |
-| Parakeet (NVIDIA) | Fastest for EU languages   | 25 languages only              |
+| Parakeet (NVIDIA) | Fastest, 25 languages      | Limited language support       |
 | Cloud APIs        | Best quality               | Requires internet, costs money |
 
 ### Decision
@@ -27,7 +26,7 @@ Implement a **unified API with pluggable backends**:
 ```typescript
 const result = await transcribe("audio.wav", {
   language: "de",
-  backend: "auto" // or "apple", "sherpa"
+  backend: "auto" // or "parakeet", "whisper"
 })
 ```
 
@@ -84,87 +83,79 @@ Reasons:
 
 ---
 
-## ADR-003: Parakeet v3 INT8 as Default for EU Languages
+## ADR-003: Two-Model Strategy (Parakeet + Whisper large-v3)
 
 **Status:** Accepted
-**Date:** 2024-12-16
+**Date:** 2024-12-16 (initial), 2024-12-28 (simplified), 2024-12-30 (revised)
 
 ### Context
 
-For European languages (de, en, fr, es, it, etc.), multiple models are viable:
+We evaluated multiple speech recognition models for cuttledoc:
 
-| Model            | Size   | Speed   | Quality   | Languages |
-| ---------------- | ------ | ------- | --------- | --------- |
-| Whisper large-v3 | 3GB    | Slow    | Best      | 99        |
-| Whisper small    | 466MB  | Medium  | Good      | 99        |
-| Parakeet v3 FP32 | 600MB  | Fast    | Excellent | 25 EU     |
-| Parakeet v3 INT8 | ~150MB | Fastest | Excellent | 25 EU     |
+| Model              | Size  | Speed       | Quality | Languages |
+| ------------------ | ----- | ----------- | ------- | --------- |
+| Parakeet v3 INT8   | 160MB | ⚡⚡⚡ (6x) | ★★★★☆   | 25        |
+| Whisper large-v3   | 1.6GB | ⚡⚡ (2x)   | ★★★★★   | 99        |
+| ~~Whisper medium~~ | 500MB | ⚡⚡ (2x)   | ★★★★☆   | 99        |
+
+#### Distil-Whisper is English-only
+
+We initially considered `whisper-distil-large-v3` for its speed advantage (6x faster than large-v3).
+However, testing revealed a critical limitation:
+
+> **"Distil-Whisper is currently only available for English speech recognition."**
+> — [Hugging Face Distil-Whisper](https://huggingface.co/distil-whisper)
+
+The distilled models ignore the `language` parameter and always output English, making them
+unsuitable for multilingual use cases. This is a fundamental limitation of the distillation
+process, not a bug in the ONNX export.
 
 ### Decision
 
-Use **Parakeet v3 INT8** as default for EU languages:
+Support only **two models**:
 
 ```typescript
 // Auto-selection logic
-if (isEuropeanLanguage(lang) && !userPreferredModel) {
-  return "parakeet-tdt-0.6b-v3-int8"
+if (isParakeetLanguage(lang)) {
+  return "parakeet-tdt-0.6b-v3" // 25 languages, smallest, fastest
 }
-return "whisper-small" // fallback
+return "whisper-large-v3" // 99 languages, best quality
 ```
+
+Models used:
+
+- `parakeet-tdt-0.6b-v3` – Fast (6x realtime), 25 languages, punctuation included
+- `whisper-large-v3` – Best quality, 99 languages, with VAD chunking for long audio
+
+Removed models:
+
+- `whisper-medium` – large-v3 has better quality
+- `whisper-distil-large-v3` – [English-only](https://huggingface.co/distil-whisper), not usable for multilingual
+
+### VAD Chunking for Long Audio
+
+Whisper has a 30-second context window limit built into its architecture. For audio longer than 25 seconds,
+we use Silero VAD (Voice Activity Detection) to:
+
+1. Detect speech segments in the audio
+2. Split audio at natural pauses (silence)
+3. Transcribe each segment individually
+4. Merge results with timestamps
+
+This happens automatically when using `whisper-large-v3` with long audio.
 
 ### Consequences
 
-- ✅ Best speed/quality ratio for EU languages
-- ✅ Smaller download than Whisper large
-- ⚠️ ~1.2GB RAM usage at runtime
-- ⚠️ Non-EU languages fall back to Whisper
+- ✅ Simpler model selection (only 2 choices)
+- ✅ True multilingual support (large-v3 respects language parameter)
+- ✅ Best quality without compromise
+- ✅ Automatic VAD chunking for long audio (>25s)
+- ⚠️ Whisper large-v3 is slower than distil models (2x vs 6x realtime)
+- ⚠️ Requires Silero VAD model download (~650KB)
 
 ---
 
-## ADR-004: Native Addon for Apple Speech
-
-**Status:** Accepted
-**Date:** 2024-12-16
-
-### Context
-
-Apple Speech Framework requires native macOS code. Options:
-
-| Approach               | Complexity | Performance | Maintenance |
-| ---------------------- | ---------- | ----------- | ----------- |
-| N-API + Objective-C++  | High       | Best        | Medium      |
-| Swift executable + IPC | Medium     | Good        | Low         |
-| AppleScript/osascript  | Low        | Poor        | Low         |
-
-### Decision
-
-Use **N-API with Objective-C++** for direct integration:
-
-```cpp
-// speech.mm
-[recognizer recognitionTaskWithRequest:request
-    resultHandler:^(SFSpeechRecognitionResult* result, NSError* error) {
-        // Direct callback to Node.js
-    }];
-```
-
-Reasons:
-
-1. No subprocess overhead
-2. Direct memory sharing
-3. Proper async handling with N-API AsyncWorker
-4. Type-safe interface via TypeScript
-
-### Consequences
-
-- ✅ Best performance, no IPC overhead
-- ✅ Proper error propagation
-- ⚠️ Requires Xcode Command Line Tools to build
-- ⚠️ More complex build setup (binding.gyp)
-
----
-
-## ADR-005: ESM-Only Package
+## ADR-004: ESM-Only Package
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -205,7 +196,7 @@ Reasons:
 
 ---
 
-## ADR-006: Lazy Backend Loading
+## ADR-005: Lazy Backend Loading
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -223,14 +214,12 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
   const backend = options.backend ?? selectBestBackend()
 
   switch (backend) {
-    case "apple": {
+    case "parakeet":
+    case "whisper": {
       // Only import when needed
-      const { AppleBackend } = await import("./backends/apple/index.js")
-      return new AppleBackend().transcribe(audioPath, options)
-    }
-    case "sherpa": {
       const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      // ...
+      const model = backend === "parakeet" ? "parakeet-tdt-0.6b-v3" : "whisper-distil-large-v3"
+      return new SherpaBackend({ model }).transcribe(audioPath, options)
     }
   }
 }
@@ -245,7 +234,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions) 
 
 ---
 
-## ADR-007: Native FFmpeg Bindings for Audio Preprocessing
+## ADR-006: Native FFmpeg Bindings for Audio Preprocessing
 
 **Status:** Accepted
 **Date:** 2024-12-16
@@ -329,7 +318,7 @@ Reasons:
 
 ---
 
-## ADR-008: TurboRepo for Monorepo Build Pipeline
+## ADR-007: TurboRepo for Monorepo Build Pipeline
 
 **Status:** Accepted
 **Date:** 2025-12-17
@@ -371,20 +360,14 @@ Reasons:
 
 ---
 
-## ADR-009: Cross-Platform CI Matrix Testing
+## ADR-008: Cross-Platform CI Matrix Testing
 
 **Status:** Accepted
 **Date:** 2025-12-17
 
 ### Context
 
-The project supports multiple platforms:
-
-- macOS (with native Apple Speech backend)
-- Windows
-- Linux
-
-We need to ensure compatibility across all platforms.
+The project supports multiple platforms (macOS, Windows, Linux) and we need to ensure compatibility across all.
 
 ### Decision
 
@@ -403,18 +386,138 @@ Test matrix covers:
 - **Node.js versions**: 22, 24
 - **Jobs**: typecheck, test, build
 
-Special handling:
-
-- macOS builds native Apple Speech module (`build:native`)
-- All platforms test TypeScript compilation and tests
-
 ### Consequences
 
 - ✅ Ensures cross-platform compatibility
 - ✅ Catches platform-specific issues early
-- ✅ Validates native module builds on macOS
 - ⚠️ Longer CI runtime (6 combinations per job)
-- ⚠️ Higher CI costs (macOS runners)
+
+---
+
+## ADR-010: OpenAI Cloud Backend
+
+**Status:** Accepted
+**Date:** 2024-12-30
+
+### Context
+
+While local models (Parakeet, Whisper) provide excellent offline transcription, some users may want:
+
+1. **Best possible quality** without GPU requirements
+2. **Easy setup** - no model downloads needed
+3. **Pay-per-use** model for occasional transcription
+
+OpenAI released next-generation audio models in March 2025:
+
+- `gpt-4o-transcribe` - Best quality, improved WER over Whisper
+- `gpt-4o-mini-transcribe` - Faster and cheaper
+
+See: [Introducing next-generation audio models](https://openai.com/index/introducing-our-next-generation-audio-models/)
+
+### Decision
+
+Add **OpenAI as a cloud backend** alongside local backends:
+
+```typescript
+// Via API
+const result = await transcribe("audio.mp3", {
+  backend: "openai",
+  apiKey: process.env.OPENAI_API_KEY,
+  model: "gpt-4o-transcribe" // or "gpt-4o-mini-transcribe"
+})
+
+// Via CLI
+cuttledoc audio.mp3 -b openai --api-key sk-...
+```
+
+Key design decisions:
+
+1. **API key handling**: Support both `--api-key` flag and `OPENAI_API_KEY` env var
+2. **Default model**: `gpt-4o-transcribe` for best quality
+3. **Response format**: Request `verbose_json` to get timestamps
+4. **No auto-selection**: OpenAI is never selected by `auto` backend (requires explicit choice)
+
+### Consequences
+
+- ✅ Best transcription quality available (lower WER than Whisper)
+- ✅ No local model download or GPU needed
+- ✅ 50+ languages supported
+- ✅ Handles accents and challenging audio better
+- ⚠️ Requires internet connection
+- ⚠️ Costs money (~$0.006/min for gpt-4o-transcribe)
+- ⚠️ Data sent to OpenAI servers (privacy consideration)
+
+### When to Use
+
+| Use Case                        | Recommended Backend             |
+| ------------------------------- | ------------------------------- |
+| Offline/privacy-sensitive       | parakeet or whisper             |
+| Best quality, cost not an issue | openai (gpt-4o-transcribe)      |
+| Frequent transcription, budget  | openai (gpt-4o-mini-transcribe) |
+| European languages, fast        | parakeet                        |
+| Asian/Arabic languages          | whisper or openai               |
+
+---
+
+## Rejected / Superseded Decisions
+
+### ADR-R01: Apple Speech Framework Backend (Rejected)
+
+**Status:** Rejected
+**Date:** 2024-12-16 (proposed) → 2024-12-28 (rejected)
+
+#### Context
+
+We initially planned to integrate Apple's native Speech Framework (`SFSpeechRecognizer`) as a backend for macOS users. The appeal was:
+
+- **No model download** - Uses pre-installed system models
+- **Neural Engine acceleration** - Optimized for Apple Silicon
+- **60+ languages** - Broad language support out of the box
+
+#### Investigation Results
+
+During prototyping, we discovered several significant issues:
+
+1. **Online/Offline Behavior Inconsistency**
+   - For short audio (<1 min), Apple uses on-device recognition
+   - For longer content, it silently switches to Apple's cloud servers
+   - No reliable way to force offline-only processing
+   - This violates our "offline-first" principle
+
+2. **Complex Native Integration**
+   - Requires N-API bindings with Objective-C++ (`speech.mm`)
+   - Needs `node-gyp` build step with Xcode Command Line Tools
+   - Platform-specific `binding.gyp` configuration
+   - Adds maintenance burden for macOS-only code
+
+3. **No Performance Advantage**
+   - Benchmarks showed Parakeet v3 matches or exceeds Apple Speech speed
+   - Whisper provides better accuracy for difficult audio
+   - Apple Speech quality comparable but not superior
+
+4. **Permission Complexity**
+   - Requires user to grant microphone/speech recognition permissions
+   - Permission prompts interrupt automated workflows
+   - No programmatic way to check permission status reliably
+
+#### Decision
+
+**Reject** Apple Speech Framework integration in favor of cross-platform sherpa-onnx backends (Parakeet, Whisper).
+
+#### Consequences
+
+- ✅ Simpler codebase - no native Objective-C++ code
+- ✅ Consistent behavior across all platforms
+- ✅ Guaranteed offline operation
+- ✅ No macOS-specific build requirements
+- ⚠️ macOS users must download models (~150MB for Parakeet)
+- ⚠️ No Neural Engine acceleration (CPU/GPU via ONNX instead)
+
+#### Lessons Learned
+
+- "Native" doesn't always mean "better" - cross-platform solutions can match or exceed native performance
+- Online fallback behavior in system APIs is a hidden complexity
+- The overhead of maintaining platform-specific native code rarely justifies marginal benefits
 
 ---
 
@@ -422,11 +525,7 @@ Special handling:
 
 ### Potential ADRs
 
-- **ADR-010**: Model caching and download strategy
-- **ADR-011**: Worker thread isolation for heavy processing
-- **ADR-012**: Browser/WebAssembly support
-- **ADR-013**: Streaming transcription API design
-
----
-
-_Last updated: 2025-12-17_
+- **ADR-009**: Model caching and download strategy
+- **ADR-010**: Worker thread isolation for heavy processing
+- **ADR-011**: Browser/WebAssembly support
+- **ADR-012**: Streaming transcription API design

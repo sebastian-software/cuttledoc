@@ -1,10 +1,10 @@
 ---
 title: Getting Started
-description: Fast, offline speech-to-text transcription library for Node.js
+description: Fast speech-to-text transcription library for Node.js with local and cloud backends
 ---
 
-cuttledoc is a fast, offline speech-to-text transcription library for Node.js.
-It supports multiple backends and optional LLM enhancement for formatting transcripts.
+cuttledoc is a fast speech-to-text transcription library for Node.js.
+It supports multiple backends (local and cloud) and optional LLM enhancement for formatting transcripts.
 
 ## Installation
 
@@ -14,25 +14,27 @@ pnpm add cuttledoc
 
 ### Requirements
 
-- Node.js 22+
+- Node.js 24+
 - ~2GB disk space for models
-
-<Callout type="info">The Apple Speech backend requires macOS 14+. Whisper and Parakeet work on all platforms.</Callout>
 
 ## CLI Usage
 
 ```bash
-# Basic transcription
-cuttledoc video.mp4
+# Basic transcription (uses local Parakeet)
+npx cuttledoc video.mp4
 
-# With LLM enhancement
-cuttledoc podcast.mp3 --enhance -o transcript.md
+# With LLM enhancement (adds formatting, TLDR, corrections)
+npx cuttledoc podcast.mp3 --enhance -o transcript.md
 
-# Use specific backend
-cuttledoc meeting.m4a -b apple -l de
+# Use specific backend and language
+npx cuttledoc meeting.m4a -b parakeet -l de
 
-# Show stats
-cuttledoc audio.wav --stats
+# Use OpenAI cloud API (best quality)
+export OPENAI_API_KEY=sk-...
+npx cuttledoc meeting.m4a -b openai
+
+# Show processing statistics
+npx cuttledoc audio.wav --stats
 ```
 
 ## API Usage
@@ -40,13 +42,20 @@ cuttledoc audio.wav --stats
 ```typescript
 import { transcribe } from 'cuttledoc'
 
+// Local transcription (offline)
 const result = await transcribe('audio.mp3', {
   language: 'en',
-  backend: 'auto'
+  backend: 'auto' // auto, whisper, parakeet, phi4
 })
 
 console.log(result.text)
 console.log(`Duration: ${result.durationSeconds}s`)
+
+// Cloud transcription (OpenAI)
+const cloudResult = await transcribe('audio.mp3', {
+  backend: 'openai',
+  apiKey: process.env.OPENAI_API_KEY
+})
 ```
 
 ## With LLM Enhancement
@@ -56,20 +65,32 @@ import { transcribe } from 'cuttledoc'
 import { enhanceTranscript } from 'cuttledoc/llm'
 
 const result = await transcribe('podcast.mp3')
-const enhanced = await enhanceTranscript(result.text)
+
+const enhanced = await enhanceTranscript(result.text, {
+  model: 'gemma3n:e4b',
+  mode: 'enhance' // or 'correct' for minimal changes
+})
 
 console.log(enhanced.markdown)
 ```
 
 ## Available Backends
 
-| Backend          | Platform  | Speed  | Quality | Languages |
-| ---------------- | --------- | ------ | ------- | --------- |
-| Apple Speech     | macOS 14+ | ⚡⚡⚡ | ★★★★    | 60+       |
-| Parakeet v3      | All       | ⚡⚡⚡ | ★★★★    | 26 (EU)   |
-| Whisper Small    | All       | ⚡⚡   | ★★★     | 99        |
-| Whisper Medium   | All       | ⚡     | ★★★★    | 99        |
-| Whisper Large v3 | All       | 🐢     | ★★★★★   | 99        |
+### Local Backends (Offline, No API Key)
+
+| Backend                   | Speed  | Quality | Languages | Size   | Requires    |
+| ------------------------- | ------ | ------- | --------- | ------ | ----------- |
+| **Parakeet v3** (default) | ⚡⚡⚡ | ★★★★☆   | 25        | 160 MB | Node.js     |
+| **Whisper large-v3**      | ⚡⚡   | ★★★★★   | 99        | 1.6 GB | Node.js     |
+| **Phi-4-multimodal**      | ⚡⚡   | ★★★★★   | 8         | 12 GB  | Python, GPU |
+| **Canary-1B-v2**          | ⚡⚡   | ★★★★★   | 26        | 1 GB   | Python, GPU |
+
+### Cloud Backends (Requires API Key)
+
+| Backend                    | Speed    | Quality | Languages | Cost        |
+| -------------------------- | -------- | ------- | --------- | ----------- |
+| **gpt-4o-transcribe**      | ⚡⚡⚡   | ★★★★★+  | 50+       | ~$0.006/min |
+| **gpt-4o-mini-transcribe** | ⚡⚡⚡⚡ | ★★★★★   | 50+       | ~$0.003/min |
 
 ## Model Management
 
@@ -77,10 +98,11 @@ console.log(enhanced.markdown)
 # List available models
 cuttledoc models list
 
-# Download speech model
-cuttledoc models download parakeet-tdt-0.6b-v3
+# Download speech models
+cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
+cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
-# Download LLM model
+# Download LLM model (for --enhance)
 cuttledoc models download gemma3n:e4b
 ```
 

@@ -13,19 +13,19 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@orama/orama": "^3.1.17",
-    "@react-router/node": "^7.10.1",
-    "fumadocs-core": "16.2.5",
-    "fumadocs-mdx": "14.1.1",
-    "fumadocs-ui": "16.2.5",
+    "@orama/orama": "^3.1.18",
+    "@react-router/node": "^7.11.0",
+    "fumadocs-core": "16.4.1",
+    "fumadocs-mdx": "14.2.3",
+    "fumadocs-ui": "16.4.1",
     "isbot": "^5.1.32",
-    "lucide-react": "^0.561.0",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router": "^7.10.1"
+    "react-router": "^7.11.0"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.10.1",
+    "@react-router/dev": "^7.11.0",
     "@release-it/conventional-changelog": "^10.0.4",
     "@tailwindcss/vite": "^4.1.18",
     "@types/mdx": "^2.0.13",
@@ -33,14 +33,14 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "prettier": "^3.7.4",
-    "react-router-devtools": "^6.0.0",
-    "release-it": "^19.1.0",
+    "react-router-devtools": "^6.0.1",
+    "release-it": "^19.2.2",
     "serve": "^14.2.5",
     "tailwindcss": "^4.1.18",
     "typedoc": "^0.28.15",
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
-    "vite-tsconfig-paths": "^6.0.2"
+    "vite-tsconfig-paths": "^6.0.3"
   }
 }
