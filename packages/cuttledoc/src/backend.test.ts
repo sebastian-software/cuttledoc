@@ -1,0 +1,91 @@
+import { afterEach, describe, expect, it } from "vitest"
+
+import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
+import { BACKEND_TYPES } from "./types.js"
+
+describe("backend", () => {
+  afterEach(() => {
+    // Reset to auto after each test
+    setBackend(BACKEND_TYPES.auto)
+  })
+
+  describe("setBackend/getBackend", () => {
+    it("should default to auto", () => {
+      expect(getBackend()).toBe(BACKEND_TYPES.auto)
+    })
+
+    it("should set and get parakeet backend", () => {
+      setBackend(BACKEND_TYPES.parakeet)
+      expect(getBackend()).toBe(BACKEND_TYPES.parakeet)
+    })
+
+    it("should set and get whisper backend", () => {
+      setBackend(BACKEND_TYPES.whisper)
+      expect(getBackend()).toBe(BACKEND_TYPES.whisper)
+    })
+  })
+
+  describe("getAvailableBackends", () => {
+    it("should return an array of backends", () => {
+      const backends = getAvailableBackends()
+      expect(Array.isArray(backends)).toBe(true)
+      expect(backends.length).toBeGreaterThan(0)
+    })
+
+    it("should always include parakeet backend", () => {
+      const backends = getAvailableBackends()
+      const parakeetBackend = backends.find((b) => b.name === BACKEND_TYPES.parakeet)
+      expect(parakeetBackend).toBeDefined()
+      expect(parakeetBackend?.isAvailable).toBe(true)
+      expect(parakeetBackend?.requiresDownload).toBe(true)
+    })
+
+    it("should always include whisper backend", () => {
+      const backends = getAvailableBackends()
+      const whisperBackend = backends.find((b) => b.name === BACKEND_TYPES.whisper)
+      expect(whisperBackend).toBeDefined()
+      expect(whisperBackend?.isAvailable).toBe(true)
+      expect(whisperBackend?.requiresDownload).toBe(true)
+    })
+
+    it("should have languages for each backend", () => {
+      const backends = getAvailableBackends()
+      for (const backend of backends) {
+        expect(backend.languages.length).toBeGreaterThan(0)
+      }
+    })
+
+    it("should have models for each backend", () => {
+      const backends = getAvailableBackends()
+      for (const backend of backends) {
+        expect(backend.models.length).toBeGreaterThan(0)
+      }
+    })
+  })
+
+  describe("selectBestBackend", () => {
+    it("should select parakeet for supported languages", () => {
+      expect(selectBestBackend("de")).toBe(BACKEND_TYPES.parakeet)
+      expect(selectBestBackend("en")).toBe(BACKEND_TYPES.parakeet)
+      expect(selectBestBackend("fr")).toBe(BACKEND_TYPES.parakeet)
+      expect(selectBestBackend("es")).toBe(BACKEND_TYPES.parakeet)
+    })
+
+    it("should select parakeet when no language specified", () => {
+      const backend = selectBestBackend()
+      expect(backend).toBe(BACKEND_TYPES.parakeet)
+    })
+
+    it("should select whisper for unsupported languages", () => {
+      expect(selectBestBackend("ja")).toBe(BACKEND_TYPES.whisper)
+      expect(selectBestBackend("zh")).toBe(BACKEND_TYPES.whisper)
+      expect(selectBestBackend("ar")).toBe(BACKEND_TYPES.whisper)
+    })
+
+    it("should handle language codes with region", () => {
+      expect(selectBestBackend("en-US")).toBe(BACKEND_TYPES.parakeet)
+      expect(selectBestBackend("de-DE")).toBe(BACKEND_TYPES.parakeet)
+      expect(selectBestBackend("ja-JP")).toBe(BACKEND_TYPES.whisper)
+    })
+  })
+})

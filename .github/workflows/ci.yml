@@ -57,6 +57,13 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./packages/cuttledoc/coverage/coverage-final.json
+          flags: ${{ matrix.os }}-node${{ matrix.node-version }}
+          name: codecov-${{ matrix.os }}-node${{ matrix.node-version }}
+          fail_ci_if_error: false
 
   build:
     name: Build (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
