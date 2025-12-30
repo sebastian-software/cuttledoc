@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document provides a high-level overview of cuttledoc's architecture. For detailed architectural decisions, see [DECISIONS.md](DECISIONS.md).
+This document provides a high-level overview of cuttledoc's architecture. For detailed architectural decisions, see [Architecture Decision Records](docs/decisions/).
 
 ## System Architecture
 
@@ -167,6 +167,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Related Documentation
 
-- [DECISIONS.md](DECISIONS.md) - Architecture Decision Records
+- [Architecture Decision Records](docs/decisions/) - Why we made certain choices
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guide
 - [README.md](README.md) - User documentation
