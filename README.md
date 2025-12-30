@@ -21,7 +21,7 @@
 ## Features
 
 - 🎤 **Multiple Backends**: Local (Whisper, Parakeet) and Cloud (OpenAI gpt-4o-transcribe)
-- 🚀 **Native Performance**: No Python for core backends, optional Python for Phi-4/Canary
+- 🚀 **Native Performance**: Pure Node.js, no Python required
 - 📱 **Offline & Online**: Choose between local processing or cloud API
 - 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
 - 🤖 **LLM Enhancement**: Auto-correct and format transcripts (using Gemma 3n)
@@ -73,7 +73,7 @@ import { transcribe } from "cuttledoc"
 // Local transcription (offline)
 const result = await transcribe("audio.mp3", {
   language: "en",
-  backend: "auto" // auto, whisper, parakeet, phi4
+  backend: "auto" // auto, whisper, parakeet, openai
 })
 
 console.log(result.text)
@@ -142,12 +142,10 @@ cuttledoc models download gemma3n:e4b
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                   | RTF  | Avg WER | Languages | Size   | Requires    |
-| ------------------------- | ---- | ------- | --------- | ------ | ----------- |
-| **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB | Node.js     |
-| **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB | Node.js     |
-| **Phi-4-multimodal**      | 0.56 | 6.1%    | 8         | 12 GB  | Python, GPU |
-| **Canary-1B-v2**          | 0.57 | 5.6%    | 26        | 1 GB   | Python, GPU |
+| Backend                   | RTF  | Avg WER | Languages | Size   |
+| ------------------------- | ---- | ------- | --------- | ------ |
+| **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB |
+| **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB |
 
 ### Cloud Backends (Requires API Key)
 
@@ -168,47 +166,28 @@ OpenAI's next-generation audio models offer improved WER (Word Error Rate) over 
 - **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, excellent for English/German/European languages
 - **`whisper`**: OpenAI Whisper large-v3 – best quality, 99 languages including Asian/Arabic
 - **`openai`**: OpenAI cloud API – best accuracy, requires `OPENAI_API_KEY`
-- **`phi4`**: Microsoft Phi-4-multimodal – best accuracy for EN/DE/ES (requires Python + MPS/CUDA)
-- **`canary`**: NVIDIA Canary-1B-v2 – excellent for EU languages including RU/UK (requires Python + CUDA)
 
 ### Why These Models?
 
-We offer multiple backends for different use cases:
+We chose these three backends for simplicity and reliability:
 
 **Local (Offline):**
 
-1. **Parakeet v3** – Best speed-to-quality ratio for common languages (160 MB, 4x realtime)
+1. **Parakeet v3** – Best speed-to-quality ratio for European languages (160 MB, 4x realtime)
 2. **Whisper large-v3** – Full multilingual model, 99 languages (1.6 GB, 0.45x realtime)
-3. **Phi-4-multimodal** – Lowest WER for: EN, DE, FR, ES, IT, PT, ZH, JA (~12 GB, 1x realtime)
-4. **Canary-1B-v2** – NVIDIA's latest, 26 EU languages + RU/UK (~1 GB, fast on CUDA)
 
-**Cloud (Requires API Key):** 5. **gpt-4o-transcribe** – OpenAI's best, improved WER over Whisper, 50+ languages 6. **gpt-4o-mini-transcribe** – Faster and cheaper, still better than Whisper
+**Cloud (Requires API Key):**
+
+3. **gpt-4o-transcribe** – OpenAI's best, improved WER over Whisper, 50+ languages
+4. **gpt-4o-mini-transcribe** – Faster and cheaper, good balance of quality and cost
 
 > **Note on Distil-Whisper**: The distilled Whisper models (`distil-large-v3`, `distil-large-v3.5`)
 > are [English-only](https://huggingface.co/distil-whisper) and ignore the language parameter.
 > We use the full `whisper-large-v3` for true multilingual support.
 
-### Python Backend Requirements (Phi-4, Canary)
-
-To use the `phi4` or `canary` backends, you need Python with the appropriate libraries:
-
-**Phi-4:**
-
-```bash
-pip install torch transformers librosa soundfile
-```
-
-- ~12GB model, downloaded automatically from Hugging Face
-- Best on Apple Silicon (MPS) or NVIDIA GPU (CUDA)
-
-**Canary:**
-
-```bash
-pip install "nemo_toolkit[asr] @ git+https://github.com/NVIDIA/NeMo.git"
-```
-
-- ~1GB model, downloaded automatically
-- Best on NVIDIA GPU (CUDA), CPU fallback available
+> **Note on Python backends**: We previously supported Phi-4-multimodal and Canary-1B-v2 via Python,
+> but removed them to simplify architecture. See [ADR-001](docs/decisions/001-remove-python-asr-backends.md)
+> for the full analysis. The code is preserved in branch `archive/python-asr-backends-2024-12`.
 
 ### Long Audio Support
 
@@ -249,8 +228,6 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
 | **gpt-4o-transcribe** | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
 | **Whisper large-v3**  | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
-| **Canary-1B-v2**      | 8.2%  | 3.2%  | 2.8%  | 7.9%  | 5.7%  | 5.6%    | 0.57 |
-| **Phi-4-multimodal**  | 3.3%  | 2.5%  | 3.7%  | 10.2% | 10.7% | 6.1%    | 0.56 |
 | **Parakeet v3**       | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
 
 _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
@@ -259,29 +236,25 @@ _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
 | Rank | Backend               | Avg WER | Best for                           |
 | ---- | --------------------- | ------- | ---------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | 5.1%    | Cloud, best for FR/PT              |
+| 🥇   | **gpt-4o-transcribe** | 5.1%    | Cloud, best for ES/DE/PT           |
 | 🥇   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
-| 🥉   | **Canary-1B-v2**      | 5.6%    | Best DE accuracy, 26 EU languages  |
-| 4    | **Phi-4-multimodal**  | 6.1%    | Best EN/ES accuracy, local GPU     |
-| 5    | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
+| 🥉   | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend               | RTF  | Best for                        |
-| ---- | --------------------- | ---- | ------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | 0.16 | Cloud, fastest overall          |
-| 🥈   | **Parakeet v3**       | 0.24 | Real-time, batch processing     |
-| 🥉   | **Phi-4-multimodal**  | 0.56 | Near real-time on MPS/CUDA      |
-| 4    | **Canary-1B-v2**      | 0.57 | Near real-time, 26 EU languages |
-| 5    | **Whisper large-v3**  | 2.2  | Quality-focused, offline on CPU |
+| Rank | Backend               | RTF  | Best for                    |
+| ---- | --------------------- | ---- | --------------------------- |
+| 🥇   | **gpt-4o-transcribe** | 0.16 | Cloud, fastest overall      |
+| 🥈   | **Parakeet v3**       | 0.24 | Real-time, batch processing |
+| 🥉   | **Whisper large-v3**  | 2.2  | Quality-focused, offline    |
 
 _RTF = Real-Time Factor. 0.16 means 10s audio transcribed in 1.6s._
 
 Benchmark methodology:
 
 - WER measured on **raw STT output** (before LLM enhancement)
-- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (5 samples × 5 languages)
-- Hardware: Apple M1 Pro, sherpa-onnx int8 models, Phi-4 on MPS
+- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (10 samples × 5 languages)
+- Hardware: Apple M1 Pro, sherpa-onnx int8 models
 - OpenAI: gpt-4o-transcribe via API
 
 ## Performance
@@ -292,10 +265,9 @@ Typical processing speed on M1 MacBook Pro:
 | ------------ | -------------- | ------------- | --- | ------- |
 | 10 min audio | Parakeet       | ~2.5 min      | -   | ~2.5min |
 | 10 min audio | Whisper        | ~20 min       | -   | ~20min  |
-| 10 min audio | Phi-4 (MPS)    | ~10 min       | -   | ~10min  |
 | 10 min audio | Parakeet + LLM | ~2.5 min      | 20s | ~3min   |
 
-Note: Whisper is slower than realtime on CPU but delivers better accuracy. Phi-4 runs near real-time on Apple Silicon (MPS) or NVIDIA GPU. First invocation has ~5-15s model loading overhead.
+Note: Whisper is slower than realtime on CPU but delivers better accuracy. First invocation has ~5-15s model loading overhead.
 
 ## Documentation
 
@@ -361,6 +333,4 @@ MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 - [@mmomtchev/ffmpeg](https://github.com/mmomtchev/ffmpeg) - Native FFmpeg bindings
 - [OpenAI Whisper](https://github.com/openai/whisper) - Speech recognition model
 - [OpenAI GPT-4o Transcribe](https://openai.com/index/introducing-our-next-generation-audio-models/) - Next-gen cloud ASR
-- [Phi-4-multimodal](https://huggingface.co/microsoft/Phi-4-multimodal-instruct) - Microsoft's multimodal LLM
-- [Canary-1B-v2](https://huggingface.co/nvidia/canary-1b-v2) - NVIDIA's multilingual ASR model
 - [Gemma](https://ai.google.dev/gemma) - Google's open-weight LLM

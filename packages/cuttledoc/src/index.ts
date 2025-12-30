@@ -1,11 +1,4 @@
-import {
-  CANARY_LANGUAGES,
-  getAvailableBackends,
-  getBackend,
-  PHI4_LANGUAGES,
-  selectBestBackend,
-  setBackend
-} from "./backend.js"
+import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
 import {
   BACKEND_TYPES,
   OPENAI_TRANSCRIBE_MODELS,
@@ -26,11 +19,10 @@ import {
 } from "./types.js"
 
 import type { OpenAIBackend } from "./backends/openai/index.js"
-import type { CanaryBackend, Phi4Backend } from "./backends/python-asr/index.js"
 import type { SherpaBackend, SherpaModelType } from "./backends/sherpa/index.js"
 
 // Re-export core types and functions
-export { CANARY_LANGUAGES, getAvailableBackends, getBackend, PHI4_LANGUAGES, selectBestBackend, setBackend }
+export { getAvailableBackends, getBackend, selectBestBackend, setBackend }
 export { BACKEND_TYPES, OPENAI_TRANSCRIBE_MODELS, PARAKEET_MODELS, WHISPER_MODELS }
 export type {
   Backend,
@@ -68,8 +60,6 @@ export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownl
 
 // Cached backend instances
 const sherpaBackendCache = new Map<SherpaModelType, SherpaBackend>()
-let pythonASRBackendInstance: Phi4Backend | CanaryBackend | null = null
-let currentPythonBackendType: "phi4" | "canary" | null = null
 let openaiBackendInstance: OpenAIBackend | null = null
 
 /**
@@ -84,27 +74,6 @@ async function getOrCreateSherpaBackend(model: SherpaModelType): Promise<SherpaB
     sherpaBackendCache.set(model, backend)
   }
   return backend
-}
-
-/**
- * Get or create a Python ASR backend (Phi-4 or Canary)
- */
-async function getOrCreatePythonASRBackend(type: "phi4" | "canary"): Promise<Phi4Backend | CanaryBackend> {
-  if (pythonASRBackendInstance !== null && currentPythonBackendType === type) {
-    return pythonASRBackendInstance
-  }
-
-  const { Phi4Backend, CanaryBackend } = await import("./backends/python-asr/index.js")
-
-  if (type === "phi4") {
-    pythonASRBackendInstance = new Phi4Backend()
-  } else {
-    pythonASRBackendInstance = new CanaryBackend()
-  }
-
-  await pythonASRBackendInstance.initialize()
-  currentPythonBackendType = type
-  return pythonASRBackendInstance
 }
 
 /**
@@ -142,16 +111,6 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
       return whisperBackend.transcribe(audioPath, options)
     }
 
-    case BACKEND_TYPES.phi4: {
-      const phi4Backend = await getOrCreatePythonASRBackend("phi4")
-      return phi4Backend.transcribe(audioPath, options)
-    }
-
-    case BACKEND_TYPES.canary: {
-      const canaryBackend = await getOrCreatePythonASRBackend("canary")
-      return canaryBackend.transcribe(audioPath, options)
-    }
-
     case BACKEND_TYPES.openai: {
       const apiKey = "apiKey" in options ? options.apiKey : undefined
       const openaiBackend = await getOrCreateOpenAIBackend(apiKey)
@@ -166,7 +125,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 }
 
 /** Default models for each backend (only local backends that need downloads) */
-const DEFAULT_MODELS: Record<Exclude<BackendType, "auto" | "phi4" | "canary" | "openai">, string> = {
+const DEFAULT_MODELS: Record<Exclude<BackendType, "auto" | "openai">, string> = {
   parakeet: "parakeet-tdt-0.6b-v3",
   whisper: "whisper-large-v3"
 }
@@ -187,24 +146,8 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
       return
     }
 
-    case BACKEND_TYPES.phi4: {
-      // Phi-4 model is downloaded automatically by Hugging Face transformers
-
-      console.log("Phi-4 model will be downloaded automatically on first use (~12GB)")
-      return
-    }
-
-    case BACKEND_TYPES.canary: {
-      // Canary model is downloaded automatically by NeMo
-
-      console.log("Canary model will be downloaded automatically on first use (~1GB)")
-      return
-    }
-
     case BACKEND_TYPES.openai: {
       // OpenAI is a cloud service, no download needed
-
-      console.log("OpenAI is a cloud service - no download needed. Set OPENAI_API_KEY env var or use --api-key")
       return
     }
 
@@ -226,13 +169,6 @@ export async function cleanup(): Promise<void> {
   }
   sherpaBackendCache.clear()
 
-  // Dispose Python ASR backend
-  if (pythonASRBackendInstance !== null) {
-    disposePromises.push(pythonASRBackendInstance.dispose())
-    pythonASRBackendInstance = null
-    currentPythonBackendType = null
-  }
-
   // Dispose OpenAI backend
   if (openaiBackendInstance !== null) {
     disposePromises.push(openaiBackendInstance.dispose())
@@ -240,12 +176,4 @@ export async function cleanup(): Promise<void> {
   }
 
   await Promise.all(disposePromises)
-}
-
-/**
- * Exit Python cleanly (call before process exit when using Phi-4 or Canary)
- */
-export async function exitPython(): Promise<void> {
-  const { exitPython: exit } = await import("./backends/python-asr/index.js")
-  exit()
 }

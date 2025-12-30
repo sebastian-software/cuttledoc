@@ -1,45 +1,6 @@
 import { BACKEND_TYPES, type BackendInfo, type BackendType, PARAKEET_MODELS, WHISPER_MODELS } from "./types.js"
 
 /**
- * Languages supported by Phi-4-multimodal (8 languages)
- * Source: https://huggingface.co/microsoft/Phi-4-multimodal-instruct
- */
-export const PHI4_LANGUAGES = ["en", "de", "fr", "es", "it", "pt", "zh", "ja"] as const
-
-/**
- * Languages supported by Canary-1B-v2 (26 languages)
- * Source: https://huggingface.co/nvidia/canary-1b-v2
- */
-export const CANARY_LANGUAGES = [
-  "en",
-  "de",
-  "fr",
-  "es",
-  "it",
-  "pt",
-  "nl",
-  "pl",
-  "cs",
-  "sk",
-  "hu",
-  "ro",
-  "bg",
-  "el",
-  "sv",
-  "da",
-  "fi",
-  "no",
-  "hr",
-  "sl",
-  "et",
-  "lv",
-  "lt",
-  "mt",
-  "uk",
-  "ru"
-] as const
-
-/**
  * Languages supported by Parakeet TDT v3 (25 languages)
  * Source: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
  */
@@ -111,22 +72,13 @@ export function getAvailableBackends(): readonly BackendInfo[] {
     requiresDownload: true
   })
 
-  // Phi-4 (best quality for 8 languages, requires Python + GPU/MPS)
+  // OpenAI (cloud, requires API key)
   backends.push({
-    name: BACKEND_TYPES.phi4,
-    isAvailable: true, // Actual check happens at runtime
-    languages: PHI4_LANGUAGES,
-    models: ["phi-4-multimodal-instruct"],
-    requiresDownload: false // Downloaded automatically by transformers
-  })
-
-  // Canary (NVIDIA, 26 EU languages, requires Python + CUDA preferred)
-  backends.push({
-    name: BACKEND_TYPES.canary,
-    isAvailable: true, // Actual check happens at runtime
-    languages: CANARY_LANGUAGES,
-    models: ["canary-1b-v2"],
-    requiresDownload: false // Downloaded automatically by NeMo
+    name: BACKEND_TYPES.openai,
+    isAvailable: true, // Actual check requires API key
+    languages: ["multilingual"], // 50+ languages
+    models: ["gpt-4o-transcribe", "gpt-4o-mini-transcribe"],
+    requiresDownload: false
   })
 
   return backends

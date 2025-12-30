@@ -1,8 +1,8 @@
 # ADR-001: Removal of Python-based ASR Backends (Phi-4, Canary)
 
-**Date:** 2024-12-31  
-**Status:** Accepted  
-**Authors:** Sebastian Werner  
+**Date:** 2024-12-31
+**Status:** Accepted
+**Authors:** Sebastian Werner
 **Archive Branch:** [`archive/python-asr-backends-2024-12`](https://github.com/sebastian-software/cuttledoc/tree/archive/python-asr-backends-2024-12)
 
 ## Context

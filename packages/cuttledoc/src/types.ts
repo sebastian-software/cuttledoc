@@ -5,8 +5,6 @@ export const BACKEND_TYPES = {
   auto: "auto",
   parakeet: "parakeet",
   whisper: "whisper",
-  phi4: "phi4",
-  canary: "canary",
   openai: "openai"
 } as const
 
