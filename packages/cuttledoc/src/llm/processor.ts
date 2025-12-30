@@ -122,7 +122,6 @@ export async function downloadModel(
   // Use node-llama-cpp's resolveModelFile (handles download + caching)
   const llama = await loadLlamaModule()
 
-  // eslint-disable-next-line no-console
   console.log(`Resolving ${modelId} from ${modelInfo.ggufRepo}...`)
 
   const downloadedPath = await llama.resolveModelFile(`hf:${modelInfo.ggufRepo}/${modelInfo.ggufFile}`, {

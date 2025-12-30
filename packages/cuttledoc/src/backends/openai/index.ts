@@ -57,7 +57,7 @@ export class OpenAIBackend implements Backend {
       )
     }
 
-    const model = (options.model as OpenAITranscribeModel) ?? this.model
+    const model = (options.model as OpenAITranscribeModel | undefined) ?? this.model
 
     // Validate model
     if (!Object.values(OPENAI_TRANSCRIBE_MODELS).includes(model)) {
@@ -105,7 +105,7 @@ export class OpenAIBackend implements Backend {
 
     if (!response.ok) {
       const errorBody = await response.text()
-      throw new Error(`OpenAI API error (${response.status}): ${errorBody}`)
+      throw new Error(`OpenAI API error (${String(response.status)}): ${errorBody}`)
     }
 
     const result = (await response.json()) as OpenAITranscriptionResponse
@@ -155,7 +155,7 @@ interface OpenAITranscriptionResponse {
   text: string
   language?: string
   duration?: number
-  segments?: Array<{
+  segments?: {
     id: number
     seek: number
     start: number
@@ -166,12 +166,12 @@ interface OpenAITranscriptionResponse {
     avg_logprob?: number
     compression_ratio: number
     no_speech_prob: number
-  }>
-  words?: Array<{
+  }[]
+  words?: {
     word: string
     start: number
     end: number
-  }>
+  }[]
 }
 
 /**

@@ -189,21 +189,21 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
 
     case BACKEND_TYPES.phi4: {
       // Phi-4 model is downloaded automatically by Hugging Face transformers
-      // eslint-disable-next-line no-console
+
       console.log("Phi-4 model will be downloaded automatically on first use (~12GB)")
       return
     }
 
     case BACKEND_TYPES.canary: {
       // Canary model is downloaded automatically by NeMo
-      // eslint-disable-next-line no-console
+
       console.log("Canary model will be downloaded automatically on first use (~1GB)")
       return
     }
 
     case BACKEND_TYPES.openai: {
       // OpenAI is a cloud service, no download needed
-      // eslint-disable-next-line no-console
+
       console.log("OpenAI is a cloud service - no download needed. Set OPENAI_API_KEY env var or use --api-key")
       return
     }

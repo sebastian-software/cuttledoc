@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Benchmark CLI module for comparing speech recognition models
  */

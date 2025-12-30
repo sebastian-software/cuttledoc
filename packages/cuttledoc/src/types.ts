@@ -64,7 +64,7 @@ export interface TranscribeOptions {
   /** OpenAI API key (required for 'openai' backend). Can also use OPENAI_API_KEY env var */
   apiKey?: string
   /** Model to use (backend-specific). For OpenAI: 'gpt-4o-transcribe' or 'gpt-4o-mini-transcribe' */
-  model?: OpenAITranscribeModel | string
+  model?: string
 }
 
 /**

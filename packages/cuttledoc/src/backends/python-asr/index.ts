@@ -104,7 +104,7 @@ async function waitForServer(port: number, timeoutMs: number = HEALTH_CHECK_TIME
 
   while (Date.now() - startTime < timeoutMs) {
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/health`, {
+      const response = await fetch(`http://127.0.0.1:${String(port)}/health`, {
         signal: AbortSignal.timeout(1000)
       })
       if (response.ok) {
@@ -117,7 +117,7 @@ async function waitForServer(port: number, timeoutMs: number = HEALTH_CHECK_TIME
     await new Promise((resolve) => setTimeout(resolve, HEALTH_CHECK_INTERVAL))
   }
 
-  throw new Error(`Python ASR server did not start within ${timeoutMs / 1000}s`)
+  throw new Error(`Python ASR server did not start within ${String(timeoutMs / 1000)}s`)
 }
 
 /**
@@ -132,8 +132,16 @@ async function findPython(): Promise<string> {
     try {
       const proc = spawn(p, ["--version"], { stdio: "pipe" })
       await new Promise<void>((resolve, reject) => {
-        proc.on("close", (code) => (code === 0 ? resolve() : reject()))
-        proc.on("error", reject)
+        proc.on("close", (code) => {
+          if (code === 0) {
+            resolve()
+          } else {
+            reject(new Error(`Python check failed with code ${String(code)}`))
+          }
+        })
+        proc.on("error", (err) => {
+          reject(err)
+        })
       })
       return p
     } catch {
@@ -164,8 +172,7 @@ async function startServer(port: number = DEFAULT_PORT, backend: PythonASRBacken
 
   const pythonPath = await findPython()
 
-  // eslint-disable-next-line no-console
-  console.log(`Starting Python ASR server (${backend}) on port ${port}...`)
+  console.log(`Starting Python ASR server (${backend}) on port ${String(port)}...`)
 
   serverProcess = spawn(pythonPath, [SERVER_SCRIPT, "--port", String(port), "--backend", backend, "--preload"], {
     stdio: ["ignore", "inherit", "inherit"],
@@ -173,7 +180,6 @@ async function startServer(port: number = DEFAULT_PORT, backend: PythonASRBacken
   })
 
   serverProcess.on("error", (err) => {
-    // eslint-disable-next-line no-console
     console.error("Python ASR server error:", err)
     serverProcess = null
     serverReady = false
@@ -181,15 +187,14 @@ async function startServer(port: number = DEFAULT_PORT, backend: PythonASRBacken
 
   serverProcess.on("exit", (code) => {
     if (code !== 0 && code !== null) {
-      // eslint-disable-next-line no-console
-      console.error(`Python ASR server exited with code ${code}`)
+      console.error(`Python ASR server exited with code ${String(code)}`)
     }
     serverProcess = null
     serverReady = false
   })
 
   await waitForServer(port)
-  // eslint-disable-next-line no-console
+
   console.log(`Python ASR server ready (${backend})`)
 }
 
@@ -222,7 +227,7 @@ async function callTranscribe(
   language?: string,
   backend?: PythonASRBackendType
 ): Promise<PythonASRResponse> {
-  const response = await fetch(`http://127.0.0.1:${serverPort}/transcribe`, {
+  const response = await fetch(`http://127.0.0.1:${String(serverPort)}/transcribe`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -236,7 +241,7 @@ async function callTranscribe(
   const result = (await response.json()) as PythonASRResponse
 
   if (!response.ok || result.error !== undefined) {
-    throw new Error(result.error ?? `Server error: ${response.status}`)
+    throw new Error(result.error ?? `Server error: ${String(response.status)}`)
   }
 
   return result
@@ -290,6 +295,7 @@ abstract class PythonASRBackend implements Backend {
   }
 
   async dispose(): Promise<void> {
+    await Promise.resolve()
     this.isInitialized = false
   }
 }

@@ -41,8 +41,8 @@ async function loadSherpaModule(): Promise<SherpaModule> {
   }
   try {
     // ESM import returns { default: module } structure
-    const mod = await import("sherpa-onnx-node")
-    sherpaModule = (mod.default ?? mod) as unknown as SherpaModule
+    const mod = (await import("sherpa-onnx-node")) as { default?: SherpaModule } & SherpaModule
+    sherpaModule = mod.default ?? mod
     return sherpaModule
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
@@ -198,9 +198,7 @@ export class SherpaBackend implements Backend {
    * Get or create VAD instance (lazy loaded)
    */
   private async getVadInstance(): Promise<VadInstance> {
-    if (this.vadInstance === null) {
-      this.vadInstance = await createVadInstance(this.numThreads)
-    }
+    this.vadInstance ??= await createVadInstance(this.numThreads)
     return this.vadInstance
   }
 
