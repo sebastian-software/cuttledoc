@@ -151,8 +151,8 @@ cuttledoc models download gemma3n:e4b
 
 | Backend                    | RTF  | Avg WER | Languages | Cost        |
 | -------------------------- | ---- | ------- | --------- | ----------- |
+| **gpt-4o-mini-transcribe** | 0.10 | 4.8%    | 50+       | ~$0.003/min |
 | **gpt-4o-transcribe**      | 0.16 | 5.1%    | 50+       | ~$0.006/min |
-| **gpt-4o-mini-transcribe** | 0.12 | ~6%     | 50+       | ~$0.003/min |
 
 OpenAI's next-generation audio models offer improved WER (Word Error Rate) over local Whisper:
 
@@ -178,8 +178,8 @@ We chose these three backends for simplicity and reliability:
 
 **Cloud (Requires API Key):**
 
-3. **gpt-4o-transcribe** – OpenAI's best, improved WER over Whisper, 50+ languages
-4. **gpt-4o-mini-transcribe** – Faster and cheaper, good balance of quality and cost
+3. **gpt-4o-mini-transcribe** – Best accuracy (4.8% WER), fastest, and cheapest cloud option
+4. **gpt-4o-transcribe** – Premium option, slightly better for German
 
 > **Note on Distil-Whisper**: The distilled Whisper models (`distil-large-v3`, `distil-large-v3.5`)
 > are [English-only](https://huggingface.co/distil-whisper) and ignore the language parameter.
@@ -224,31 +224,34 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings (lower is better):
 
-| Backend               | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
-| --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
-| **gpt-4o-transcribe** | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
-| **Whisper large-v3**  | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
-| **Parakeet v3**       | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
+| Backend                    | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
+| -------------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
+| **gpt-4o-mini-transcribe** | 5.7%  | 1.3%  | 3.4%  | 7.3%  | 6.0%  | 4.8%    | 0.10 |
+| **gpt-4o-transcribe**      | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
+| **Whisper large-v3**       | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
+| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
 
 _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
 ### 🏆 Ranking by Accuracy
 
-| Rank | Backend               | Avg WER | Best for                           |
-| ---- | --------------------- | ------- | ---------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | 5.1%    | Cloud, best for ES/DE/PT           |
-| 🥇   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
-| 🥉   | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
+| Rank | Backend                    | Avg WER | Best for                           |
+| ---- | -------------------------- | ------- | ---------------------------------- |
+| 🥇   | **gpt-4o-mini-transcribe** | 4.8%    | Cloud, best overall + cheapest     |
+| 🥈   | **gpt-4o-transcribe**      | 5.1%    | Cloud, best for DE                 |
+| 🥈   | **Whisper large-v3**       | 5.1%    | Offline, broadest language support |
+| 4    | **Parakeet v3**            | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend               | RTF  | Best for                    |
-| ---- | --------------------- | ---- | --------------------------- |
-| 🥇   | **gpt-4o-transcribe** | 0.16 | Cloud, fastest overall      |
-| 🥈   | **Parakeet v3**       | 0.24 | Real-time, batch processing |
-| 🥉   | **Whisper large-v3**  | 2.2  | Quality-focused, offline    |
+| Rank | Backend                    | RTF  | Best for                    |
+| ---- | -------------------------- | ---- | --------------------------- |
+| 🥇   | **gpt-4o-mini-transcribe** | 0.10 | Cloud, fastest + cheapest   |
+| 🥈   | **gpt-4o-transcribe**      | 0.16 | Cloud, premium quality      |
+| 🥉   | **Parakeet v3**            | 0.24 | Real-time, batch processing |
+| 4    | **Whisper large-v3**       | 2.2  | Quality-focused, offline    |
 
-_RTF = Real-Time Factor. 0.16 means 10s audio transcribed in 1.6s._
+_RTF = Real-Time Factor. 0.10 means 10s audio transcribed in 1.0s._
 
 Benchmark methodology:
 
