@@ -51,7 +51,7 @@ The backend system provides a unified interface for speech recognition:
 - **Sherpa Backend** (`backends/sherpa/`)
   - Cross-platform ONNX runtime via sherpa-onnx
   - Two optimized models:
-    - **Parakeet TDT v3** (160 MB) – fastest, English-only
+    - **Parakeet TDT v3** (160 MB) – fastest, 25 European languages
     - **Whisper large-v3** (1.6 GB) – best quality, 99 languages
   - Model download from GitHub Releases and Hugging Face
 

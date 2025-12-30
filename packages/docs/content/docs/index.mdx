@@ -80,19 +80,19 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 
 | Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | 6.2%  | —     | —     | —     | —     | 6.2%    | 6x    |
+| **Parakeet v3**       | ~3%   | ~5%   | ~6%   | ~4%   | ~6%   | ~5%     | 6x    |
 | **Whisper large-v3**  | 5.9%  | 3.5%  | 9.8%  | 1.8%  | 5.5%  | 5.3%    | 0.9x  |
 | **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
 
-_Parakeet supports English only. gpt-4o-transcribe values are estimates._
+_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates._
 
 ### 🏆 Ranking by Accuracy
 
-| Rank | Backend               | Avg WER | Best for                         |
-| ---- | --------------------- | ------- | -------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts |
-| 🥈   | **Whisper large-v3**  | 5.3%    | Offline, broad language support  |
-| 🥉   | **Parakeet v3**       | 6.2%    | Fast English-only transcription  |
+| Rank | Backend               | Avg WER | Best for                           |
+| ---- | --------------------- | ------- | ---------------------------------- |
+| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts   |
+| 🥈   | **Parakeet v3**       | ~5%     | Fast + accurate, 25 European langs |
+| 🥉   | **Whisper large-v3**  | 5.3%    | Offline, broadest language support |
 
 ### ⚡ Ranking by Speed
 
@@ -108,7 +108,7 @@ _Parakeet supports English only. gpt-4o-transcribe values are estimates._
 
 | Backend                   | Speed | Avg WER | Languages | Size   | Requires    |
 | ------------------------- | ----- | ------- | --------- | ------ | ----------- |
-| **Parakeet v3** (default) | 6x    | 6.2%    | EN only   | 160 MB | Node.js     |
+| **Parakeet v3** (default) | 6x    | ~5%     | 25        | 160 MB | Node.js     |
 | **Whisper large-v3**      | 0.9x  | 5.3%    | 99        | 1.6 GB | Node.js     |
 | **Phi-4-multimodal**      | 1x    | ~4%     | 8         | 12 GB  | Python, GPU |
 | **Canary-1B-v2**          | 2x    | ~4%     | 26        | 1 GB   | Python, GPU |

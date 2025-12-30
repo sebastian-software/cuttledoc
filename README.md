@@ -247,19 +247,19 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 
 | Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | 6.2%  | —     | —     | —     | —     | 6.2%    | 6x    |
+| **Parakeet v3**       | ~3%   | ~5%   | ~6%   | ~4%   | ~6%   | ~5%     | 6x    |
 | **Whisper large-v3**  | 5.9%  | 3.5%  | 9.8%  | 1.8%  | 5.5%  | 5.3%    | 0.9x  |
 | **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
 
-_Parakeet supports English only. gpt-4o-transcribe values are estimates based on OpenAI benchmarks._
+_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates._
 
 ### 🏆 Ranking by Accuracy
 
-| Rank | Backend               | Avg WER | Best for                         |
-| ---- | --------------------- | ------- | -------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts |
-| 🥈   | **Whisper large-v3**  | 5.3%    | Offline, broad language support  |
-| 🥉   | **Parakeet v3**       | 6.2%    | Fast English-only transcription  |
+| Rank | Backend               | Avg WER | Best for                           |
+| ---- | --------------------- | ------- | ---------------------------------- |
+| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts   |
+| 🥈   | **Parakeet v3**       | ~5%     | Fast + accurate, 25 European langs |
+| 🥉   | **Whisper large-v3**  | 5.3%    | Offline, broadest language support |
 
 ### ⚡ Ranking by Speed
 
