@@ -245,12 +245,12 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings (lower is better):
 
-| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | RTF  |
+| Backend               | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
-| **Phi-4-multimodal**  | 3.3%  | 3.7%  | 10.2% | 2.5%  | 10.7% | 6.1%    | 0.56 |
-| **Parakeet v3**       | 4.6%  | 4.5%  | 10.1% | 3.6%  | 9.0%  | 6.4%    | 0.24 |
-| **Whisper large-v3**  | 4.9%  | 2.8%  | 10.6% | 2.1%  | 5.2%  | 5.1%    | 2.2  |
-| **gpt-4o-transcribe** | 9.9%  | 2.8%  | 6.3%  | 2.1%  | 4.6%  | 5.1%    | 0.16 |
+| **Phi-4-multimodal**  | 3.3%  | 2.5%  | 3.7%  | 10.2% | 10.7% | 6.1%    | 0.56 |
+| **Parakeet v3**       | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
+| **Whisper large-v3**  | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
+| **gpt-4o-transcribe** | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
 
 _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
