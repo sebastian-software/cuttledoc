@@ -35,18 +35,8 @@ MODELS = {
         "decoder": "sherpa-onnx-whisper-large-v3/large-v3-decoder.int8.onnx",
         "tokens": "sherpa-onnx-whisper-large-v3/large-v3-tokens.txt",
     },
-    "whisper-distil-v3": {
-        "type": "whisper",
-        "encoder": "sherpa-onnx-whisper-distil-large-v3/distil-large-v3-encoder.int8.onnx",
-        "decoder": "sherpa-onnx-whisper-distil-large-v3/distil-large-v3-decoder.int8.onnx",
-        "tokens": "sherpa-onnx-whisper-distil-large-v3/distil-large-v3-tokens.txt",
-    },
-    "whisper-distil-v3.5": {
-        "type": "whisper",
-        "encoder": "sherpa-onnx-whisper-distil-large-v3.5/distil-large-v3.5-encoder.int8.onnx",
-        "decoder": "sherpa-onnx-whisper-distil-large-v3.5/distil-large-v3.5-decoder.int8.onnx",
-        "tokens": "sherpa-onnx-whisper-distil-large-v3.5/distil-large-v3.5-tokens.txt",
-    },
+    # Note: whisper-distil-* models are English-only and not included here.
+    # They have >100% WER for non-English languages.
 }
 
 LANGUAGES = ["en", "de", "fr", "es", "pt"]
