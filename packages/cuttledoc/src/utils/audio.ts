@@ -27,6 +27,41 @@ export interface AudioSamples {
 }
 
 /**
+ * Normalize audio samples to a target peak level.
+ *
+ * Some audio sources (like FLEURS dataset) have very low volume levels
+ * which can cause recognition issues with some models like Parakeet.
+ *
+ * @param samples - Float32 audio samples
+ * @param targetPeak - Target peak level (default: 0.9)
+ * @returns Normalized samples (may be same array if already loud enough)
+ */
+export function normalizeAudio(samples: Float32Array, targetPeak = 0.9): Float32Array {
+  // Find current peak
+  let currentPeak = 0
+  for (let i = 0; i < samples.length; i++) {
+    const abs = Math.abs(samples[i])
+    if (abs > currentPeak) {
+      currentPeak = abs
+    }
+  }
+
+  // If audio is already loud enough or silent, don't modify
+  if (currentPeak >= targetPeak * 0.5 || currentPeak === 0) {
+    return samples
+  }
+
+  // Apply gain to reach target peak
+  const gain = targetPeak / currentPeak
+  const normalized = new Float32Array(samples.length)
+  for (let i = 0; i < samples.length; i++) {
+    normalized[i] = samples[i] * gain
+  }
+
+  return normalized
+}
+
+/**
  * Options for audio preprocessing
  */
 export interface AudioPreprocessOptions {

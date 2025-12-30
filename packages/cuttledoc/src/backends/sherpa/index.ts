@@ -9,7 +9,7 @@ import {
   type TranscriptionResult,
   type TranscriptionSegment
 } from "../../types.js"
-import { isFFmpegAvailable, preprocessAudio } from "../../utils/audio.js"
+import { isFFmpegAvailable, normalizeAudio, preprocessAudio } from "../../utils/audio.js"
 
 import { getModelsDir, getSileroVadPath, isVadModelDownloaded } from "./download.js"
 import {
@@ -275,16 +275,20 @@ export class SherpaBackend implements Backend {
     if (isWavFile) {
       // Fast path: Use sherpa's native WAV reader
       const wave = this.sherpa.readWave(audioPath)
+      // Normalize audio - some sources like FLEURS have very low volume
+      const samples = normalizeAudio(wave.samples)
       return {
-        samples: wave.samples,
+        samples,
         sampleRate: wave.sampleRate,
-        durationSeconds: wave.samples.length / wave.sampleRate
+        durationSeconds: samples.length / wave.sampleRate
       }
     } else if (isFFmpegAvailable()) {
       // Use ffmpeg for other formats
       const audio = await preprocessAudio(audioPath)
+      // Normalize audio - some sources like FLEURS have very low volume
+      const samples = normalizeAudio(audio.samples)
       return {
-        samples: audio.samples,
+        samples,
         sampleRate: audio.sampleRate,
         durationSeconds: audio.durationSeconds
       }
