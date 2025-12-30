@@ -4,9 +4,10 @@
   "description": "Fast offline video-to-document transcription with AI enhancement",
   "type": "module",
   "bin": {
-    "cuttledoc": "./dist/cli.js"
+    "cuttledoc": "./bin/cuttledoc.js"
   },
   "files": [
+    "bin",
     "dist"
   ],
   "main": "./dist/index.cjs",
@@ -56,13 +57,13 @@
   "license": "MIT",
   "dependencies": {
     "@mmomtchev/ffmpeg": "^2.0.1",
-    "node-llama-cpp": "^3.14.5"
+    "node-llama-cpp": "^3.14.5",
+    "sherpa-onnx-node": "^1.12.20"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.4",
     "@vitest/coverage-v8": "^4.0.16",
     "release-it": "^19.2.2",
-    "sherpa-onnx-node": "^1.12.20",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"

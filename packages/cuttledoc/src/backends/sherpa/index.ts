@@ -40,7 +40,9 @@ async function loadSherpaModule(): Promise<SherpaModule> {
     return sherpaModule
   }
   try {
-    sherpaModule = (await import("sherpa-onnx-node")) as unknown as SherpaModule
+    // ESM import returns { default: module } structure
+    const mod = await import("sherpa-onnx-node")
+    sherpaModule = (mod.default ?? mod) as unknown as SherpaModule
     return sherpaModule
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
