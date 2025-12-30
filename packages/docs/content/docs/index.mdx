@@ -80,10 +80,11 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 
 | Backend               | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
+| **gpt-4o-transcribe** | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
+| **Whisper large-v3**  | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
+| **Canary-1B-v2**      | 8.2%  | 3.2%  | 2.8%  | 7.9%  | 5.7%  | 5.6%    | 0.57 |
 | **Phi-4-multimodal**  | 3.3%  | 2.5%  | 3.7%  | 10.2% | 10.7% | 6.1%    | 0.56 |
 | **Parakeet v3**       | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
-| **Whisper large-v3**  | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
-| **gpt-4o-transcribe** | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
 
 _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
@@ -93,8 +94,9 @@ _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 | ---- | --------------------- | ------- | ---------------------------------- |
 | 🥇   | **gpt-4o-transcribe** | 5.1%    | Cloud, best for FR/PT              |
 | 🥇   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
-| 🥉   | **Phi-4-multimodal**  | 6.1%    | Best EN/ES accuracy, local GPU     |
-| 4    | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
+| 🥉   | **Canary-1B-v2**      | 5.6%    | Best DE accuracy, 26 EU languages  |
+| 4    | **Phi-4-multimodal**  | 6.1%    | Best EN/ES accuracy, local GPU     |
+| 5    | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
@@ -103,7 +105,8 @@ _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 | 🥇   | **gpt-4o-transcribe** | 0.16 | Cloud, fastest overall          |
 | 🥈   | **Parakeet v3**       | 0.24 | Real-time, batch processing     |
 | 🥉   | **Phi-4-multimodal**  | 0.56 | Near real-time on MPS/CUDA      |
-| 4    | **Whisper large-v3**  | 2.2  | Quality-focused, offline on CPU |
+| 4    | **Canary-1B-v2**      | 0.57 | Near real-time, 26 EU languages |
+| 5    | **Whisper large-v3**  | 2.2  | Quality-focused, offline on CPU |
 
 _RTF = Real-Time Factor. 0.16 means 10s audio transcribed in 1.6s._
 
@@ -116,7 +119,7 @@ _RTF = Real-Time Factor. 0.16 means 10s audio transcribed in 1.6s._
 | **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB | Node.js     |
 | **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB | Node.js     |
 | **Phi-4-multimodal**      | 0.56 | 6.1%    | 8         | 12 GB  | Python, GPU |
-| **Canary-1B-v2**          | ~0.5 | ~5%     | 26        | 1 GB   | Python, GPU |
+| **Canary-1B-v2**          | 0.57 | 5.6%    | 26        | 1 GB   | Python, GPU |
 
 ### Cloud Backends (Requires API Key)
 
