@@ -1,3 +1,5 @@
+# Downloaded WAV files (large, can be regenerated)
 *.wav
-*.txt
+
+# Python virtual environment
 .venv/

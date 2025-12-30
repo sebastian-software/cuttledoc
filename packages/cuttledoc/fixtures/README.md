@@ -1,58 +1,44 @@
 # Test Fixtures
 
-This directory is for audio files used in integration testing and WER benchmarks.
+Audio samples for integration testing and WER benchmarks.
 
-## Getting Started
+## Included Samples (~1.7MB total)
 
-To run integration tests and benchmarks, you need audio files with matching reference transcripts.
+| Language   | Samples | Duration | Source                   |
+| ---------- | ------- | -------- | ------------------------ |
+| English    | 10      | ~1.5 min | FLEURS (native speakers) |
+| German     | 10      | ~2.6 min | FLEURS (native speakers) |
+| French     | 10      | ~1.8 min | FLEURS (native speakers) |
+| Spanish    | 10      | ~1.8 min | FLEURS (native speakers) |
+| Portuguese | 10      | ~2.2 min | FLEURS (native speakers) |
 
-### Quick Start: Download LibriSpeech Samples
+**Total: 50 samples, ~10 minutes of audio**
 
-We provide a script to download samples from [LibriSpeech](https://www.openslr.org/12/) and [Multilingual LibriSpeech](https://www.openslr.org/94/) (public domain speech datasets):
+Compressed with Opus codec at 24kbps. FLEURS contains recordings from
+native speakers reading Wikipedia articles - more natural than audiobooks.
+
+## Download Additional Samples
 
 ```bash
-# Install dependencies (use venv for macOS)
+# Install dependencies
 python3 -m venv .venv && source .venv/bin/activate
-pip install 'datasets[audio]' soundfile
+pip install 'datasets<3' librosa soundfile
 
-# Download samples for all 5 benchmark languages (EN, DE, FR, ES, PT)
-python download-samples.py
-
-# Or download specific language
-python download-samples.py --lang de --samples 10
+# Download more samples
+python download-samples.py --samples 20     # 20 samples per language
+python download-samples.py --lang de        # German only
 ```
 
-Supported languages: 🇬🇧 en, 🇩🇪 de, 🇫🇷 fr, 🇪🇸 es, 🇧🇷 pt (via LibriSpeech / Multilingual LibriSpeech)
-
-### File Naming Convention
-
-```
-<name>-<language>.ogg   # Audio file (any format: wav, mp3, ogg, m4a)
-<name>-<language>.md    # Reference transcript (plain text or markdown)
-```
-
-Examples:
-
-- `librispeech-de-001.wav` + `librispeech-de-001.txt`
-- `librispeech-en-001.wav` + `librispeech-en-001.txt`
-
-### Running Benchmarks
+## Running Benchmarks
 
 ```bash
-# Run benchmark on all fixtures
-cuttledoc benchmark run
+# Run benchmark on fixtures
+cuttledoc benchmark run --fixtures packages/cuttledoc/fixtures
 
-# Run for specific language
-cuttledoc benchmark run --language de
-
-# Compare specific models
-cuttledoc benchmark run parakeet-tdt-0.6b-v3 whisper-large-v3
+# Filter by language
+cuttledoc benchmark run --fixtures packages/cuttledoc/fixtures --language en
 ```
 
-## License Note
+## License
 
-Audio fixtures are not included in the repository (too large). Use properly licensed datasets:
-
-- **FLEURS**: Apache 2.0 license (Google)
-- **LibriSpeech**: Public domain
-- **Common Voice**: CC0 license (Mozilla)
+FLEURS is released under CC BY 4.0 by Google.
