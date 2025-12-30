@@ -142,19 +142,19 @@ cuttledoc models download gemma3n:e4b
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                   | Speed    | Avg WER | Languages | Size   | Requires    |
-| ------------------------- | -------- | ------- | --------- | ------ | ----------- |
-| **Parakeet v3** (default) | 4x RT    | 6.4%    | 25        | 160 MB | Node.js     |
-| **Whisper large-v3**      | 0.45x RT | 5.1%    | 99        | 1.6 GB | Node.js     |
-| **Phi-4-multimodal**      | ~1x RT   | ~4%     | 8         | 12 GB  | Python, GPU |
-| **Canary-1B-v2**          | ~2x RT   | ~4%     | 26        | 1 GB   | Python, GPU |
+| Backend                   | RTF  | Avg WER | Languages | Size   | Requires    |
+| ------------------------- | ---- | ------- | --------- | ------ | ----------- |
+| **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB | Node.js     |
+| **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB | Node.js     |
+| **Phi-4-multimodal**      | 0.56 | 6.1%    | 8         | 12 GB  | Python, GPU |
+| **Canary-1B-v2**          | ~0.5 | ~5%     | 26        | 1 GB   | Python, GPU |
 
 ### Cloud Backends (Requires API Key)
 
-| Backend                    | Speed    | Quality | Languages | Cost        |
-| -------------------------- | -------- | ------- | --------- | ----------- |
-| **gpt-4o-transcribe**      | ⚡⚡⚡   | ★★★★★+  | 50+       | ~$0.006/min |
-| **gpt-4o-mini-transcribe** | ⚡⚡⚡⚡ | ★★★★★   | 50+       | ~$0.003/min |
+| Backend                    | RTF  | Avg WER | Languages | Cost        |
+| -------------------------- | ---- | ------- | --------- | ----------- |
+| **gpt-4o-transcribe**      | 0.16 | 5.1%    | 50+       | ~$0.006/min |
+| **gpt-4o-mini-transcribe** | 0.12 | ~6%     | 50+       | ~$0.003/min |
 
 OpenAI's next-generation audio models offer improved WER (Word Error Rate) over local Whisper:
 
@@ -245,38 +245,41 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings (lower is better):
 
-| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | RTF   |
-| --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | 4.6%  | 4.5%  | 10.1% | 3.6%  | 9.0%  | 6.4%    | 0.24  |
-| **Whisper large-v3**  | 4.9%  | 2.8%  | 10.6% | 2.1%  | 5.2%  | 5.1%    | 2.2   |
-| **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
+| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | RTF  |
+| --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
+| **Phi-4-multimodal**  | 3.3%  | 3.7%  | 10.2% | 2.5%  | 10.7% | 6.1%    | 0.56 |
+| **Parakeet v3**       | 4.6%  | 4.5%  | 10.1% | 3.6%  | 9.0%  | 6.4%    | 0.24 |
+| **Whisper large-v3**  | 4.9%  | 2.8%  | 10.6% | 2.1%  | 5.2%  | 5.1%    | 2.2  |
+| **gpt-4o-transcribe** | 9.9%  | 2.8%  | 6.3%  | 2.1%  | 4.6%  | 5.1%    | 0.16 |
 
-_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates. RTF = Real-Time Factor (lower = faster)._
+_RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
 ### 🏆 Ranking by Accuracy
 
 | Rank | Backend               | Avg WER | Best for                           |
 | ---- | --------------------- | ------- | ---------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts   |
-| 🥈   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
-| 🥉   | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
+| 🥇   | **gpt-4o-transcribe** | 5.1%    | Cloud, best for FR/PT              |
+| 🥇   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
+| 🥉   | **Phi-4-multimodal**  | 6.1%    | Best EN/ES accuracy, local GPU     |
+| 4    | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend               | Speed    | Best for                    |
-| ---- | --------------------- | -------- | --------------------------- |
-| 🥇   | **Parakeet v3**       | 4x RT    | Real-time, batch processing |
-| 🥈   | **Whisper large-v3**  | 0.45x RT | Quality-focused, offline    |
-| 🥉   | **gpt-4o-transcribe** | cloud    | Depends on network latency  |
+| Rank | Backend               | RTF  | Best for                        |
+| ---- | --------------------- | ---- | ------------------------------- |
+| 🥇   | **gpt-4o-transcribe** | 0.16 | Cloud, fastest overall          |
+| 🥈   | **Parakeet v3**       | 0.24 | Real-time, batch processing     |
+| 🥉   | **Phi-4-multimodal**  | 0.56 | Near real-time on MPS/CUDA      |
+| 4    | **Whisper large-v3**  | 2.2  | Quality-focused, offline on CPU |
 
-_Speed = relative to real-time (4x RT means 10s audio transcribed in ~2.5s)_
+_RTF = Real-Time Factor. 0.16 means 10s audio transcribed in 1.6s._
 
 Benchmark methodology:
 
 - WER measured on **raw STT output** (before LLM enhancement)
-- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (5 samples per language)
-- Hardware: Apple M1 Pro, sherpa-onnx int8 models
-- Run your own: `node /tmp/benchmark-wer.js` (after creating WAV files from OGG fixtures)
+- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (5 samples × 5 languages)
+- Hardware: Apple M1 Pro, sherpa-onnx int8 models, Phi-4 on MPS
+- OpenAI: gpt-4o-transcribe via API
 
 ## Performance
 
