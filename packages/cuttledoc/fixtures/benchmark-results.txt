@@ -1,0 +1,23 @@
+📁 Models: /Users/sebastian/Workspace/cuttledoc/models
+📁 Fixtures: /Users/sebastian/Workspace/cuttledoc/packages/cuttledoc/fixtures
+🔬 Testing 1 models: whisper-large-v3
+
+⏱️  whisper-large-v3
+   EN: WER=5.9%, RTF=1.03
+   DE: /Users/runner/work/sherpa-onnx/sherpa-onnx/sherpa-onnx/csrc/offline-recognizer-whisper-impl.h:DecodeStream:97 Only waves less than 30 seconds are supported. We process only the first 30 seconds and discard the remaining data
+WER=3.5%, RTF=1.07
+   FR: WER=9.8%, RTF=1.38
+   ES: WER=1.8%, RTF=1.10
+   PT: WER=5.5%, RTF=1.08
+
+## WER Results (lower is better)
+
+| Model | EN | DE | FR | ES | PT | Avg |
+|-------|----|----|----|----|----|----|
+| whisper-large-v3 | 5.9% | 3.5% | 9.8% | 1.8% | 5.5% | 5.3% |
+
+## RTF Results (lower is faster)
+
+| Model | EN | DE | FR | ES | PT | Avg |
+|-------|----|----|----|----|----|----|
+| whisper-large-v3 | 1.03 | 1.07 | 1.38 | 1.10 | 1.08 | 1.13 |

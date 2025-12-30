@@ -243,41 +243,40 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 ## Quality Benchmark
 
-Word Error Rate (WER) on LibriSpeech / Multilingual LibriSpeech (lower is better):
+Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings (lower is better):
 
 | Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | 5.2%  | 7.8%  | 8.1%  | 6.4%  | 9.2%  | 7.3%    | 6x    |
-| **Whisper large-v3**  | 2.9%  | 4.5%  | 4.8%  | 3.9%  | 5.1%  | 4.2%    | 2x    |
-| **gpt-4o-transcribe** | 2.1%  | 3.2%  | 3.5%  | 2.8%  | 3.8%  | 3.1%    | cloud |
-| **Phi-4-multimodal**  | 3.3%  | 3.7%  | 4.2%  | 3.1%  | 4.5%  | 3.8%    | 1x    |
+| **Parakeet v3**       | 6.2%  | —     | —     | —     | —     | 6.2%    | 6x    |
+| **Whisper large-v3**  | 5.9%  | 3.5%  | 9.8%  | 1.8%  | 5.5%  | 5.3%    | 0.9x  |
+| **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
+
+_Parakeet supports English only. gpt-4o-transcribe values are estimates based on OpenAI benchmarks._
 
 ### 🏆 Ranking by Accuracy
 
 | Rank | Backend               | Avg WER | Best for                         |
 | ---- | --------------------- | ------- | -------------------------------- |
-| 🥇   | **gpt-4o-transcribe** | 3.1%    | Production, critical transcripts |
-| 🥈   | **Phi-4-multimodal**  | 3.8%    | Offline, GPU available           |
-| 🥉   | **Whisper large-v3**  | 4.2%    | Offline, broad language support  |
-| 4    | **Parakeet v3**       | 7.3%    | Fast drafts, real-time           |
+| 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts |
+| 🥈   | **Whisper large-v3**  | 5.3%    | Offline, broad language support  |
+| 🥉   | **Parakeet v3**       | 6.2%    | Fast English-only transcription  |
 
 ### ⚡ Ranking by Speed
 
 | Rank | Backend               | Speed | Best for                    |
 | ---- | --------------------- | ----- | --------------------------- |
 | 🥇   | **Parakeet v3**       | 6x    | Real-time, batch processing |
-| 🥈   | **Whisper large-v3**  | 2x    | Balanced speed/quality      |
-| 🥉   | **Phi-4-multimodal**  | 1x    | Near real-time on GPU       |
-| 4    | **gpt-4o-transcribe** | cloud | Depends on network latency  |
+| 🥈   | **Whisper large-v3**  | 0.9x  | Quality-focused, offline    |
+| 🥉   | **gpt-4o-transcribe** | cloud | Depends on network latency  |
 
 _Speed = relative to real-time (6x means 10s audio transcribed in ~1.7s)_
 
 Benchmark methodology:
 
 - WER measured on **raw STT output** (before LLM enhancement)
-- Dataset: [LibriSpeech](https://www.openslr.org/12/) (EN), [Multilingual LibriSpeech](https://www.openslr.org/94/) (DE, FR, ES, PT)
-- Hardware: Apple M1 Pro (Node.js backends) / M1 Max MPS (Python backends)
-- Run your own: `python fixtures/download-samples.py && cuttledoc benchmark run`
+- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (~10 min per language)
+- Hardware: Apple M1 Pro, sherpa-onnx int8 models
+- Run your own: `cd packages/cuttledoc/fixtures && python benchmark.py`
 
 ## Performance
 

@@ -104,8 +104,9 @@ function findFixtures(fixturesDir: string, language?: string): { audio: string; 
     }
 
     // Filter by language if specified
+    // Supports: "fleurs-en-000", "fairytale-de", "audio-fr-001"
     if (language !== undefined) {
-      const langMatch = /-([a-z]{2})$/.exec(baseName)
+      const langMatch = /-([a-z]{2})(?:-\d+)?$/.exec(baseName)
       if (langMatch?.[1] !== language) {
         continue
       }
