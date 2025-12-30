@@ -17,7 +17,7 @@ ADRs preserve the context, reasoning, and trade-offs behind major decisions. The
 
 | ID                                         | Title                                                | Date       | Status   |
 | ------------------------------------------ | ---------------------------------------------------- | ---------- | -------- |
-| [001](./001-remove-python-asr-backends.md) | Removal of Python-based ASR Backends (Phi-4, Canary) | 2024-12-31 | Accepted |
+| [001](./001-remove-python-asr-backends.md) | Removal of Python-based ASR Backends (Phi-4, Canary) | 2025-01-01 | Accepted |
 
 ## Template
 
@@ -49,4 +49,4 @@ Major removals are preserved in archive branches:
 
 | Branch                                | Content                       | Date    |
 | ------------------------------------- | ----------------------------- | ------- |
-| `archive/python-asr-backends-2024-12` | Phi-4 & Canary implementation | 2024-12 |
+| `archive/python-asr-backends-2025-01` | Phi-4 & Canary implementation | 2025-01 |

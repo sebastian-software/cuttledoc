@@ -187,7 +187,7 @@ We chose these three backends for simplicity and reliability:
 
 > **Note on Python backends**: We previously supported Phi-4-multimodal and Canary-1B-v2 via Python,
 > but removed them to simplify architecture. See [ADR-001](docs/decisions/001-remove-python-asr-backends.md)
-> for the full analysis. The code is preserved in branch `archive/python-asr-backends-2024-12`.
+> for the full analysis. The code is preserved in branch `archive/python-asr-backends-2025-01`.
 
 ### Long Audio Support
 

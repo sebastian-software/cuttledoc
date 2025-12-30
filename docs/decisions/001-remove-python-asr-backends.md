@@ -1,9 +1,9 @@
 # ADR-001: Removal of Python-based ASR Backends (Phi-4, Canary)
 
-**Date:** 2024-12-31
+**Date:** 2025-01-01
 **Status:** Accepted
 **Authors:** Sebastian Werner
-**Archive Branch:** [`archive/python-asr-backends-2024-12`](https://github.com/sebastian-software/cuttledoc/tree/archive/python-asr-backends-2024-12)
+**Archive Branch:** [`archive/python-asr-backends-2025-01`](https://github.com/sebastian-software/cuttledoc/tree/archive/python-asr-backends-2025-01)
 
 ## Context
 
@@ -289,7 +289,7 @@ We decided against this because:
 
 ### Preserved for Reference
 
-- **Archive branch**: `archive/python-asr-backends-2024-12`
+- **Archive branch**: `archive/python-asr-backends-2025-01`
 - **Server implementation**: `packages/cuttledoc/src/backends/python-asr/server.py`
 - **Client implementation**: `packages/cuttledoc/src/backends/python-asr/index.ts`
 - **Benchmark data**: `packages/cuttledoc/fixtures/benchmark.py`
