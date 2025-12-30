@@ -142,12 +142,12 @@ cuttledoc models download gemma3n:e4b
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                   | Speed  | Quality | Languages | Size   | Requires    |
-| ------------------------- | ------ | ------- | --------- | ------ | ----------- |
-| **Parakeet v3** (default) | ⚡⚡⚡ | ★★★★☆   | 25        | 160 MB | Node.js     |
-| **Whisper large-v3**      | ⚡⚡   | ★★★★★   | 99        | 1.6 GB | Node.js     |
-| **Phi-4-multimodal**      | ⚡⚡   | ★★★★★   | 8         | 12 GB  | Python, GPU |
-| **Canary-1B-v2**          | ⚡⚡   | ★★★★★   | 26        | 1 GB   | Python, GPU |
+| Backend                   | Speed    | Avg WER | Languages | Size   | Requires    |
+| ------------------------- | -------- | ------- | --------- | ------ | ----------- |
+| **Parakeet v3** (default) | 4x RT    | 6.4%    | 25        | 160 MB | Node.js     |
+| **Whisper large-v3**      | 0.45x RT | 5.1%    | 99        | 1.6 GB | Node.js     |
+| **Phi-4-multimodal**      | ~1x RT   | ~4%     | 8         | 12 GB  | Python, GPU |
+| **Canary-1B-v2**          | ~2x RT   | ~4%     | 26        | 1 GB   | Python, GPU |
 
 ### Cloud Backends (Requires API Key)
 
@@ -177,8 +177,8 @@ We offer multiple backends for different use cases:
 
 **Local (Offline):**
 
-1. **Parakeet v3** – Best speed-to-quality ratio for common languages (160 MB, 6x realtime)
-2. **Whisper large-v3** – Full multilingual model, 99 languages (1.6 GB, 2x realtime)
+1. **Parakeet v3** – Best speed-to-quality ratio for common languages (160 MB, 4x realtime)
+2. **Whisper large-v3** – Full multilingual model, 99 languages (1.6 GB, 0.45x realtime)
 3. **Phi-4-multimodal** – Lowest WER for: EN, DE, FR, ES, IT, PT, ZH, JA (~12 GB, 1x realtime)
 4. **Canary-1B-v2** – NVIDIA's latest, 26 EU languages + RU/UK (~1 GB, fast on CUDA)
 
@@ -245,51 +245,51 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings (lower is better):
 
-| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
+| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | RTF   |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | ~3%   | ~5%   | ~6%   | ~4%   | ~6%   | ~5%     | 6x    |
-| **Whisper large-v3**  | 5.9%  | 3.5%  | 9.8%  | 1.8%  | 5.5%  | 5.3%    | 0.9x  |
+| **Parakeet v3**       | 4.6%  | 4.5%  | 10.1% | 3.6%  | 9.0%  | 6.4%    | 0.24  |
+| **Whisper large-v3**  | 4.9%  | 2.8%  | 10.6% | 2.1%  | 5.2%  | 5.1%    | 2.2   |
 | **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
 
-_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates._
+_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates. RTF = Real-Time Factor (lower = faster)._
 
 ### 🏆 Ranking by Accuracy
 
 | Rank | Backend               | Avg WER | Best for                           |
 | ---- | --------------------- | ------- | ---------------------------------- |
 | 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts   |
-| 🥈   | **Parakeet v3**       | ~5%     | Fast + accurate, 25 European langs |
-| 🥉   | **Whisper large-v3**  | 5.3%    | Offline, broadest language support |
+| 🥈   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
+| 🥉   | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend               | Speed | Best for                    |
-| ---- | --------------------- | ----- | --------------------------- |
-| 🥇   | **Parakeet v3**       | 6x    | Real-time, batch processing |
-| 🥈   | **Whisper large-v3**  | 0.9x  | Quality-focused, offline    |
-| 🥉   | **gpt-4o-transcribe** | cloud | Depends on network latency  |
+| Rank | Backend               | Speed    | Best for                    |
+| ---- | --------------------- | -------- | --------------------------- |
+| 🥇   | **Parakeet v3**       | 4x RT    | Real-time, batch processing |
+| 🥈   | **Whisper large-v3**  | 0.45x RT | Quality-focused, offline    |
+| 🥉   | **gpt-4o-transcribe** | cloud    | Depends on network latency  |
 
-_Speed = relative to real-time (6x means 10s audio transcribed in ~1.7s)_
+_Speed = relative to real-time (4x RT means 10s audio transcribed in ~2.5s)_
 
 Benchmark methodology:
 
 - WER measured on **raw STT output** (before LLM enhancement)
-- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (~10 min per language)
+- Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (5 samples per language)
 - Hardware: Apple M1 Pro, sherpa-onnx int8 models
-- Run your own: `cd packages/cuttledoc/fixtures && python benchmark.py`
+- Run your own: `node /tmp/benchmark-wer.js` (after creating WAV files from OGG fixtures)
 
 ## Performance
 
 Typical processing speed on M1 MacBook Pro:
 
-| Input        | Backend        | Transcription | LLM | Total |
-| ------------ | -------------- | ------------- | --- | ----- |
-| 10 min audio | Parakeet       | 20s           | -   | 20s   |
-| 10 min audio | Whisper        | 45s           | -   | 45s   |
-| 10 min audio | Phi-4 (MPS)    | ~10min        | -   | ~10m  |
-| 10 min audio | Parakeet + LLM | 20s           | 20s | 40s   |
+| Input        | Backend        | Transcription | LLM | Total   |
+| ------------ | -------------- | ------------- | --- | ------- |
+| 10 min audio | Parakeet       | ~2.5 min      | -   | ~2.5min |
+| 10 min audio | Whisper        | ~20 min       | -   | ~20min  |
+| 10 min audio | Phi-4 (MPS)    | ~10 min       | -   | ~10min  |
+| 10 min audio | Parakeet + LLM | ~2.5 min      | 20s | ~3min   |
 
-Note: Phi-4 runs near real-time on Apple Silicon (MPS) or NVIDIA GPU. The first invocation has ~15s model loading overhead.
+Note: Whisper is slower than realtime on CPU but delivers better accuracy. Phi-4 runs near real-time on Apple Silicon (MPS) or NVIDIA GPU. First invocation has ~5-15s model loading overhead.
 
 ## Documentation
 

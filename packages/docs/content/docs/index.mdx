@@ -78,40 +78,42 @@ console.log(enhanced.markdown)
 
 Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs) native speaker recordings:
 
-| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | Speed |
+| Backend               | 🇬🇧 EN | 🇩🇪 DE | 🇫🇷 FR | 🇪🇸 ES | 🇧🇷 PT | Avg WER | RTF   |
 | --------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ----- |
-| **Parakeet v3**       | ~3%   | ~5%   | ~6%   | ~4%   | ~6%   | ~5%     | 6x    |
-| **Whisper large-v3**  | 5.9%  | 3.5%  | 9.8%  | 1.8%  | 5.5%  | 5.3%    | 0.9x  |
+| **Parakeet v3**       | 4.6%  | 4.5%  | 10.1% | 3.6%  | 9.0%  | 6.4%    | 0.24  |
+| **Whisper large-v3**  | 4.9%  | 2.8%  | 10.6% | 2.1%  | 5.2%  | 5.1%    | 2.2   |
 | **gpt-4o-transcribe** | ~4%   | ~3%   | ~5%   | ~2%   | ~4%   | ~3.5%   | cloud |
 
-_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates._
+_Parakeet v3 supports [25 European languages](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). gpt-4o-transcribe values are estimates. RTF = Real-Time Factor (lower = faster)._
 
 ### 🏆 Ranking by Accuracy
 
 | Rank | Backend               | Avg WER | Best for                           |
 | ---- | --------------------- | ------- | ---------------------------------- |
 | 🥇   | **gpt-4o-transcribe** | ~3.5%   | Production, critical transcripts   |
-| 🥈   | **Parakeet v3**       | ~5%     | Fast + accurate, 25 European langs |
-| 🥉   | **Whisper large-v3**  | 5.3%    | Offline, broadest language support |
+| 🥈   | **Whisper large-v3**  | 5.1%    | Offline, broadest language support |
+| 🥉   | **Parakeet v3**       | 6.4%    | Fast + accurate, 25 European langs |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend               | Speed | Best for                    |
-| ---- | --------------------- | ----- | --------------------------- |
-| 🥇   | **Parakeet v3**       | 6x    | Real-time, batch processing |
-| 🥈   | **Whisper large-v3**  | 0.9x  | Quality-focused, offline    |
-| 🥉   | **gpt-4o-transcribe** | cloud | Depends on network latency  |
+| Rank | Backend               | Speed    | Best for                    |
+| ---- | --------------------- | -------- | --------------------------- |
+| 🥇   | **Parakeet v3**       | 4x RT    | Real-time, batch processing |
+| 🥈   | **Whisper large-v3**  | 0.45x RT | Quality-focused, offline    |
+| 🥉   | **gpt-4o-transcribe** | cloud    | Depends on network latency  |
+
+_Speed = relative to real-time (4x RT means 10s audio transcribed in ~2.5s)_
 
 ## Available Backends
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                   | Speed | Avg WER | Languages | Size   | Requires    |
-| ------------------------- | ----- | ------- | --------- | ------ | ----------- |
-| **Parakeet v3** (default) | 6x    | ~5%     | 25        | 160 MB | Node.js     |
-| **Whisper large-v3**      | 0.9x  | 5.3%    | 99        | 1.6 GB | Node.js     |
-| **Phi-4-multimodal**      | 1x    | ~4%     | 8         | 12 GB  | Python, GPU |
-| **Canary-1B-v2**          | 2x    | ~4%     | 26        | 1 GB   | Python, GPU |
+| Backend                   | Speed    | Avg WER | Languages | Size   | Requires    |
+| ------------------------- | -------- | ------- | --------- | ------ | ----------- |
+| **Parakeet v3** (default) | 4x RT    | 6.4%    | 25        | 160 MB | Node.js     |
+| **Whisper large-v3**      | 0.45x RT | 5.1%    | 99        | 1.6 GB | Node.js     |
+| **Phi-4-multimodal**      | 1x RT    | ~4%     | 8         | 12 GB  | Python, GPU |
+| **Canary-1B-v2**          | 2x RT    | ~4%     | 26        | 1 GB   | Python, GPU |
 
 ### Cloud Backends (Requires API Key)
 
