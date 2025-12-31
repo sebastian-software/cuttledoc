@@ -27,7 +27,9 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "benchmark": "npx tsx scripts/benchmark.ts",
+    "fixtures:download": "python fixtures/download-voxpopuli.py"
   },
   "dependencies": {
     "node-llama-cpp": "^3.14.5"
