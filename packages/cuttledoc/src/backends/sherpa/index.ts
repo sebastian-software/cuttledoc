@@ -9,7 +9,8 @@ import {
   type TranscriptionResult,
   type TranscriptionSegment
 } from "../../types.js"
-import { isFFmpegAvailable, normalizeAudio, preprocessAudio } from "../../utils/audio.js"
+import { decodeAudio, isFFmpegAvailable } from "@cuttledoc/ffmpeg"
+import { normalizeAudio } from "../../utils/audio.js"
 
 import { getModelsDir, getSileroVadPath, isVadModelDownloaded } from "./download.js"
 import {
@@ -281,12 +282,14 @@ export class SherpaBackend implements Backend {
         durationSeconds: samples.length / wave.sampleRate
       }
     } else if (isFFmpegAvailable()) {
-      // Use ffmpeg for other formats
-      const audio = await preprocessAudio(audioPath)
-      // Normalize audio - some sources like FLEURS have very low volume
-      const samples = normalizeAudio(audio.samples)
+      // Use @cuttledoc/ffmpeg for other formats
+      const audio = await decodeAudio(audioPath, {
+        sampleRate: 16000,
+        channels: 1,
+        normalize: true
+      })
       return {
-        samples,
+        samples: audio.samples,
         sampleRate: audio.sampleRate,
         durationSeconds: audio.durationSeconds
       }

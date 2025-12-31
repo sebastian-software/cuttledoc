@@ -1,0 +1,52 @@
+{
+  "name": "@cuttledoc/ffmpeg",
+  "version": "1.0.0",
+  "description": "Lightweight FFmpeg wrapper for audio processing",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "binary",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "postinstall": "node scripts/install.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "ffmpeg",
+    "audio",
+    "transcription",
+    "preprocessing"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Sebastian Werner",
+    "email": "s.werner@sebastian-software.de"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebastian-software/cuttledoc",
+    "directory": "packages/ffmpeg"
+  }
+}

@@ -60,6 +60,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@cuttledoc/ffmpeg": "workspace:*",
     "node-llama-cpp": "^3.14.5",
     "sherpa-onnx-node": "^1.12.20"
   },
