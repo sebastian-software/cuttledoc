@@ -1,18 +1,17 @@
 /**
- * Audio preprocessing utilities using native ffmpeg bindings
+ * Audio preprocessing utilities using system ffmpeg
  *
  * Converts various audio formats to 16kHz mono Float32 samples
  * suitable for speech recognition models.
+ *
+ * Uses the system-installed ffmpeg command-line tool for reliable
+ * cross-platform audio conversion.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { existsSync } from "node:fs"
-
-import type { AudioStreamDefinition } from "@mmomtchev/ffmpeg/stream"
+import { existsSync, readFileSync, unlinkSync, mkdtempSync } from "node:fs"
+import { execSync, spawnSync } from "node:child_process"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
 
 /**
  * Audio samples in the format expected by speech recognition models
@@ -72,42 +71,33 @@ export interface AudioPreprocessOptions {
   channels?: number
 }
 
-// Lazy-loaded ffmpeg modules
-let cachedFFmpeg: any = null
-let cachedStream: any = null
+// Cache the ffmpeg availability check
+let ffmpegAvailable: boolean | null = null
 
 /**
- * Check if ffmpeg bindings are available
+ * Check if system ffmpeg is available
  */
 export function isFFmpegAvailable(): boolean {
+  if (ffmpegAvailable !== null) {
+    return ffmpegAvailable
+  }
+
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("@mmomtchev/ffmpeg")
-    return true
+    const result = spawnSync("ffmpeg", ["-version"], {
+      encoding: "utf-8",
+      timeout: 5000,
+      stdio: ["pipe", "pipe", "pipe"]
+    })
+    ffmpegAvailable = result.status === 0
   } catch {
-    return false
+    ffmpegAvailable = false
   }
+
+  return ffmpegAvailable
 }
 
 /**
- * Load the ffmpeg modules
- */
-function loadFFmpeg(): { ffmpeg: any; stream: any } {
-  if (cachedFFmpeg === null || cachedStream === null) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      cachedFFmpeg = require("@mmomtchev/ffmpeg")
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      cachedStream = require("@mmomtchev/ffmpeg/stream")
-    } catch {
-      throw new Error("@mmomtchev/ffmpeg is not installed. Run: npm install @mmomtchev/ffmpeg")
-    }
-  }
-  return { ffmpeg: cachedFFmpeg, stream: cachedStream }
-}
-
-/**
- * Convert an audio file to 16kHz mono Float32 samples
+ * Convert an audio file to 16kHz mono Float32 samples using system ffmpeg
  *
  * Supports any format that ffmpeg can decode (mp3, m4a, wav, flac, ogg, etc.)
  *
@@ -123,103 +113,56 @@ export async function preprocessAudio(audioPath: string, options: AudioPreproces
     throw new Error(`Audio file not found: ${audioPath}`)
   }
 
-  const { ffmpeg, stream } = loadFFmpeg()
+  if (!isFFmpegAvailable()) {
+    throw new Error("ffmpeg is not installed. Please install ffmpeg to process non-WAV audio files.")
+  }
 
-  return new Promise((resolve, reject) => {
-    const chunks: Float32Array[] = []
-    let totalSamples = 0
+  // Create temp file for raw PCM output
+  const tempDir = mkdtempSync(join(tmpdir(), "cuttledoc-"))
+  const tempFile = join(tempDir, "audio.raw")
 
-    // Create demuxer to read the input file
-    const demuxer = new stream.Demuxer({ inputFile: audioPath })
-
-    demuxer.on("error", (err: Error) => {
-      reject(err)
-    })
-
-    demuxer.on("ready", () => {
-      try {
-        // Get the first audio stream
-        const audioStream = demuxer.audio[0]
-        if (audioStream === undefined) {
-          reject(new Error("No audio stream found in file"))
-          return
-        }
-
-        // Create audio decoder
-        const decoder = new stream.AudioDecoder({ stream: audioStream.stream })
-        const inputDef = decoder.definition()
-
-        // Create output definition with proper types
-        const outputDef: AudioStreamDefinition = {
-          type: "Audio",
-          bitRate: inputDef.bitRate,
-          codec: inputDef.codec,
-          sampleRate: targetSampleRate,
-          sampleFormat: new ffmpeg.SampleFormat("flt"),
-          channelLayout: new ffmpeg.ChannelLayout(targetChannels === 1 ? "mono" : "stereo")
-        }
-
-        // Create resampler to convert to target format
-        const resampler = new stream.AudioTransform({
-          input: inputDef,
-          output: outputDef
-        })
-
-        // Pipe decoder output through resampler
-        decoder.pipe(resampler)
-
-        resampler.on("data", (frame: { data: Buffer }) => {
-          // Convert Buffer to Float32Array
-          const float32 = new Float32Array(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength / 4)
-          chunks.push(float32)
-          totalSamples += float32.length
-        })
-
-        resampler.on("end", () => {
-          // Concatenate all chunks into a single Float32Array
-          const samples = new Float32Array(totalSamples)
-          let offset = 0
-          for (const chunk of chunks) {
-            samples.set(chunk, offset)
-            offset += chunk.length
-          }
-
-          resolve({
-            samples,
-            sampleRate: targetSampleRate,
-            durationSeconds: totalSamples / targetSampleRate
-          })
-        })
-
-        resampler.on("error", (err: Error) => {
-          reject(err)
-        })
-        decoder.on("error", (err: Error) => {
-          reject(err)
-        })
-
-        // Discard other streams to prevent memory buildup
-        for (const video of demuxer.video) {
-          video.resume()
-        }
-        for (let i = 1; i < demuxer.audio.length; i++) {
-          const extra = demuxer.audio[i]
-          if (extra !== undefined) {
-            extra.resume()
-          }
-        }
-      } catch (err) {
-        reject(err instanceof Error ? err : new Error(String(err)))
+  try {
+    // Convert to raw PCM float32 little-endian mono
+    execSync(
+      `ffmpeg -i "${audioPath}" -ar ${targetSampleRate} -ac ${targetChannels} -f f32le -acodec pcm_f32le -y "${tempFile}"`,
+      {
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 60000 // 1 minute timeout
       }
-    })
-  })
+    )
+
+    // Read the raw PCM data
+    const buffer = readFileSync(tempFile)
+    const samples = new Float32Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 4)
+
+    const durationSeconds = samples.length / targetSampleRate
+
+    return {
+      samples,
+      sampleRate: targetSampleRate,
+      durationSeconds
+    }
+  } finally {
+    // Cleanup temp files
+    try {
+      if (existsSync(tempFile)) {
+        unlinkSync(tempFile)
+      }
+      if (existsSync(tempDir)) {
+        unlinkSync(tempDir)
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
 }
 
 /**
  * Stream audio samples from a file
  *
- * Yields Float32Array chunks as they are decoded, allowing
- * transcription to start before the entire file is processed.
+ * For system ffmpeg, this just reads the entire file at once.
+ * True streaming would require more complex piping.
  *
  * @param audioPath - Path to the audio file
  * @param options - Preprocessing options
@@ -228,148 +171,42 @@ export async function* streamAudioSamples(
   audioPath: string,
   options: AudioPreprocessOptions = {}
 ): AsyncGenerator<Float32Array, void, unknown> {
-  const targetSampleRate = options.sampleRate ?? 16000
-  const targetChannels = options.channels ?? 1
-
-  if (!existsSync(audioPath)) {
-    throw new Error(`Audio file not found: ${audioPath}`)
-  }
-
-  const { ffmpeg, stream } = loadFFmpeg()
-
-  // Create an async queue for samples
-  const queue: Float32Array[] = []
-  let done = false
-  let streamError: Error | null = null
-  let resolveWait: (() => void) | null = null
-
-  const demuxer = new stream.Demuxer({ inputFile: audioPath })
-
-  const waitForData = (): Promise<void> => {
-    if (queue.length > 0 || done) {
-      return Promise.resolve()
-    }
-    return new Promise((resolve) => {
-      resolveWait = resolve
-    })
-  }
-
-  const signalReady = (): void => {
-    if (resolveWait !== null) {
-      resolveWait()
-      resolveWait = null
-    }
-  }
-
-  demuxer.on("error", (err: Error) => {
-    streamError = err
-    done = true
-    signalReady()
-  })
-
-  demuxer.on("ready", () => {
-    try {
-      const audioStream = demuxer.audio[0]
-      if (audioStream === undefined) {
-        streamError = new Error("No audio stream found in file")
-        done = true
-        signalReady()
-        return
-      }
-
-      const decoder = new stream.AudioDecoder({ stream: audioStream.stream })
-      const inputDef = decoder.definition()
-
-      const outputDef: AudioStreamDefinition = {
-        type: "Audio",
-        bitRate: inputDef.bitRate,
-        codec: inputDef.codec,
-        sampleRate: targetSampleRate,
-        sampleFormat: new ffmpeg.SampleFormat("flt"),
-        channelLayout: new ffmpeg.ChannelLayout(targetChannels === 1 ? "mono" : "stereo")
-      }
-
-      const resampler = new stream.AudioTransform({
-        input: inputDef,
-        output: outputDef
-      })
-
-      decoder.pipe(resampler)
-
-      resampler.on("data", (frame: { data: Buffer }) => {
-        const float32 = new Float32Array(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength / 4)
-        queue.push(float32)
-        signalReady()
-      })
-
-      resampler.on("end", () => {
-        done = true
-        signalReady()
-      })
-
-      resampler.on("error", (err: Error) => {
-        streamError = err
-        done = true
-        signalReady()
-      })
-
-      // Discard other streams
-      for (const video of demuxer.video) {
-        video.resume()
-      }
-      for (let i = 1; i < demuxer.audio.length; i++) {
-        const extra = demuxer.audio[i]
-        if (extra !== undefined) {
-          extra.resume()
-        }
-      }
-    } catch (err) {
-      streamError = err instanceof Error ? err : new Error(String(err))
-      done = true
-      signalReady()
-    }
-  })
-
-  // Yield samples as they become available
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  while (true) {
-    await waitForData()
-
-    // Check for errors - streamError can be set asynchronously
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (streamError !== null) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw streamError
-    }
-
-    // Yield all available chunks
-    while (queue.length > 0) {
-      const chunk = queue.shift()
-      if (chunk !== undefined) {
-        yield chunk
-      }
-    }
-
-    // Exit when done and queue is empty - done can be set asynchronously
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (done && queue.length === 0) {
-      break
-    }
-  }
+  // For simplicity, just load all samples at once
+  const result = await preprocessAudio(audioPath, options)
+  yield result.samples
 }
 
 /**
- * Get audio file duration by preprocessing
+ * Get audio file duration
  *
- * Note: This fully decodes the audio to get accurate duration.
- * For large files, consider using preprocessAudio which returns duration.
+ * Uses ffprobe for fast duration lookup without full decode.
  *
  * @param audioPath - Path to the audio file
  * @returns Duration in seconds
  */
 export async function getAudioDuration(audioPath: string): Promise<number> {
-  const result = await preprocessAudio(audioPath)
-  return result.durationSeconds
+  if (!existsSync(audioPath)) {
+    throw new Error(`Audio file not found: ${audioPath}`)
+  }
+
+  try {
+    const result = execSync(
+      `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+      {
+        encoding: "utf-8",
+        timeout: 10000
+      }
+    )
+    const duration = parseFloat(result.trim())
+    if (isNaN(duration)) {
+      throw new Error("Could not parse duration")
+    }
+    return duration
+  } catch {
+    // Fallback: decode and measure
+    const result = await preprocessAudio(audioPath)
+    return result.durationSeconds
+  }
 }
 
 /**
@@ -383,30 +220,22 @@ export async function isAudioSupported(audioPath: string): Promise<boolean> {
     return false
   }
 
+  if (!isFFmpegAvailable()) {
+    // Without ffmpeg, only WAV is supported
+    return audioPath.toLowerCase().endsWith(".wav")
+  }
+
   try {
-    const { stream } = loadFFmpeg()
-
-    return await new Promise((resolve) => {
-      const demuxer = new stream.Demuxer({ inputFile: audioPath })
-
-      demuxer.on("error", () => {
-        resolve(false)
-      })
-
-      demuxer.on("ready", () => {
-        const hasAudio = demuxer.audio.length > 0
-
-        // Clean up
-        for (const video of demuxer.video) {
-          video.resume()
-        }
-        for (const audio of demuxer.audio) {
-          audio.resume()
-        }
-
-        resolve(hasAudio)
-      })
-    })
+    // Use ffprobe to check if file has audio streams
+    const result = spawnSync(
+      "ffprobe",
+      ["-v", "error", "-select_streams", "a", "-show_entries", "stream=codec_type", "-of", "csv=p=0", audioPath],
+      {
+        encoding: "utf-8",
+        timeout: 10000
+      }
+    )
+    return result.status === 0 && result.stdout.includes("audio")
   } catch {
     return false
   }

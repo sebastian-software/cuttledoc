@@ -60,7 +60,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@mmomtchev/ffmpeg": "^2.0.1",
     "node-llama-cpp": "^3.14.5",
     "sherpa-onnx-node": "^1.12.20"
   },

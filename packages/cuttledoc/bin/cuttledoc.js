@@ -78,11 +78,18 @@ if (platform() === "darwin" || platform() === "linux") {
     if (!currentPath.includes(addonPath)) {
       // Spawn the actual CLI with the library path set
       const cliPath = resolve(__dirname, "..", "dist", "cli.cjs")
+      // Set up NODE_PATH to find modules in the monorepo root
+      const workspaceRoot = resolve(__dirname, "..", "..", "..")
+      const currentNodePath = process.env.NODE_PATH || ""
+      const nodeModulesPath = join(workspaceRoot, "node_modules")
+
       const env = {
         ...process.env,
         [envVar]: addonPath + (currentPath ? `:${currentPath}` : ""),
         // Also help sherpa-onnx-node find its native module
-        SHERPA_ONNX_ADDON_PATH: addonPath
+        SHERPA_ONNX_ADDON_PATH: addonPath,
+        // Help Node.js find hoisted modules like @mmomtchev/ffmpeg
+        NODE_PATH: nodeModulesPath + (currentNodePath ? `:${currentNodePath}` : "")
       }
 
       const child = spawn(process.execPath, [cliPath, ...args], {
