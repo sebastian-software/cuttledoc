@@ -32,12 +32,20 @@ python download-samples.py --lang de        # German only
 ## Running Benchmarks
 
 ```bash
-# Run benchmark on fixtures
-cuttledoc benchmark run --fixtures packages/cuttledoc/fixtures
+# Run all benchmarks (local + cloud)
+pnpm --filter cuttledoc benchmark
 
-# Filter by language
-cuttledoc benchmark run --fixtures packages/cuttledoc/fixtures --language en
+# Only local backends (no API key needed)
+pnpm --filter cuttledoc benchmark:local
+
+# Only cloud backends (requires OPENAI_API_KEY)
+pnpm --filter cuttledoc benchmark:cloud
+
+# Specific backend
+pnpm --filter cuttledoc benchmark -- --backend=whisper
 ```
+
+See `scripts/benchmark.ts` for the benchmark implementation.
 
 ## License
 

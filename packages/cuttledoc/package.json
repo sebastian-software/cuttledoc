@@ -37,6 +37,10 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "clean": "rm -rf dist",
+    "benchmark": "npx tsx scripts/benchmark.ts",
+    "benchmark:local": "npx tsx scripts/benchmark.ts --local",
+    "benchmark:cloud": "npx tsx scripts/benchmark.ts --cloud",
+    "fixtures:download": "python fixtures/download-samples.py",
     "release": "release-it --npm.otp=$(op item get 'npmjs' --otp)",
     "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)"
   },
