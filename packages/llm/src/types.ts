@@ -56,13 +56,14 @@ export type LocalModelId = keyof typeof LOCAL_MODELS
 
 /**
  * Recommended Ollama models for transcript processing
+ *
+ * Focus: Multilingual text understanding (DE, FR, ES, PT, EN)
+ * No reasoning required - just grammar, punctuation, word boundaries
  */
 export const OLLAMA_MODELS = {
-  "gemma3:4b": "Best balance of speed and quality for transcripts",
-  "gemma3:12b": "Higher quality, needs more RAM",
-  "gemma3n:e4b": "Newest, optimized for edge devices",
-  "qwen2.5:3b": "Excellent multilingual support",
-  "llama3.2:3b": "Fast and capable"
+  "gemma3n:e4b": "Google Gemma 3n - Fast, efficient, edge-optimized (3GB)",
+  "qwen2.5:7b": "Alibaba Qwen 2.5 - Best multilingual support (5GB)",
+  "mistral:7b": "Mistral 7B - Good EU language support (5GB)"
 } as const
 
 export type OllamaModelId = keyof typeof OLLAMA_MODELS
