@@ -1,0 +1,53 @@
+{
+  "name": "@cuttledoc/llm",
+  "version": "1.0.0",
+  "description": "LLM-based transcript enhancement for cuttledoc",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "node-llama-cpp": "^3.14.5"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "llm",
+    "transcript",
+    "enhancement",
+    "ollama",
+    "openai",
+    "gemma"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebasptsch/cuttledoc.git",
+    "directory": "packages/llm"
+  }
+}

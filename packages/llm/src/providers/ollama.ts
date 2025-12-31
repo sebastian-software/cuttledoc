@@ -11,22 +11,12 @@ import {
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
   TRANSCRIPT_ENHANCEMENT_PROMPT,
-  type LLMProcessResult,
+  type EnhanceResult,
   type ProcessMode
-} from "./types.js"
+} from "../types.js"
 
 /** Ollama API base URL */
 const OLLAMA_BASE_URL = process.env["OLLAMA_HOST"] ?? "http://localhost:11434"
-
-/** Recommended models for transcript processing */
-export const OLLAMA_MODELS = {
-  "gemma3:4b": "Best balance of speed and quality for transcripts",
-  "gemma3:12b": "Higher quality, needs more RAM",
-  "qwen2.5:3b": "Excellent multilingual support",
-  "llama3.2:3b": "Fast and capable"
-} as const
-
-export type OllamaModelId = keyof typeof OLLAMA_MODELS
 
 interface OllamaGenerateResponse {
   response: string
@@ -67,8 +57,12 @@ export async function listOllamaModels(): Promise<string[]> {
  * Check if a specific model is available
  */
 export async function hasOllamaModel(model: string): Promise<boolean> {
-  const models = await listOllamaModels()
-  return models.some((m) => m.startsWith(model))
+  try {
+    const models = await listOllamaModels()
+    return models.some((m) => m.startsWith(model))
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -102,7 +96,7 @@ export class OllamaProcessor {
       mode?: ProcessMode
       temperature?: number
     } = {}
-  ): Promise<LLMProcessResult> {
+  ): Promise<EnhanceResult> {
     const startTime = performance.now()
 
     // Select prompt based on mode
@@ -141,10 +135,11 @@ export class OllamaProcessor {
     const plainText = stripMarkdown(enhancedText)
 
     // Calculate tokens per second from Ollama metrics
+    const outputTokens = data.eval_count ?? enhancedText.split(/\s+/).length
     const tokensPerSecond =
-      data.eval_count && data.eval_duration
+      data.eval_count !== undefined && data.eval_duration !== undefined
         ? data.eval_count / (data.eval_duration / 1e9)
-        : enhancedText.split(/\s+/).length / processingTime
+        : outputTokens / processingTime
 
     return {
       markdown: enhancedText,
@@ -152,10 +147,12 @@ export class OllamaProcessor {
       stats: {
         processingTimeSeconds: processingTime,
         inputTokens: rawTranscript.split(/\s+/).length,
-        outputTokens: data.eval_count ?? enhancedText.split(/\s+/).length,
+        outputTokens,
         tokensPerSecond,
         correctionsCount: corrections.length,
-        paragraphCount
+        paragraphCount,
+        provider: "ollama",
+        model: this.model
       },
       corrections
     }
@@ -165,7 +162,7 @@ export class OllamaProcessor {
    * No cleanup needed for Ollama (stateless HTTP)
    */
   async dispose(): Promise<void> {
-    // Nothing to dispose - Ollama manages its own resources
+    await Promise.resolve()
   }
 }
 
@@ -175,7 +172,7 @@ export class OllamaProcessor {
 export async function enhanceWithOllama(
   transcript: string,
   options: { model?: string; mode?: ProcessMode } = {}
-): Promise<LLMProcessResult> {
-  const processor = new OllamaProcessor(options.model ? { model: options.model } : {})
-  return processor.enhance(transcript, options.mode ? { mode: options.mode } : {})
+): Promise<EnhanceResult> {
+  const processor = new OllamaProcessor(options.model !== undefined ? { model: options.model } : {})
+  return processor.enhance(transcript, options.mode !== undefined ? { mode: options.mode } : {})
 }

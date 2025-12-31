@@ -3,9 +3,14 @@
  */
 
 /**
- * Supported LLM models for transcript processing
+ * Available LLM providers
  */
-export const LLM_MODELS = {
+export type LLMProvider = "ollama" | "openai" | "local"
+
+/**
+ * Supported local LLM models (for node-llama-cpp)
+ */
+export const LOCAL_MODELS = {
   // Gemma 3n - Newest, optimized for edge devices (July 2025)
   "gemma3n:e4b": {
     ggufRepo: "bartowski/gemma-3n-E4B-it-GGUF",
@@ -47,7 +52,31 @@ export const LLM_MODELS = {
   }
 } as const
 
-export type LLMModelId = keyof typeof LLM_MODELS
+export type LocalModelId = keyof typeof LOCAL_MODELS
+
+/**
+ * Recommended Ollama models for transcript processing
+ */
+export const OLLAMA_MODELS = {
+  "gemma3:4b": "Best balance of speed and quality for transcripts",
+  "gemma3:12b": "Higher quality, needs more RAM",
+  "gemma3n:e4b": "Newest, optimized for edge devices",
+  "qwen2.5:3b": "Excellent multilingual support",
+  "llama3.2:3b": "Fast and capable"
+} as const
+
+export type OllamaModelId = keyof typeof OLLAMA_MODELS
+
+/**
+ * OpenAI models for transcript processing
+ */
+export const OPENAI_MODELS = {
+  "gpt-4o-mini": "Fast and cost-effective",
+  "gpt-4o": "Highest quality",
+  "gpt-4-turbo": "Good balance of quality and speed"
+} as const
+
+export type OpenAIModelId = keyof typeof OPENAI_MODELS
 
 /**
  * Processing mode
@@ -62,32 +91,38 @@ export const PROCESS_MODES = {
 export type ProcessMode = keyof typeof PROCESS_MODES
 
 /**
- * LLM processing options
+ * Options for enhancing a transcript
  */
-export interface LLMProcessOptions {
-  /** Model to use (default: gemma3n:e4b). Built-in: gemma3n:e4b, gemma3n:e2b, gemma3:4b, gemma3:12b, deepseek-r1:1.5b, qwen2.5:3b */
-  model?: LLMModelId
+export interface EnhanceOptions {
+  /** Provider to use (auto-detected if not specified) */
+  provider?: LLMProvider
 
-  /** Custom GGUF file path (overrides model selection) */
-  modelPath?: string
-
-  /** GPU layers to offload (-1 = all, 0 = CPU only) */
-  gpuLayers?: number
-
-  /** Context size override */
-  contextSize?: number
-
-  /** Temperature for generation (default: 0.3 for correction) */
-  temperature?: number
+  /** Model name (provider-specific) */
+  model?: string
 
   /** Processing mode: "enhance" (full formatting) or "correct" (fixes only) */
   mode?: ProcessMode
+
+  /** Temperature for generation (default: 0.3) */
+  temperature?: number
+
+  /** OpenAI API key (required for openai provider) */
+  apiKey?: string
+
+  /** Custom model path for local provider */
+  modelPath?: string
+
+  /** GPU layers to offload for local provider (-1 = all, 0 = CPU only) */
+  gpuLayers?: number
+
+  /** Context size override for local provider */
+  contextSize?: number
 }
 
 /**
  * Result of LLM processing
  */
-export interface LLMProcessResult {
+export interface EnhanceResult {
   /** Formatted markdown text */
   markdown: string
 
@@ -98,7 +133,7 @@ export interface LLMProcessResult {
   stats: {
     /** Time spent processing in seconds */
     processingTimeSeconds: number
-    /** Input token count */
+    /** Input token count (approximate) */
     inputTokens: number
     /** Output token count */
     outputTokens: number
@@ -108,13 +143,22 @@ export interface LLMProcessResult {
     correctionsCount: number
     /** Number of paragraphs created */
     paragraphCount: number
+    /** Provider used */
+    provider: LLMProvider
+    /** Model used */
+    model: string
   }
 
   /** Detected corrections (before → after) */
-  corrections: {
-    original: string
-    corrected: string
-  }[]
+  corrections: Correction[]
+}
+
+/**
+ * A detected correction
+ */
+export interface Correction {
+  original: string
+  corrected: string
 }
 
 /**
@@ -182,14 +226,14 @@ export function countParagraphs(text: string): number {
 /**
  * Diff two texts and find changed words
  */
-export function findCorrections(original: string, corrected: string): { original: string; corrected: string }[] {
+export function findCorrections(original: string, corrected: string): Correction[] {
   const originalWords = original.toLowerCase().split(/\s+/)
   const correctedPlain = stripMarkdown(corrected)
   const correctedWords = correctedPlain.toLowerCase().split(/\s+/)
 
-  const corrections: { original: string; corrected: string }[] = []
+  const corrections: Correction[] = []
 
-  // Simple word-by-word comparison (not perfect but good enough)
+  // Simple word-by-word comparison
   const minLen = Math.min(originalWords.length, correctedWords.length)
 
   for (let i = 0; i < minLen; i++) {

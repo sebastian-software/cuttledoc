@@ -55,8 +55,7 @@ export {
 } from "./backends/sherpa/download.js"
 
 // Re-export LLM types for CLI
-export { LLM_MODELS, type LLMModelId } from "./llm/types.js"
-export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "./llm/processor.js"
+export { LLM_MODELS, type LLMModelId, downloadLLMModel, isLLMModelDownloaded } from "./llm/index.js"
 
 // Cached backend instances
 const sherpaBackendCache = new Map<SherpaModelType, SherpaBackend>()

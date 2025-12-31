@@ -1,35 +1,64 @@
 /**
  * LLM-based transcript enhancement
  *
- * Primary: Ollama (recommended) - just `ollama pull gemma3:4b`
- * Fallback: node-llama-cpp for environments without Ollama
+ * This module re-exports from @cuttledoc/llm for backward compatibility.
+ *
+ * @see @cuttledoc/llm for full documentation
  */
 
-// Ollama backend (recommended)
+// Re-export everything from @cuttledoc/llm
 export {
+  // Main API
+  enhanceTranscript,
+  detectProvider,
+  isLLMAvailable,
+
+  // Providers
+  OllamaProcessor,
+  OpenAIProcessor,
+  LocalProcessor,
+
+  // Ollama utilities
   enhanceWithOllama,
   hasOllamaModel,
   isOllamaRunning,
   listOllamaModels,
-  OLLAMA_MODELS,
-  OllamaProcessor,
-  type OllamaModelId
-} from "./ollama.js"
 
-// node-llama-cpp backend (fallback)
-export { downloadModel, enhanceTranscript, hasModelsDirectory, LLMProcessor } from "./processor.js"
+  // OpenAI utilities
+  enhanceWithOpenAI,
+  hasOpenAIKey,
 
-// Shared types
-export {
+  // Local utilities
+  downloadModel,
+  enhanceWithLocal,
+  hasModelsDirectory,
+  isModelDownloaded,
+
+  // Types
   countParagraphs,
   findCorrections,
-  LLM_MODELS,
-  PROCESS_MODES,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
   TRANSCRIPT_ENHANCEMENT_PROMPT,
-  type LLMModelId,
-  type LLMProcessOptions,
-  type LLMProcessResult,
+
+  // Model configs
+  LOCAL_MODELS,
+  OLLAMA_MODELS,
+  OPENAI_MODELS,
+  PROCESS_MODES,
+
+  // Type exports
+  type Correction,
+  type EnhanceOptions,
+  type EnhanceResult,
+  type LLMProvider,
+  type LocalModelId,
+  type OllamaModelId,
+  type OpenAIModelId,
   type ProcessMode
-} from "./types.js"
+} from "@cuttledoc/llm"
+
+// Legacy aliases for backward compatibility
+export { LOCAL_MODELS as LLM_MODELS, type LocalModelId as LLMModelId } from "@cuttledoc/llm"
+export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "@cuttledoc/llm"
+export type { EnhanceResult as LLMProcessResult, EnhanceOptions as LLMProcessOptions } from "@cuttledoc/llm"

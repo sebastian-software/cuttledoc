@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countParagraphs, findCorrections, LLM_MODELS, stripMarkdown } from "./types.js"
+import { countParagraphs, findCorrections, LLM_MODELS, stripMarkdown } from "./index.js"
 
 describe("LLM types", () => {
   describe("LLM_MODELS", () => {
@@ -10,7 +10,11 @@ describe("LLM types", () => {
     })
 
     it("should have all required fields for each model", () => {
-      for (const [id, model] of Object.entries(LLM_MODELS)) {
+      const entries = Object.entries(LLM_MODELS) as [
+        string,
+        { ggufRepo: string; ggufFile: string; contextSize: number; description: string }
+      ][]
+      for (const [id, model] of entries) {
         expect(model.ggufRepo, `${id} should have ggufRepo`).toBeDefined()
         expect(model.ggufFile, `${id} should have ggufFile`).toBeDefined()
         expect(model.contextSize, `${id} should have contextSize`).toBeGreaterThan(0)

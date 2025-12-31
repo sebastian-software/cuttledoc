@@ -1,7 +1,8 @@
 /**
- * LLM-based transcript enhancement using node-llama-cpp
+ * Local LLM processing using node-llama-cpp
  *
- * Native Node.js bindings - no external processes or CLI tools
+ * Native Node.js bindings - no external processes or CLI tools.
+ * Downloads GGUF models from Hugging Face automatically.
  */
 
 import { existsSync, mkdirSync, readdirSync } from "node:fs"
@@ -10,15 +11,14 @@ import { join } from "node:path"
 import {
   countParagraphs,
   findCorrections,
-  LLM_MODELS,
+  LOCAL_MODELS,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
   TRANSCRIPT_ENHANCEMENT_PROMPT,
-  type LLMModelId,
-  type LLMProcessOptions,
-  type LLMProcessResult,
+  type EnhanceResult,
+  type LocalModelId,
   type ProcessMode
-} from "./types.js"
+} from "../types.js"
 
 import type {
   getLlama,
@@ -30,7 +30,7 @@ import type {
   resolveModelFile
 } from "node-llama-cpp"
 
-// Type definitions
+// Type definitions for dynamic import
 interface LlamaModule {
   getLlama: typeof getLlama
   LlamaChatSession: typeof LlamaChatSession
@@ -68,8 +68,7 @@ function getModelsDir(): string {
 }
 
 /**
- * Check if models directory exists (rough check)
- * Note: node-llama-cpp handles actual model caching with prefixed filenames
+ * Check if models directory exists
  */
 export function hasModelsDirectory(): boolean {
   return existsSync(getModelsDir())
@@ -77,10 +76,9 @@ export function hasModelsDirectory(): boolean {
 
 /**
  * Check if a specific LLM model is downloaded
- * node-llama-cpp uses prefixed filenames like "hf_Qwen_qwen2.5-3b-instruct-q4_k_m.gguf"
  */
-export function isModelDownloaded(modelId: LLMModelId): boolean {
-  const modelInfo = LLM_MODELS[modelId]
+export function isModelDownloaded(modelId: LocalModelId): boolean {
+  const modelInfo = LOCAL_MODELS[modelId]
   const modelsDir = getModelsDir()
 
   if (!existsSync(modelsDir)) {
@@ -105,13 +103,12 @@ export function isModelDownloaded(modelId: LLMModelId): boolean {
 
 /**
  * Download a model from Hugging Face (or return cached path)
- * Uses node-llama-cpp's resolveModelFile which handles caching automatically
  */
 export async function downloadModel(
-  modelId: LLMModelId,
+  modelId: LocalModelId,
   options: { onProgress?: (progress: number) => void } = {}
 ): Promise<string> {
-  const modelInfo = LLM_MODELS[modelId]
+  const modelInfo = LOCAL_MODELS[modelId]
   const modelsDir = getModelsDir()
 
   // Create directory if needed
@@ -119,7 +116,6 @@ export async function downloadModel(
     mkdirSync(modelsDir, { recursive: true })
   }
 
-  // Use node-llama-cpp's resolveModelFile (handles download + caching)
   const llama = await loadLlamaModule()
 
   console.log(`Resolving ${modelId} from ${modelInfo.ggufRepo}...`)
@@ -137,24 +133,31 @@ export async function downloadModel(
 }
 
 /**
- * LLM Processor for transcript enhancement
+ * Local LLM Processor using node-llama-cpp
  */
-export class LLMProcessor {
+export class LocalProcessor {
   private llama: Llama | null = null
   private model: LlamaModel | null = null
   private context: LlamaContext | null = null
   private isInitialized = false
 
-  private readonly modelId: LLMModelId
+  private readonly modelId: LocalModelId
   private readonly modelPath: string | undefined
   private readonly gpuLayers: number
   private readonly contextSize: number
 
-  constructor(options: LLMProcessOptions = {}) {
+  constructor(
+    options: {
+      model?: LocalModelId
+      modelPath?: string
+      gpuLayers?: number
+      contextSize?: number
+    } = {}
+  ) {
     this.modelId = options.model ?? "gemma3n:e4b"
     this.modelPath = options.modelPath
     this.gpuLayers = options.gpuLayers ?? -1 // All layers on GPU by default
-    const modelInfo = LLM_MODELS[this.modelId]
+    const modelInfo = LOCAL_MODELS[this.modelId]
     this.contextSize = options.contextSize ?? modelInfo.contextSize
   }
 
@@ -189,15 +192,27 @@ export class LLMProcessor {
   }
 
   /**
+   * Check if local LLM is available
+   */
+  async isAvailable(): Promise<boolean> {
+    try {
+      await loadLlamaModule()
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
    * Enhance a transcript with formatting and corrections
    */
   async enhance(
     rawTranscript: string,
     options: {
-      mode?: ProcessMode | undefined
-      temperature?: number | undefined
+      mode?: ProcessMode
+      temperature?: number
     } = {}
-  ): Promise<LLMProcessResult> {
+  ): Promise<EnhanceResult> {
     if (!this.isInitialized || this.context === null || this.model === null) {
       await this.initialize()
     }
@@ -240,8 +255,8 @@ export class LLMProcessor {
     const paragraphCount = countParagraphs(response)
     const plainText = stripMarkdown(response)
 
-    // Get token counts from session
-    const inputTokens = rawTranscript.split(/\s+/).length // Approximation
+    // Approximate token counts
+    const inputTokens = rawTranscript.split(/\s+/).length
     const outputTokens = response.split(/\s+/).length
 
     return {
@@ -253,7 +268,9 @@ export class LLMProcessor {
         outputTokens,
         tokensPerSecond: outputTokens / processingTime,
         correctionsCount: corrections.length,
-        paragraphCount
+        paragraphCount,
+        provider: "local",
+        model: this.modelId
       },
       corrections
     }
@@ -265,21 +282,23 @@ export class LLMProcessor {
   async enhanceChunked(
     rawTranscript: string,
     options: {
-      mode?: ProcessMode | undefined
-      temperature?: number | undefined
-      chunkSize?: number | undefined
-      onChunk?: ((chunk: string, index: number, total: number) => void) | undefined
+      mode?: ProcessMode
+      temperature?: number
+      chunkSize?: number
+      onChunk?: (chunk: string, index: number, total: number) => void
     } = {}
-  ): Promise<LLMProcessResult> {
+  ): Promise<EnhanceResult> {
     const chunkSize = options.chunkSize ?? 2000 // Words per chunk
     const words = rawTranscript.split(/\s+/)
 
+    // Build enhance options (filter undefined)
+    const enhanceOpts: { mode?: ProcessMode; temperature?: number } = {}
+    if (options.mode !== undefined) enhanceOpts.mode = options.mode
+    if (options.temperature !== undefined) enhanceOpts.temperature = options.temperature
+
     // If small enough, process directly
     if (words.length <= chunkSize) {
-      return await this.enhance(rawTranscript, {
-        mode: options.mode,
-        temperature: options.temperature
-      })
+      return await this.enhance(rawTranscript, enhanceOpts)
     }
 
     // Split into chunks at sentence boundaries
@@ -316,10 +335,7 @@ export class LLMProcessor {
         options.onChunk(chunk, i, chunks.length)
       }
 
-      const result = await this.enhance(chunk, {
-        mode: options.mode,
-        temperature: options.temperature
-      })
+      const result = await this.enhance(chunk, enhanceOpts)
 
       enhancedChunks.push(result.markdown)
       allCorrections.push(...result.corrections)
@@ -339,7 +355,9 @@ export class LLMProcessor {
         outputTokens: totalOutputTokens,
         tokensPerSecond: totalOutputTokens / totalTime,
         correctionsCount: allCorrections.length,
-        paragraphCount: countParagraphs(markdown)
+        paragraphCount: countParagraphs(markdown),
+        provider: "local",
+        model: this.modelId
       },
       corrections: allCorrections
     }
@@ -362,19 +380,26 @@ export class LLMProcessor {
 }
 
 /**
- * Quick function to enhance a transcript
+ * Quick helper to enhance a transcript via local LLM
  */
-export async function enhanceTranscript(
-  rawTranscript: string,
-  options: LLMProcessOptions = {}
-): Promise<LLMProcessResult> {
-  const processor = new LLMProcessor(options)
+export async function enhanceWithLocal(
+  transcript: string,
+  options: { model?: LocalModelId; mode?: ProcessMode; modelPath?: string } = {}
+): Promise<EnhanceResult> {
+  // Build processor options (filter undefined)
+  const processorOpts: { model?: LocalModelId; modelPath?: string } = {}
+  if (options.model !== undefined) processorOpts.model = options.model
+  if (options.modelPath !== undefined) processorOpts.modelPath = options.modelPath
+
+  const processor = new LocalProcessor(processorOpts)
+
+  // Build enhance options (filter undefined)
+  const enhanceOpts: { mode?: ProcessMode } = {}
+  if (options.mode !== undefined) enhanceOpts.mode = options.mode
 
   try {
     await processor.initialize()
-    return await processor.enhanceChunked(rawTranscript, {
-      mode: options.mode
-    })
+    return await processor.enhanceChunked(transcript, enhanceOpts)
   } finally {
     await processor.dispose()
   }
