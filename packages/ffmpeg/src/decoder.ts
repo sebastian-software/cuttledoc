@@ -1,5 +1,9 @@
 /**
  * Audio decoding utilities using FFmpeg CLI
+ *
+ * Includes speech-optimized preprocessing:
+ * - Bandpass filter (80Hz - 12kHz) to remove rumble and hiss
+ * - EBU R128 loudness normalization for consistent levels
  */
 
 import { execFile } from "node:child_process"
@@ -17,9 +21,19 @@ export interface DecodeOptions {
   sampleRate?: number
   /** Number of channels (default: 1 for mono) */
   channels?: number
-  /** Normalize audio to target peak level (default: 0.9) */
+  /**
+   * Apply speech-optimized preprocessing (default: true)
+   * - Bandpass filter: 80Hz - 12kHz (removes rumble and hiss)
+   * - Loudness normalization: EBU R128 standard
+   */
+  speechOptimize?: boolean
+  /**
+   * @deprecated Use speechOptimize instead. Peak normalization is replaced by EBU R128 loudnorm.
+   */
   normalize?: boolean
-  /** Target peak level for normalization (default: 0.9) */
+  /**
+   * @deprecated No longer used. EBU R128 loudnorm handles normalization.
+   */
   targetPeak?: number
 }
 
@@ -38,9 +52,31 @@ export interface AudioData {
 }
 
 /**
+ * Build the audio filter chain for speech preprocessing
+ */
+function buildSpeechFilters(): string {
+  // Bandpass filter: Keep frequencies relevant for speech (80Hz - 12kHz)
+  // - highpass=f=80: Removes low-frequency rumble (HVAC, traffic, mic handling)
+  // - lowpass=f=12000: Removes high-frequency hiss and noise
+  const bandpass = "highpass=f=80,lowpass=f=12000"
+
+  // EBU R128 loudness normalization
+  // - I=-16: Target integrated loudness (standard for speech/podcasts)
+  // - LRA=11: Loudness range (how much dynamic variation to allow)
+  // - TP=-1.5: True peak limit (prevents clipping)
+  const loudnorm = "loudnorm=I=-16:LRA=11:TP=-1.5"
+
+  return `${bandpass},${loudnorm}`
+}
+
+/**
  * Decode an audio file to Float32 samples.
  *
  * Supports any format that FFmpeg can decode: MP3, OGG, M4A, FLAC, WAV, etc.
+ *
+ * By default, applies speech-optimized preprocessing:
+ * - Bandpass filter (80Hz - 12kHz) to remove rumble and hiss
+ * - EBU R128 loudness normalization for consistent levels
  *
  * @param inputPath - Path to the audio file
  * @param options - Decoding options
@@ -50,14 +86,11 @@ export interface AudioData {
  * ```typescript
  * import { decodeAudio } from '@cuttledoc/ffmpeg'
  *
- * // Decode to 16kHz mono (ideal for speech recognition)
- * const audio = await decodeAudio('speech.ogg', {
- *   sampleRate: 16000,
- *   channels: 1
- * })
+ * // Decode with speech optimization (default)
+ * const audio = await decodeAudio('speech.ogg')
  *
- * console.log(`Duration: ${audio.durationSeconds}s`)
- * console.log(`Samples: ${audio.samples.length}`)
+ * // Decode without preprocessing (raw conversion)
+ * const raw = await decodeAudio('audio.mp3', { speechOptimize: false })
  * ```
  */
 export async function decodeAudio(inputPath: string, options: DecodeOptions = {}): Promise<AudioData> {
@@ -67,13 +100,24 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
 
   const sampleRate = options.sampleRate ?? 16000
   const channels = options.channels ?? 1
-  const normalize = options.normalize ?? true
-  const targetPeak = options.targetPeak ?? 0.9
+
+  // Support legacy 'normalize' option, default to speech optimization
+  const speechOptimize = options.speechOptimize ?? options.normalize ?? true
 
   // Build FFmpeg arguments
   const args = [
+    "-hide_banner", // Suppress FFmpeg banner
     "-i",
-    inputPath,
+    inputPath
+  ]
+
+  // Add speech preprocessing filters if enabled
+  if (speechOptimize) {
+    args.push("-af", buildSpeechFilters())
+  }
+
+  // Output format
+  args.push(
     "-ar",
     String(sampleRate),
     "-ac",
@@ -83,7 +127,7 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
     "-acodec",
     "pcm_f32le",
     "-" // Output to stdout
-  ]
+  )
 
   try {
     const { stdout } = await execFileAsync(ffmpegPath(), args, {
@@ -96,12 +140,7 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
     const arrayBuffer = new ArrayBuffer(stdout.byteLength)
     const view = new Uint8Array(arrayBuffer)
     view.set(stdout)
-    let samples = new Float32Array(arrayBuffer)
-
-    // Normalize if requested
-    if (normalize) {
-      samples = normalizeAudio(samples, targetPeak)
-    }
+    const samples = new Float32Array(arrayBuffer)
 
     const durationSeconds = samples.length / sampleRate
 
@@ -115,38 +154,4 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to decode audio: ${message}`)
   }
-}
-
-/**
- * Normalize audio samples to a target peak level.
- *
- * @param samples - Float32 audio samples
- * @param targetPeak - Target peak level (default: 0.9)
- * @returns Normalized samples
- */
-function normalizeAudio(samples: Float32Array<ArrayBuffer>, targetPeak = 0.9): Float32Array<ArrayBuffer> {
-  // Find current peak
-  let currentPeak = 0
-  for (const sample of samples) {
-    const abs = Math.abs(sample)
-    if (abs > currentPeak) {
-      currentPeak = abs
-    }
-  }
-
-  // If audio is already loud enough or silent, don't modify
-  if (currentPeak >= targetPeak * 0.5 || currentPeak === 0) {
-    return samples
-  }
-
-  // Apply gain to reach target peak
-  const gain = targetPeak / currentPeak
-  const buffer = new ArrayBuffer(samples.length * 4)
-  const normalized = new Float32Array(buffer)
-  let idx = 0
-  for (const sample of samples) {
-    normalized[idx++] = sample * gain
-  }
-
-  return normalized
 }

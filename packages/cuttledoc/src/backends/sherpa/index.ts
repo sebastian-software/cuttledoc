@@ -283,10 +283,11 @@ export class SherpaBackend implements Backend {
       }
     } else if (isFFmpegAvailable()) {
       // Use @cuttledoc/ffmpeg for other formats
+      // Applies speech-optimized preprocessing: bandpass filter + loudness normalization
       const audio = await decodeAudio(audioPath, {
         sampleRate: 16000,
         channels: 1,
-        normalize: true
+        speechOptimize: true
       })
       return {
         samples: audio.samples,
@@ -296,8 +297,8 @@ export class SherpaBackend implements Backend {
     } else {
       throw new Error(
         `Unsupported audio format: ${audioPath}. ` +
-          "Install @mmomtchev/ffmpeg for mp3, m4a, and other formats, " +
-          "or convert to WAV (16kHz mono)."
+          "The @cuttledoc/ffmpeg package should be installed automatically. " +
+          "Try reinstalling cuttledoc, or convert to WAV (16kHz mono)."
       )
     }
   }
