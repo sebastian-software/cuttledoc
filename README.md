@@ -218,7 +218,23 @@ The optional LLM post-processing uses Gemma 3n to:
    - Bullet lists where appropriate
 4. Fix obvious **transcription errors**
 
-All processing happens locally using [node-llama-cpp](https://github.com/withcatai/node-llama-cpp).
+All processing happens locally using [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) or via Ollama.
+
+### LLM Correction Benchmark
+
+We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speakers each):
+
+| Model       | WER Before | WER After | Improvement | Speed  |
+| ----------- | ---------- | --------- | ----------- | ------ |
+| **gemma3n** | 9.2%       | **3.8%**  | **+59%**    | 37 t/s |
+| phi4:14b    | 9.2%       | 4.2%      | +54%        | 36 t/s |
+
+**Key findings:**
+
+- LLM correction improves WER in **9/10 cases**
+- Most effective on high-WER samples (>10%): up to **-28 percentage points**
+- Minimal degradation in edge cases (~0.7pp)
+- **Recommendation:** Enable LLM correction by default
 
 ## Quality Benchmark
 

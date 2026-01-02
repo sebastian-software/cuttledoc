@@ -1,8 +1,10 @@
 # Downloaded audio samples (large files)
 *.wav
-*.ogg
 *.mp3
 *.m4a
+
+# Keep TTS benchmark audio (OGG compressed, ~18MB total)
+!audio/*.ogg
 
 # Keep reference transcripts
 !*.txt

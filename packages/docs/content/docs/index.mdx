@@ -137,6 +137,22 @@ cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 cuttledoc models download gemma3n:e4b
 ```
 
+## LLM Correction Benchmark
+
+We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speakers each):
+
+| Model       | WER Before | WER After | Improvement | Speed  |
+| ----------- | ---------- | --------- | ----------- | ------ |
+| **gemma3n** | 9.2%       | **3.8%**  | **+59%**    | 37 t/s |
+| phi4:14b    | 9.2%       | 4.2%      | +54%        | 36 t/s |
+
+**Key findings:**
+
+- LLM correction improves WER in **9/10 cases**
+- Most effective on high-WER samples (>10%): up to **-28 percentage points**
+- Minimal degradation in edge cases (~0.7pp)
+- **Recommendation:** Enable LLM correction by default
+
 ## Next Steps
 
 <Cards>
