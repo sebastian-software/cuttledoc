@@ -1,0 +1,49 @@
+{
+  "name": "@cuttledoc/coreml-asr",
+  "version": "1.0.0",
+  "description": "CoreML-based ASR for Apple Silicon using Parakeet TDT v3",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "build",
+    "src/*.mm",
+    "binding.gyp"
+  ],
+  "scripts": {
+    "build:native": "node-gyp rebuild",
+    "build:ts": "tsup",
+    "build": "npm run build:native && npm run build:ts",
+    "clean": "node-gyp clean && rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0"
+  },
+  "devDependencies": {
+    "node-addon-api": "^8.3.1",
+    "node-gyp": "^11.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "license": "MIT"
+}

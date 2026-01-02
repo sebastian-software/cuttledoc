@@ -1,0 +1,9 @@
+# Build output
+build/
+dist/
+
+# Native module
+*.node
+
+# node-gyp
+.node-gyp/
