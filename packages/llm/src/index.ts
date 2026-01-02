@@ -29,7 +29,7 @@ export {
   PROCESS_MODES,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
-  TRANSCRIPT_ENHANCEMENT_PROMPT,
+  TRANSCRIPT_FORMAT_PROMPT,
   type Correction,
   type EnhanceOptions,
   type EnhanceResult,

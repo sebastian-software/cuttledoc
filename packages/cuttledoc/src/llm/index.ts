@@ -1,7 +1,7 @@
 /**
  * LLM-based transcript enhancement
  *
- * This module re-exports from @cuttledoc/llm for backward compatibility.
+ * This module re-exports from @cuttledoc/llm.
  *
  * @see @cuttledoc/llm for full documentation
  */
@@ -39,7 +39,7 @@ export {
   findCorrections,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
-  TRANSCRIPT_ENHANCEMENT_PROMPT,
+  TRANSCRIPT_FORMAT_PROMPT,
 
   // Model configs
   LOCAL_MODELS,
@@ -57,8 +57,3 @@ export {
   type OpenAIModelId,
   type ProcessMode
 } from "@cuttledoc/llm"
-
-// Legacy aliases for backward compatibility
-export { LOCAL_MODELS as LLM_MODELS, type LocalModelId as LLMModelId } from "@cuttledoc/llm"
-export { downloadModel as downloadLLMModel, isModelDownloaded as isLLMModelDownloaded } from "@cuttledoc/llm"
-export type { EnhanceResult as LLMProcessResult, EnhanceOptions as LLMProcessOptions } from "@cuttledoc/llm"

@@ -32,10 +32,9 @@ OPTIONS:
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
-  -e, --enhance           Full LLM enhancement (formatting, TLDR, corrections)
-  --no-enhance            Disable LLM correction (raw STT output)
-  --correct-only          Only fix transcription errors, no formatting (default)
-  --llm-model <name>      LLM model for enhancement (default: gemma3n:e4b)
+  -f, --format            Add formatting (paragraphs, headings, markdown)
+  --no-correct            Disable LLM correction (raw STT output)
+  --llm-model <name>      LLM model for correction (default: gemma3n:e4b)
   -s, --stats             Show processing statistics
   -q, --quiet             Minimal output (just the transcript)
   -h, --help              Show this help message
@@ -60,10 +59,10 @@ EXAMPLES:
   cuttledoc podcast.mp3
 
   # Raw STT output without LLM correction
-  cuttledoc podcast.mp3 --no-enhance
+  cuttledoc podcast.mp3 --no-correct
 
-  # Full LLM enhancement (formatting, TLDR, corrections)
-  cuttledoc video.mp4 -e -o transcript.md
+  # With formatting (paragraphs, headings, markdown)
+  cuttledoc video.mp4 -f -o transcript.md
 
   # Transcribe with Whisper for best quality
   cuttledoc meeting.m4a -b whisper

@@ -43,12 +43,12 @@ describe("cli output", () => {
       expect(output).toContain("-l")
     })
 
-    it("should document enhance option", () => {
+    it("should document format option", () => {
       printHelp()
 
       const output = mockConsoleLog.mock.calls[0]?.[0] as string
-      expect(output).toContain("--enhance")
-      expect(output).toContain("-e")
+      expect(output).toContain("--format")
+      expect(output).toContain("-f")
     })
 
     it("should document models command", () => {

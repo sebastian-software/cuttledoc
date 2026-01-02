@@ -83,9 +83,9 @@ export type OpenAIModelId = keyof typeof OPENAI_MODELS
  * Processing mode
  */
 export const PROCESS_MODES = {
-  /** Full enhancement: TLDR, headings, formatting, corrections */
-  enhance: "enhance",
-  /** Correction only: Fix transcription errors, no restructuring */
+  /** Formatting: Paragraphs, headings, markdown formatting + corrections */
+  format: "format",
+  /** Correction only: Fix transcription errors, no restructuring (default) */
   correct: "correct"
 } as const
 
@@ -101,7 +101,7 @@ export interface EnhanceOptions {
   /** Model name (provider-specific) */
   model?: string
 
-  /** Processing mode: "enhance" (full formatting) or "correct" (fixes only) */
+  /** Processing mode: "format" (full formatting) or "correct" (fixes only, default) */
   mode?: ProcessMode
 
   /** Temperature for generation (default: 0.3) */
@@ -163,25 +163,25 @@ export interface Correction {
 }
 
 /**
- * System prompt for transcript enhancement
+ * System prompt for transcript formatting (paragraphs, headings, markdown)
  */
-export const TRANSCRIPT_ENHANCEMENT_PROMPT = `You are an expert at formatting and enhancing video transcripts.
+export const TRANSCRIPT_FORMAT_PROMPT = `You are an expert at formatting video transcripts for readability.
 
 Your task:
-1. **TLDR**: Start with a brief summary (2-3 sentences) under a "## TLDR" heading
-2. **Structure**: Organize the text into logical paragraphs at natural speech pauses
-3. **Headings**: Add ## or ### headings for clear topic changes
-4. **Formatting**:
+1. **Structure**: Organize the text into logical paragraphs at natural speech pauses
+2. **Headings**: Add ## or ### headings for clear topic changes
+3. **Formatting**:
    - **Bold** for key terms and important statements
    - *Italic* for emphasis and proper nouns
    - Bullet lists where appropriate (e.g., when speaker lists items)
-5. **Corrections**: Fix only obvious transcription errors (misheard words, homophones)
+4. **Corrections**: Fix obvious transcription errors (misheard words, homophones)
 
 Rules:
 - KEEP the original language of the transcript (do not translate)
 - PRESERVE the original wording - do not rephrase or paraphrase
 - DO NOT add information that wasn't spoken
 - DO NOT remove any statements
+- DO NOT summarize - output the complete text
 - MAINTAIN the speaker's voice and style
 - Output ONLY the formatted markdown, no meta-commentary
 

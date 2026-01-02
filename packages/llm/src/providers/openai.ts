@@ -10,7 +10,7 @@ import {
   findCorrections,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
-  TRANSCRIPT_ENHANCEMENT_PROMPT,
+  TRANSCRIPT_FORMAT_PROMPT,
   type EnhanceResult,
   type ProcessMode
 } from "../types.js"
@@ -78,8 +78,8 @@ export class OpenAIProcessor {
     const startTime = performance.now()
 
     // Select prompt based on mode
-    const mode = options.mode ?? "enhance"
-    const systemPrompt = mode === "correct" ? TRANSCRIPT_CORRECTION_PROMPT : TRANSCRIPT_ENHANCEMENT_PROMPT
+    const mode = options.mode ?? "correct"
+    const systemPrompt = mode === "correct" ? TRANSCRIPT_CORRECTION_PROMPT : TRANSCRIPT_FORMAT_PROMPT
 
     // Call OpenAI Chat Completions API
     const response = await fetch(`${this.baseUrl}/chat/completions`, {

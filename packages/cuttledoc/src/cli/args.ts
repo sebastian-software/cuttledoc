@@ -8,8 +8,8 @@ export interface CLIArgs {
   version: boolean
   quiet: boolean
   stats: boolean
-  enhance: boolean
-  correctOnly: boolean
+  correct: boolean // LLM correction (default: true)
+  format: boolean // Full formatting with paragraphs/headings (default: false)
 
   // Options
   backend: string | undefined
@@ -35,8 +35,8 @@ export function parseArgs(argv: string[]): CLIArgs {
     version: false,
     quiet: false,
     stats: false,
-    enhance: true, // LLM correction enabled by default
-    correctOnly: true, // Default: only correct errors (no formatting/TLDR)
+    correct: true, // LLM correction enabled by default
+    format: false, // Formatting disabled by default
     backend: undefined,
     model: undefined,
     language: undefined,
@@ -64,14 +64,12 @@ export function parseArgs(argv: string[]): CLIArgs {
       args.quiet = true
     } else if (arg === "-s" || arg === "--stats") {
       args.stats = true
-    } else if (arg === "-e" || arg === "--enhance") {
-      args.enhance = true
-      args.correctOnly = false // Full enhancement with formatting/TLDR
-    } else if (arg === "--no-enhance") {
-      args.enhance = false // Disable LLM correction entirely
-    } else if (arg === "--correct-only") {
-      args.correctOnly = true
-      args.enhance = true
+    } else if (arg === "-f" || arg === "--format") {
+      args.format = true // Enable formatting (implies correction)
+      args.correct = true
+    } else if (arg === "--no-correct") {
+      args.correct = false // Disable LLM correction entirely
+      args.format = false
     }
     // Options with values
     else if (arg === "-b" || arg === "--backend") {

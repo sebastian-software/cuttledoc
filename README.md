@@ -49,10 +49,10 @@ pnpm add cuttledoc
 npx cuttledoc video.mp4
 
 # Raw STT output without LLM correction
-npx cuttledoc video.mp4 --no-enhance
+npx cuttledoc video.mp4 --no-correct
 
-# Full LLM enhancement (formatting, TLDR, corrections)
-npx cuttledoc podcast.mp3 --enhance -o transcript.md
+# With formatting (paragraphs, headings, markdown)
+npx cuttledoc podcast.mp3 -f -o transcript.md
 
 # Use specific backend and language
 npx cuttledoc meeting.m4a -b parakeet -l de
@@ -115,9 +115,8 @@ Options:
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code: en, de, fr, es, etc.
   -o, --output <file>     Write output to file
-  -e, --enhance           Full LLM enhancement (formatting, TLDR, corrections)
-  --no-enhance            Disable LLM correction (raw STT output)
-  --correct-only          Only fix transcription errors, no formatting (default)
+  -f, --format            Add formatting (paragraphs, headings, markdown)
+  --no-correct            Disable LLM correction (raw STT output)
   --llm-model <name>      LLM model (default: gemma3n:e4b)
   -s, --stats             Show processing statistics
   -q, --quiet             Minimal output
@@ -125,7 +124,7 @@ Options:
   -v, --version           Show version
 ```
 
-> **Note:** LLM correction is enabled by default. Use `--no-enhance` for raw STT output.
+> **Note:** LLM correction is enabled by default. Use `--no-correct` for raw STT output.
 
 ### Model Management
 

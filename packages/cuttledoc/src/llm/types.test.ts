@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { countParagraphs, findCorrections, LLM_MODELS, stripMarkdown } from "./index.js"
+import { countParagraphs, findCorrections, LOCAL_MODELS, stripMarkdown } from "./index.js"
 
 describe("LLM types", () => {
-  describe("LLM_MODELS", () => {
+  describe("LOCAL_MODELS", () => {
     it("should have gemma3n:e4b as a model", () => {
-      expect(LLM_MODELS["gemma3n:e4b"]).toBeDefined()
-      expect(LLM_MODELS["gemma3n:e4b"].ggufRepo).toContain("gemma")
+      expect(LOCAL_MODELS["gemma3n:e4b"]).toBeDefined()
+      expect(LOCAL_MODELS["gemma3n:e4b"].ggufRepo).toContain("gemma")
     })
 
     it("should have all required fields for each model", () => {
-      const entries = Object.entries(LLM_MODELS) as [
+      const entries = Object.entries(LOCAL_MODELS) as [
         string,
         { ggufRepo: string; ggufFile: string; contextSize: number; description: string }
       ][]

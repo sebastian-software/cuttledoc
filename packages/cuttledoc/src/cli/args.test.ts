@@ -47,27 +47,22 @@ describe("parseArgs", () => {
       expect(args.stats).toBe(true)
     })
 
-    it("should parse -e flag (full enhancement)", () => {
-      const args = parseArgs(["-e"])
-      expect(args.enhance).toBe(true)
-      expect(args.correctOnly).toBe(false) // Full enhancement disables correct-only
+    it("should parse -f flag (formatting)", () => {
+      const args = parseArgs(["-f"])
+      expect(args.format).toBe(true)
+      expect(args.correct).toBe(true)
     })
 
-    it("should parse --enhance flag (full enhancement)", () => {
-      const args = parseArgs(["--enhance"])
-      expect(args.enhance).toBe(true)
-      expect(args.correctOnly).toBe(false) // Full enhancement disables correct-only
+    it("should parse --format flag", () => {
+      const args = parseArgs(["--format"])
+      expect(args.format).toBe(true)
+      expect(args.correct).toBe(true)
     })
 
-    it("should parse --no-enhance flag", () => {
-      const args = parseArgs(["--no-enhance"])
-      expect(args.enhance).toBe(false)
-    })
-
-    it("should parse --correct-only flag", () => {
-      const args = parseArgs(["--correct-only"])
-      expect(args.correctOnly).toBe(true)
-      expect(args.enhance).toBe(true)
+    it("should parse --no-correct flag", () => {
+      const args = parseArgs(["--no-correct"])
+      expect(args.correct).toBe(false)
+      expect(args.format).toBe(false)
     })
   })
 
@@ -166,7 +161,7 @@ describe("parseArgs", () => {
         "de",
         "-o",
         "transcript.md",
-        "-e",
+        "-f",
         "--llm-model",
         "gemma3n:e4b",
         "-s"
@@ -176,7 +171,8 @@ describe("parseArgs", () => {
       expect(args.backend).toBe("parakeet")
       expect(args.language).toBe("de")
       expect(args.output).toBe("transcript.md")
-      expect(args.enhance).toBe(true)
+      expect(args.format).toBe(true)
+      expect(args.correct).toBe(true)
       expect(args.llmModel).toBe("gemma3n:e4b")
       expect(args.stats).toBe(true)
     })
@@ -202,8 +198,8 @@ describe("parseArgs", () => {
       expect(args.version).toBe(false)
       expect(args.quiet).toBe(false)
       expect(args.stats).toBe(false)
-      expect(args.enhance).toBe(true) // LLM correction enabled by default
-      expect(args.correctOnly).toBe(true) // Only correction, no formatting by default
+      expect(args.correct).toBe(true) // LLM correction enabled by default
+      expect(args.format).toBe(false) // Formatting disabled by default
       expect(args.backend).toBeUndefined()
       expect(args.model).toBeUndefined()
       expect(args.language).toBeUndefined()

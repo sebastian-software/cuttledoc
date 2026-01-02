@@ -14,7 +14,7 @@ import {
   LOCAL_MODELS,
   stripMarkdown,
   TRANSCRIPT_CORRECTION_PROMPT,
-  TRANSCRIPT_ENHANCEMENT_PROMPT,
+  TRANSCRIPT_FORMAT_PROMPT,
   type EnhanceResult,
   type LocalModelId,
   type ProcessMode
@@ -231,8 +231,8 @@ export class LocalProcessor {
     })
 
     // Select prompt based on mode
-    const mode = options.mode ?? "enhance"
-    const systemPrompt = mode === "correct" ? TRANSCRIPT_CORRECTION_PROMPT : TRANSCRIPT_ENHANCEMENT_PROMPT
+    const mode = options.mode ?? "correct"
+    const systemPrompt = mode === "correct" ? TRANSCRIPT_CORRECTION_PROMPT : TRANSCRIPT_FORMAT_PROMPT
 
     const prompt = `${systemPrompt}\n\n---\n\n${rawTranscript}`
 

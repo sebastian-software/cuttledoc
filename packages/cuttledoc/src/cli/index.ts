@@ -16,7 +16,7 @@ import { basename } from "node:path"
 import {
   transcribe,
   BACKEND_TYPES,
-  LLM_MODELS,
+  LOCAL_MODELS,
   SHERPA_MODELS,
   downloadLLMModel,
   downloadSherpaModel,
@@ -70,9 +70,9 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
 
     printModels(
       sherpaModelsSimple,
-      LLM_MODELS,
+      LOCAL_MODELS,
       (id) => isSherpaModelDownloaded(id as keyof typeof SHERPA_MODELS),
-      (id) => isLLMModelDownloaded(id as keyof typeof LLM_MODELS)
+      (id) => isLLMModelDownloaded(id as keyof typeof LOCAL_MODELS)
     )
     return
   }
@@ -86,9 +86,9 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     }
 
     // Try LLM models first
-    if (modelId in LLM_MODELS) {
+    if (modelId in LOCAL_MODELS) {
       console.log(`Downloading LLM model: ${modelId}...`)
-      await downloadLLMModel(modelId as keyof typeof LLM_MODELS, {
+      await downloadLLMModel(modelId as keyof typeof LOCAL_MODELS, {
         onProgress: (p) => {
           process.stdout.write(`\rProgress: ${(p * 100).toFixed(1)}%`)
         }
@@ -162,17 +162,18 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   const transcribeTime = (performance.now() - startTime) / 1000
   let finalText = result.text
 
-  // Enhance with LLM if requested
-  if (args.enhance) {
+  // LLM processing (correction enabled by default)
+  if (args.correct) {
     const llmModel = args.llmModel ?? "gemma3n:e4b"
-    console.log(`Enhancing with LLM: ${llmModel}`)
+    const mode = args.format ? "format" : "correct"
+    console.log(`LLM ${mode}: ${llmModel}`)
 
     // Validate model
-    const modelId = llmModel in LLM_MODELS ? (llmModel as keyof typeof LLM_MODELS) : "gemma3n:e4b"
+    const modelId = llmModel in LOCAL_MODELS ? (llmModel as keyof typeof LOCAL_MODELS) : "gemma3n:e4b"
 
     const enhanced = await enhanceTranscript(result.text, {
       model: modelId,
-      mode: args.correctOnly ? "correct" : "enhance"
+      mode
     })
 
     finalText = enhanced.markdown
@@ -206,7 +207,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
       totalTimeSeconds: totalTime,
       backend: result.backend,
       wordCount: result.text.split(/\s+/).length,
-      enhanced: args.enhance
+      enhanced: args.correct
     })
   }
 }
