@@ -6,7 +6,10 @@
  */
 
 import { existsSync } from "node:fs"
+import { createRequire } from "node:module"
 import { join, resolve } from "node:path"
+
+const require = createRequire(import.meta.url)
 
 /**
  * Native addon interface
@@ -29,7 +32,6 @@ function loadAddon(): CoreMLAddon {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const bindings = require("bindings")
     return bindings("coreml_asr") as CoreMLAddon
   } catch (error) {

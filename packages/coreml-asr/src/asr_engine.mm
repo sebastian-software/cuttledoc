@@ -233,11 +233,18 @@ std::string AsrEngine::transcribeFile(const std::string& filePath) {
 std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) {
     @autoreleasepool {
         // Create input MLMultiArray
-        // Shape depends on model - typically [1, num_frames, 80] for mel features
-        size_t numFrames = melFeatures.size() / 80; // 80 mel bins
+        // FluidInference CoreML model expects FIXED shape [1, 128, 1501]
+        const int melBins = 128;
+        const size_t fixedFrames = 1501; // Fixed size for 15 second audio
+        size_t numFrames = melFeatures.size() / melBins;
+
+        // Clamp input frames to max
+        if (numFrames > fixedFrames) {
+            numFrames = fixedFrames;
+        }
 
         NSError* error = nil;
-        NSArray<NSNumber*>* shape = @[@1, @(numFrames), @80];
+        NSArray<NSNumber*>* shape = @[@1, @(melBins), @(fixedFrames)];
         MLMultiArray* input = [[MLMultiArray alloc] initWithShape:shape
                                                          dataType:MLMultiArrayDataTypeFloat32
                                                             error:&error];
@@ -245,14 +252,32 @@ std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) 
             throw std::runtime_error("Failed to create input array");
         }
 
-        // Copy data
+        // Zero-initialize for padding
         float* inputPtr = (float*)input.dataPointer;
-        memcpy(inputPtr, melFeatures.data(), melFeatures.size() * sizeof(float));
+        memset(inputPtr, 0, melBins * fixedFrames * sizeof(float));
 
-        // Create feature provider
-        // Note: Input name depends on the specific model export
-        NSString* inputName = @"audio_signal"; // Common name, may need adjustment
-        NSDictionary* inputDict = @{inputName: input};
+        // Copy and transpose data: [frames, mel_bins] -> [1, mel_bins, frames]
+        for (size_t f = 0; f < numFrames; f++) {
+            for (int m = 0; m < melBins; m++) {
+                inputPtr[m * fixedFrames + f] = melFeatures[f * melBins + m];
+            }
+        }
+
+        // Create mel_length input (actual number of frames without padding)
+        NSArray<NSNumber*>* lengthShape = @[@1];
+        MLMultiArray* lengthInput = [[MLMultiArray alloc] initWithShape:lengthShape
+                                                               dataType:MLMultiArrayDataTypeInt32
+                                                                  error:&error];
+        if (error) {
+            throw std::runtime_error("Failed to create length array");
+        }
+        ((int32_t*)lengthInput.dataPointer)[0] = static_cast<int32_t>(numFrames);
+
+        // Create feature provider with both inputs
+        NSDictionary* inputDict = @{
+            @"mel": input,
+            @"mel_length": lengthInput
+        };
         MLDictionaryFeatureProvider* provider =
             [[MLDictionaryFeatureProvider alloc] initWithDictionary:inputDict error:&error];
 
@@ -269,15 +294,24 @@ std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) 
                                      [errorMsg UTF8String]);
         }
 
-        // Extract output
-        // Note: Output name depends on the specific model export
-        MLFeatureValue* outputValue = [output featureValueForName:@"encoder_output"];
-        if (outputValue == nil) {
-            // Try alternative names
-            outputValue = [output featureValueForName:@"output"];
+        // Extract output - try various names
+        NSArray<NSString*>* possibleNames = @[@"encoder", @"encoder_output", @"output", @"encoded", @"hidden", @"features", @"x"];
+        MLFeatureValue* outputValue = nil;
+
+        for (NSString* name in possibleNames) {
+            outputValue = [output featureValueForName:name];
+            if (outputValue != nil && outputValue.multiArrayValue != nil) {
+                NSLog(@"Found encoder output with name: %@", name);
+                break;
+            }
         }
 
         if (outputValue == nil || outputValue.multiArrayValue == nil) {
+            // List all available feature names for debugging
+            NSLog(@"Available output features:");
+            for (NSString* name in output.featureNames) {
+                NSLog(@"  - %@", name);
+            }
             throw std::runtime_error("Failed to get encoder output");
         }
 
