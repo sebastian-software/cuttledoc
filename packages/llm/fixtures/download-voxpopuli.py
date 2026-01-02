@@ -54,10 +54,10 @@ def download_samples(lang: str, num_samples: int, output_dir: Path):
 
         audio = sample["audio"]
         transcription = sample.get("normalized_text") or sample.get("raw_text", "")
-        
+
         if not transcription or len(transcription.strip()) < 50:
             continue  # Skip samples without good transcription
-            
+
         duration = len(audio["array"]) / audio["sampling_rate"]
 
         # Filter by duration

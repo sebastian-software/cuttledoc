@@ -20,11 +20,15 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const FIXTURES_DIR = join(__dirname, "..", "fixtures")
+// Use FLEURS samples from cuttledoc package (already downloaded)
+const FIXTURES_DIR = join(__dirname, "..", "..", "cuttledoc", "fixtures")
 const RESULTS_DIR = join(__dirname, "..", "results")
 
 // Models to benchmark
-const MODELS = ["gemma3n:e4b", "qwen2.5:7b", "mistral:7b"]
+const MODELS = ["gemma3n:latest", "qwen2.5:7b", "mistral:7b"]
+
+// Limit samples per language for faster benchmarks
+const MAX_SAMPLES_PER_LANG = 3
 
 // Languages
 const LANGUAGES = ["en", "de", "fr", "es", "pt"]
@@ -187,7 +191,7 @@ function transcribeAudio(audioPath: string): string {
 }
 
 /**
- * Find all VoxPopuli samples
+ * Find all FLEURS samples
  */
 function findSamples(): { lang: string; id: string; audioPath: string; refPath: string }[] {
   const samples: { lang: string; id: string; audioPath: string; refPath: string }[] = []
@@ -199,10 +203,10 @@ function findSamples(): { lang: string; id: string; audioPath: string; refPath: 
   const files = readdirSync(FIXTURES_DIR)
 
   for (const file of files) {
-    const match = file.match(/^voxpopuli-(\w+)-(\d+)\.ogg$/)
+    const match = file.match(/^fleurs-(\w+)-(\d+)\.ogg$/)
     if (match) {
       const [, lang, id] = match
-      const refPath = join(FIXTURES_DIR, `voxpopuli-${lang}-${id}.txt`)
+      const refPath = join(FIXTURES_DIR, `fleurs-${lang}-${id}.txt`)
       if (existsSync(refPath)) {
         samples.push({
           lang: lang!,
@@ -214,7 +218,20 @@ function findSamples(): { lang: string; id: string; audioPath: string; refPath: 
     }
   }
 
-  return samples.sort((a, b) => `${a.lang}-${a.id}`.localeCompare(`${b.lang}-${b.id}`))
+  // Sort and limit samples per language
+  const sorted = samples.sort((a, b) => `${a.lang}-${a.id}`.localeCompare(`${b.lang}-${b.id}`))
+
+  // Limit to MAX_SAMPLES_PER_LANG per language
+  const limited: typeof samples = []
+  const countByLang = new Map<string, number>()
+  for (const sample of sorted) {
+    const count = countByLang.get(sample.lang) ?? 0
+    if (count < MAX_SAMPLES_PER_LANG) {
+      limited.push(sample)
+      countByLang.set(sample.lang, count + 1)
+    }
+  }
+  return limited
 }
 
 /**
@@ -389,8 +406,8 @@ async function main() {
   // Find samples
   const samples = findSamples()
   if (samples.length === 0) {
-    console.error("❌ No VoxPopuli samples found. Download with:")
-    console.error("   cd packages/llm/fixtures && python download-voxpopuli.py")
+    console.error("❌ No FLEURS samples found. Download with:")
+    console.error("   cd packages/cuttledoc/fixtures && python download-samples.py")
     process.exit(1)
   }
 

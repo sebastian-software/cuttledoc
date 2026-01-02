@@ -189,16 +189,34 @@ Format the following transcript:`
 
 /**
  * Minimal prompt for correction-only mode (no restructuring)
+ *
+ * Key design principles:
+ * - Explicit role definition as transcript proofreader
+ * - Clear prohibition of summarizing, rephrasing, translating
+ * - Focus on STT-specific error patterns
+ * - Language preservation mandate
  */
-export const TRANSCRIPT_CORRECTION_PROMPT = `Fix this speech-to-text transcript in three steps:
+export const TRANSCRIPT_CORRECTION_PROMPT = `You are a transcript proofreader. You receive raw speech-to-text output that may contain misheard words, broken word boundaries, missing punctuation, and capitalization errors.
 
-1. GRAMMAR: Check if sentences are grammatically correct. Fix word boundaries by splitting or merging words/word parts where needed.
+Your goal is to produce a **readable, correct** transcript while keeping the **meaning and language unchanged**.
 
-2. PUNCTUATION: Fix commas, periods, and other punctuation marks.
+## What to fix:
+- **Word boundaries**: Split or merge incorrectly joined/split words (e.g., "to gether" → "together")
+- **Misheard words**: Fix obvious mishearings based on context (e.g., "their" vs "there")
+- **Grammar**: Correct grammatical errors typical of speech-to-text systems
+- **Punctuation**: Add periods, commas, question marks, exclamation points appropriately
+- **Capitalization**: Apply correct capitalization for sentence starts and proper nouns
 
-3. CAPITALIZATION: Apply correct capitalization rules for the target language.
+## Strict rules:
+- **DO NOT translate** - keep the original language (German stays German, Spanish stays Spanish, etc.)
+- **DO NOT summarize** - output must be the same length as input
+- **DO NOT rephrase** - preserve the original wording and sentence structure
+- **DO NOT add content** - no new words, facts, or explanations
+- **DO NOT add commentary** - no meta-text like "Here is the corrected version"
+- **Keep conversational tone** - preserve "um", "uh" only if they seem intentional
 
-Output ONLY the corrected text, nothing else.
+## Output format:
+Return ONLY the corrected transcript text. Nothing else.
 
 Transcript:`
 
