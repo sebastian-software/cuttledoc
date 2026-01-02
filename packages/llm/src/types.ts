@@ -11,12 +11,12 @@ export type LLMProvider = "ollama" | "openai" | "local"
  * Supported local LLM models (for node-llama-cpp)
  */
 export const LOCAL_MODELS = {
-  // Gemma 3n - Newest, optimized for edge devices (July 2025)
+  // Gemma 3n - Optimized for edge devices
   "gemma3n:e4b": {
     ggufRepo: "bartowski/gemma-3n-E4B-it-GGUF",
     ggufFile: "gemma-3n-E4B-it-Q4_K_M.gguf",
     contextSize: 32768,
-    description: "Google Gemma 3n E4B - Best quality/size ratio, >1300 LMArena, 3GB RAM"
+    description: "Google Gemma 3n E4B - Best quality/size ratio, 3GB RAM"
   },
   "gemma3n:e2b": {
     ggufRepo: "bartowski/gemma-3n-E2B-it-GGUF",
@@ -24,31 +24,25 @@ export const LOCAL_MODELS = {
     contextSize: 32768,
     description: "Google Gemma 3n E2B - Ultra-efficient, 2GB RAM"
   },
-  // Gemma 3 - Stable, well-tested
-  "gemma3:4b": {
-    ggufRepo: "bartowski/gemma-3-4b-it-GGUF",
-    ggufFile: "gemma-3-4b-it-Q4_K_M.gguf",
-    contextSize: 8192,
-    description: "Google Gemma 3 4B - Stable, 140 languages"
+  // Qwen 3 - Excellent multilingual
+  "qwen3:4b": {
+    ggufRepo: "bartowski/Qwen3-4B-GGUF",
+    ggufFile: "Qwen3-4B-Q4_K_M.gguf",
+    contextSize: 32768,
+    description: "Alibaba Qwen 3 4B - Fast, great for multilingual"
   },
-  "gemma3:12b": {
-    ggufRepo: "bartowski/gemma-3-12b-it-GGUF",
-    ggufFile: "gemma-3-12b-it-Q4_K_M.gguf",
-    contextSize: 8192,
-    description: "Google Gemma 3 12B - Higher quality, needs 8GB+ RAM"
+  "qwen3:8b": {
+    ggufRepo: "bartowski/Qwen3-8B-GGUF",
+    ggufFile: "Qwen3-8B-Q4_K_M.gguf",
+    contextSize: 32768,
+    description: "Alibaba Qwen 3 8B - Higher quality multilingual"
   },
-  // Other models
-  "deepseek-r1:1.5b": {
-    ggufRepo: "bartowski/DeepSeek-R1-Distill-Qwen-1.5B-GGUF",
-    ggufFile: "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
-    contextSize: 4096,
-    description: "DeepSeek R1 1.5B - Fast reasoning model"
-  },
-  "qwen2.5:3b": {
-    ggufRepo: "Qwen/Qwen2.5-3B-Instruct-GGUF",
-    ggufFile: "qwen2.5-3b-instruct-q4_k_m.gguf",
-    contextSize: 8192,
-    description: "Qwen 2.5 3B - Excellent for German and multilingual"
+  // Llama 4 - Latest from Meta
+  "llama4-scout:17b": {
+    ggufRepo: "bartowski/Llama-4-Scout-17B-16E-Instruct-GGUF",
+    ggufFile: "Llama-4-Scout-17B-16E-Instruct-Q4_K_M.gguf",
+    contextSize: 131072,
+    description: "Meta Llama 4 Scout - Best quality, needs 12GB+ RAM"
   }
 } as const
 
@@ -61,9 +55,10 @@ export type LocalModelId = keyof typeof LOCAL_MODELS
  * No reasoning required - just grammar, punctuation, word boundaries
  */
 export const OLLAMA_MODELS = {
-  "gemma3n:e4b": "Google Gemma 3n - Fast, efficient, edge-optimized (3GB)",
-  "qwen2.5:7b": "Alibaba Qwen 2.5 - Best multilingual support (5GB)",
-  "mistral:7b": "Mistral 7B - Good EU language support (5GB)"
+  "gemma3n:e4b": "Google Gemma 3n E4B - Fast, efficient, edge-optimized (3GB)",
+  "llama4-scout:17b": "Meta Llama 4 Scout - Best quality/speed ratio (10GB)",
+  "qwen3:8b": "Alibaba Qwen 3 - Excellent multilingual support (5GB)",
+  "mistral-small:24b": "Mistral Small 3.1 - Strong EU language support (14GB)"
 } as const
 
 export type OllamaModelId = keyof typeof OLLAMA_MODELS
@@ -72,9 +67,10 @@ export type OllamaModelId = keyof typeof OLLAMA_MODELS
  * OpenAI models for transcript processing
  */
 export const OPENAI_MODELS = {
-  "gpt-4o-mini": "Fast and cost-effective",
-  "gpt-4o": "Highest quality",
-  "gpt-4-turbo": "Good balance of quality and speed"
+  "gpt-5-mini": "GPT-5 Mini - Fast, cost-effective, best for text correction",
+  "gpt-5-nano": "GPT-5 Nano - Ultra-fast, lowest cost",
+  "gpt-4o-mini": "GPT-4o Mini - Legacy, still available",
+  "gpt-4o": "GPT-4o - High quality, higher cost"
 } as const
 
 export type OpenAIModelId = keyof typeof OPENAI_MODELS
