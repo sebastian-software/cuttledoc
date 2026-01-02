@@ -47,20 +47,27 @@ describe("parseArgs", () => {
       expect(args.stats).toBe(true)
     })
 
-    it("should parse -e flag", () => {
+    it("should parse -e flag (full enhancement)", () => {
       const args = parseArgs(["-e"])
       expect(args.enhance).toBe(true)
+      expect(args.correctOnly).toBe(false) // Full enhancement disables correct-only
     })
 
-    it("should parse --enhance flag", () => {
+    it("should parse --enhance flag (full enhancement)", () => {
       const args = parseArgs(["--enhance"])
       expect(args.enhance).toBe(true)
+      expect(args.correctOnly).toBe(false) // Full enhancement disables correct-only
+    })
+
+    it("should parse --no-enhance flag", () => {
+      const args = parseArgs(["--no-enhance"])
+      expect(args.enhance).toBe(false)
     })
 
     it("should parse --correct-only flag", () => {
       const args = parseArgs(["--correct-only"])
       expect(args.correctOnly).toBe(true)
-      expect(args.enhance).toBe(true) // Should also enable enhance
+      expect(args.enhance).toBe(true)
     })
   })
 
@@ -188,15 +195,15 @@ describe("parseArgs", () => {
   })
 
   describe("default values", () => {
-    it("should have correct defaults", () => {
+    it("should have correct defaults (LLM correction enabled by default)", () => {
       const args = parseArgs([])
 
       expect(args.help).toBe(false)
       expect(args.version).toBe(false)
       expect(args.quiet).toBe(false)
       expect(args.stats).toBe(false)
-      expect(args.enhance).toBe(false)
-      expect(args.correctOnly).toBe(false)
+      expect(args.enhance).toBe(true) // LLM correction enabled by default
+      expect(args.correctOnly).toBe(true) // Only correction, no formatting by default
       expect(args.backend).toBeUndefined()
       expect(args.model).toBeUndefined()
       expect(args.language).toBeUndefined()

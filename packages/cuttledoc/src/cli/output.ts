@@ -32,8 +32,9 @@ OPTIONS:
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
-  -e, --enhance           Enhance transcript with LLM (formatting, corrections)
-  --correct-only          Only fix transcription errors, no formatting
+  -e, --enhance           Full LLM enhancement (formatting, TLDR, corrections)
+  --no-enhance            Disable LLM correction (raw STT output)
+  --correct-only          Only fix transcription errors, no formatting (default)
   --llm-model <name>      LLM model for enhancement (default: gemma3n:e4b)
   -s, --stats             Show processing statistics
   -q, --quiet             Minimal output (just the transcript)
@@ -55,8 +56,14 @@ CLOUD MODELS (requires OPENAI_API_KEY):
   Note: Distil-Whisper models are English-only (https://huggingface.co/distil-whisper)
 
 EXAMPLES:
-  # Basic transcription (uses Parakeet for supported languages)
+  # Basic transcription with LLM correction (default)
   cuttledoc podcast.mp3
+
+  # Raw STT output without LLM correction
+  cuttledoc podcast.mp3 --no-enhance
+
+  # Full LLM enhancement (formatting, TLDR, corrections)
+  cuttledoc video.mp4 -e -o transcript.md
 
   # Transcribe with Whisper for best quality
   cuttledoc meeting.m4a -b whisper
@@ -66,12 +73,6 @@ EXAMPLES:
   # Or set OPENAI_API_KEY environment variable:
   export OPENAI_API_KEY=sk-...
   cuttledoc meeting.m4a -b openai
-
-  # Use the faster/cheaper OpenAI model
-  cuttledoc meeting.m4a -b openai -m gpt-4o-mini-transcribe
-
-  # Transcribe and enhance with LLM
-  cuttledoc video.mp4 -e -o transcript.md
 
   # Download speech models
   cuttledoc models download parakeet-tdt-0.6b-v3

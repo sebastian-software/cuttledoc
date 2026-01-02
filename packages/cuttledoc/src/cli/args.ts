@@ -35,8 +35,8 @@ export function parseArgs(argv: string[]): CLIArgs {
     version: false,
     quiet: false,
     stats: false,
-    enhance: false,
-    correctOnly: false,
+    enhance: true, // LLM correction enabled by default
+    correctOnly: true, // Default: only correct errors (no formatting/TLDR)
     backend: undefined,
     model: undefined,
     language: undefined,
@@ -66,9 +66,12 @@ export function parseArgs(argv: string[]): CLIArgs {
       args.stats = true
     } else if (arg === "-e" || arg === "--enhance") {
       args.enhance = true
+      args.correctOnly = false // Full enhancement with formatting/TLDR
+    } else if (arg === "--no-enhance") {
+      args.enhance = false // Disable LLM correction entirely
     } else if (arg === "--correct-only") {
       args.correctOnly = true
-      args.enhance = true // Correction implies enhance
+      args.enhance = true
     }
     // Options with values
     else if (arg === "-b" || arg === "--backend") {
