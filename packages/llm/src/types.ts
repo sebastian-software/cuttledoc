@@ -68,9 +68,7 @@ export type OllamaModelId = keyof typeof OLLAMA_MODELS
  */
 export const OPENAI_MODELS = {
   "gpt-5-mini": "GPT-5 Mini - Fast, cost-effective, best for text correction",
-  "gpt-5-nano": "GPT-5 Nano - Ultra-fast, lowest cost",
-  "gpt-4o-mini": "GPT-4o Mini - Legacy, still available",
-  "gpt-4o": "GPT-4o - High quality, higher cost"
+  "gpt-5-nano": "GPT-5 Nano - Ultra-fast, lowest cost"
 } as const
 
 export type OpenAIModelId = keyof typeof OPENAI_MODELS
