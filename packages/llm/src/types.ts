@@ -62,7 +62,8 @@ export type LocalModelId = keyof typeof LOCAL_MODELS
  * Focus: Multilingual text understanding (DE, FR, ES, PT, EN)
  */
 export const OLLAMA_MODELS = {
-  "gemma3:4b": "Google Gemma 3 4B - Fast, 140 languages (3GB)",
+  "gemma3n:e4b": "Google Gemma 3n E4B - Edge-optimized, 140 languages (7.5GB)",
+  "gemma3n:e2b": "Google Gemma 3n E2B - Ultra-efficient (5.6GB)",
   "qwen3:8b": "Alibaba Qwen 3 8B - Best multilingual support (5GB)",
   "phi4:14b": "Microsoft Phi-4 14B - Great for text tasks (9GB)",
   "mistral-nemo": "Mistral Nemo 12B - Strong EU languages (8GB)"
