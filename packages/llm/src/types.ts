@@ -36,13 +36,6 @@ export const LOCAL_MODELS = {
     ggufFile: "Qwen3-8B-Q4_K_M.gguf",
     contextSize: 32768,
     description: "Alibaba Qwen 3 8B - Higher quality multilingual"
-  },
-  // Llama 4 - Latest from Meta
-  "llama4-scout:17b": {
-    ggufRepo: "bartowski/Llama-4-Scout-17B-16E-Instruct-GGUF",
-    ggufFile: "Llama-4-Scout-17B-16E-Instruct-Q4_K_M.gguf",
-    contextSize: 131072,
-    description: "Meta Llama 4 Scout - Best quality, needs 12GB+ RAM"
   }
 } as const
 
@@ -56,7 +49,6 @@ export type LocalModelId = keyof typeof LOCAL_MODELS
  */
 export const OLLAMA_MODELS = {
   "gemma3n:e4b": "Google Gemma 3n E4B - Fast, efficient, edge-optimized (3GB)",
-  "llama4-scout:17b": "Meta Llama 4 Scout - Best quality/speed ratio (10GB)",
   "qwen3:8b": "Alibaba Qwen 3 - Excellent multilingual support (5GB)",
   "mistral-small:24b": "Mistral Small 3.1 - Strong EU language support (14GB)"
 } as const
