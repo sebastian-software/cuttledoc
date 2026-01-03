@@ -121,18 +121,6 @@ interface TranscriptionResult {
 }
 ```
 
-## Comparison with @cuttledoc/coreml-asr
-
-| Feature      | whisper-asr           | coreml-asr                |
-| ------------ | --------------------- | ------------------------- |
-| Model        | Whisper (OpenAI)      | Parakeet-TDT (NVIDIA)     |
-| Languages    | 99                    | 25 European               |
-| Architecture | Encoder-Decoder       | RNN-T/TDT                 |
-| Model Size   | 75MB - 2.9GB          | 600MB                     |
-| Best For     | Accuracy, translation | Speed, European languages |
-
-Both use **CoreML/ANE** for hardware acceleration.
-
 ## License
 
 MIT
