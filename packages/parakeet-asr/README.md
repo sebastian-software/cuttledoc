@@ -1,6 +1,6 @@
-# @cuttledoc/coreml-asr
+# @cuttledoc/parakeet-asr
 
-CoreML-based Automatic Speech Recognition for Apple Silicon.
+Parakeet TDT ASR for Apple Silicon with CoreML/ANE acceleration.
 
 ## Features
 
@@ -18,7 +18,7 @@ CoreML-based Automatic Speech Recognition for Apple Silicon.
 ## Installation
 
 ```bash
-pnpm add @cuttledoc/coreml-asr
+pnpm add @cuttledoc/parakeet-asr
 ```
 
 ## Model Setup
@@ -27,16 +27,16 @@ Download the CoreML models from HuggingFace:
 
 ```bash
 git lfs install
-git clone https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml models/parakeet-coreml
+git clone https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml models/parakeet
 ```
 
 ## Usage
 
 ```typescript
-import { CoreMLAsrEngine } from "@cuttledoc/coreml-asr"
+import { ParakeetAsrEngine } from "@cuttledoc/parakeet-asr"
 
-const engine = new CoreMLAsrEngine({
-  modelDir: "./models/parakeet-coreml"
+const engine = new ParakeetAsrEngine({
+  modelDir: "./models/parakeet"
 })
 
 await engine.initialize()
@@ -52,10 +52,10 @@ engine.cleanup()
 
 ## API Reference
 
-### `CoreMLAsrEngine`
+### `ParakeetAsrEngine`
 
 ```typescript
-new CoreMLAsrEngine({ modelDir: string })
+new ParakeetAsrEngine({ modelDir: string })
 ```
 
 #### Methods
@@ -68,7 +68,6 @@ new CoreMLAsrEngine({ modelDir: string })
 ### Helper Functions
 
 - `isAvailable(): boolean` - Check platform support
-- `getDefaultModelDir(): string` - Get default model path
 
 ## Architecture
 

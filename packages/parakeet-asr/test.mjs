@@ -1,19 +1,19 @@
 /**
- * Quick test for CoreML ASR
+ * Quick test for Parakeet ASR
  */
 
-import { CoreMLAsrEngine, isAvailable } from "./dist/index.js"
+import { ParakeetAsrEngine, isAvailable } from "./dist/index.js"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { execSync } from "node:child_process"
 
-console.log("CoreML ASR Test")
-console.log("================")
+console.log("Parakeet ASR Test")
+console.log("=================")
 console.log("Platform:", process.platform)
 console.log("Available:", isAvailable())
 
 if (!isAvailable()) {
-  console.log("CoreML ASR is only available on macOS")
+  console.log("Parakeet ASR is only available on macOS")
   process.exit(1)
 }
 
@@ -21,7 +21,7 @@ const modelDir = join(process.cwd(), "../../models/parakeet-coreml")
 console.log("Model directory:", modelDir)
 
 try {
-  const engine = new CoreMLAsrEngine({ modelDir })
+  const engine = new ParakeetAsrEngine({ modelDir })
   console.log("\nInitializing engine...")
   await engine.initialize()
   console.log("Engine ready:", engine.isReady())

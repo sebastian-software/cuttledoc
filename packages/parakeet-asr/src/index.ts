@@ -1,8 +1,7 @@
 /**
- * @cuttledoc/coreml-asr
+ * @cuttledoc/parakeet-asr
  *
- * CoreML-based Automatic Speech Recognition for Apple Silicon.
- * Uses the Parakeet TDT v3 model for high-quality multilingual transcription.
+ * Parakeet TDT ASR for Apple Silicon with CoreML/ANE acceleration.
  */
 
 import { existsSync } from "node:fs"
@@ -14,7 +13,7 @@ const require = createRequire(import.meta.url)
 /**
  * Native addon interface
  */
-interface CoreMLAddon {
+interface NativeAddon {
   initialize(modelDir: string): boolean
   isInitialized(): boolean
   transcribe(samples: Float32Array, sampleRate?: number): string
@@ -26,23 +25,23 @@ interface CoreMLAddon {
 /**
  * Load the native addon
  */
-function loadAddon(): CoreMLAddon {
+function loadAddon(): NativeAddon {
   if (process.platform !== "darwin") {
-    throw new Error("@cuttledoc/coreml-asr is only supported on macOS")
+    throw new Error("@cuttledoc/parakeet-asr is only supported on macOS")
   }
 
   try {
     const bindings = require("bindings")
-    return bindings("coreml_asr") as CoreMLAddon
+    return bindings("coreml_asr") as NativeAddon
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`Failed to load CoreML ASR native addon: ${message}`)
+    throw new Error(`Failed to load Parakeet ASR native addon: ${message}`)
   }
 }
 
-let addon: CoreMLAddon | null = null
+let addon: NativeAddon | null = null
 
-function getAddon(): CoreMLAddon {
+function getAddon(): NativeAddon {
   if (addon === null) {
     addon = loadAddon()
   }
@@ -65,9 +64,9 @@ export interface AsrEngineOptions {
 }
 
 /**
- * CoreML ASR Engine
+ * Parakeet ASR Engine with CoreML/ANE acceleration
  */
-export class CoreMLAsrEngine {
+export class ParakeetAsrEngine {
   private readonly modelDir: string
   private initialized = false
 
@@ -105,7 +104,7 @@ export class CoreMLAsrEngine {
     const success = nativeAddon.initialize(this.modelDir)
 
     if (!success) {
-      throw new Error("Failed to initialize CoreML ASR engine")
+      throw new Error("Failed to initialize Parakeet ASR engine")
     }
 
     this.initialized = true
@@ -152,14 +151,9 @@ export class CoreMLAsrEngine {
   }
 }
 
-export function getDefaultModelDir(): string {
-  return process.env["COREML_ASR_MODEL_DIR"] ?? process.env["CUTTLEDOC_MODELS_DIR"] ?? join(process.cwd(), "models")
-}
+// Legacy alias for backwards compatibility
+export { ParakeetAsrEngine as CoreMLAsrEngine }
 
 export function isAvailable(): boolean {
   return process.platform === "darwin"
-}
-
-export async function downloadModels(_targetDir: string): Promise<void> {
-  throw new Error("Model download not yet implemented. Please download models manually from HuggingFace.")
 }

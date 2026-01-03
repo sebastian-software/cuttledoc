@@ -1,7 +1,7 @@
 {
-  "name": "@cuttledoc/coreml-asr",
+  "name": "@cuttledoc/parakeet-asr",
   "version": "1.0.0",
-  "description": "CoreML-based ASR for Apple Silicon using Parakeet TDT v3",
+  "description": "Parakeet TDT ASR for Apple Silicon with CoreML/ANE acceleration",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
