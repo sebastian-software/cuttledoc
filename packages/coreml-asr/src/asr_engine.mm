@@ -91,13 +91,10 @@ static std::vector<std::string> loadVocabulary(const std::string& path) {
 
     std::string line;
     while (std::getline(file, line)) {
-        // Each line may be "token index" or just "token"
-        size_t spacePos = line.find(' ');
-        if (spacePos != std::string::npos) {
-            vocab.push_back(line.substr(0, spacePos));
-        } else {
-            vocab.push_back(line);
-        }
+        // FluidInference vocab.txt format: each line is just the token itself
+        // Tokens may start with a space (word boundary marker)
+        // Just use the entire line as the token
+        vocab.push_back(line);
     }
 
     return vocab;
