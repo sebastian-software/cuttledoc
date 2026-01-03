@@ -2,7 +2,7 @@
  * @cuttledoc/llm - LLM-based transcript enhancement
  *
  * Supports multiple providers:
- * - Ollama (local, recommended) - `ollama pull gemma3n:e4b`
+ * - Ollama (local, recommended) - `ollama pull phi4:14b`
  * - OpenAI (cloud) - requires OPENAI_API_KEY
  * - Local (node-llama-cpp) - downloads GGUF models automatically
  *

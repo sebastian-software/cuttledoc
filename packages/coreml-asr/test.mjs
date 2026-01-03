@@ -32,7 +32,7 @@ try {
   console.log("\nTest audio:", audioFile)
 
   // Convert to WAV using ffmpeg - ensure 16kHz mono
-  const wavFile = "/tmp/test-audio.wav"
+  const wavFile = "/tmp/test-audio-en.wav"
   execSync(`ffmpeg -y -i "${audioFile}" -ar 16000 -ac 1 -f wav "${wavFile}"`, {
     stdio: "pipe",
     cwd: join(process.cwd())

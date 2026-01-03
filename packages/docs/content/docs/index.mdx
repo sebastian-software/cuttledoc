@@ -67,8 +67,8 @@ import { enhanceTranscript } from 'cuttledoc/llm'
 const result = await transcribe('podcast.mp3')
 
 const enhanced = await enhanceTranscript(result.text, {
-  model: 'gemma3n:e4b',
-  mode: 'enhance' // or 'correct' for minimal changes
+  model: 'phi4:14b', // default, best quality
+  mode: 'correct' // or 'format' for full formatting
 })
 
 console.log(enhanced.markdown)
@@ -133,36 +133,35 @@ cuttledoc models list
 cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
 cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
-# Download LLM model (for --enhance)
-cuttledoc models download gemma3n:e4b
+# Download LLM model (for --format)
+cuttledoc models download phi4:14b
 ```
 
 ## LLM Correction Benchmark
 
 We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speakers each):
 
-| Model            | Avg WER Before | Avg WER After | Improvement | Speed  |
-| ---------------- | -------------- | ------------- | ----------- | ------ |
-| **phi4:14b**     | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
-| **mistral-nemo** | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
-| gemma3n:e4b      | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
-| gemma3n:e2b      | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
-| ~~qwen3:8b~~     | 5.6%           | 11.7%         | -75.2% ⚠️   | 50 t/s |
+| Model                  | Avg WER Before | Avg WER After | Improvement | Speed  |
+| ---------------------- | -------------- | ------------- | ----------- | ------ |
+| **phi4:14b** (default) | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
+| **mistral-nemo**       | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
+| gemma3n:e4b            | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
+| gemma3n:e2b            | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
 
 ### 🏆 LLM Ranking
 
-| Rank | Model            | Improvement | Speed  | Best for                   |
-| ---- | ---------------- | ----------- | ------ | -------------------------- |
-| 🥇   | **phi4:14b**     | +52.0%      | 36 t/s | Best quality, DE/ES        |
-| 🥈   | **mistral-nemo** | +42.7%      | 60 t/s | Best speed, all languages  |
-| 🥉   | **gemma3n:e4b**  | +41.2%      | 35 t/s | Most reliable, no outliers |
+| Rank | Model                  | Improvement | Speed  | Best for                   |
+| ---- | ---------------------- | ----------- | ------ | -------------------------- |
+| 🥇   | **phi4:14b** (default) | +52.0%      | 36 t/s | Best quality, DE/ES        |
+| 🥈   | **mistral-nemo**       | +42.7%      | 60 t/s | Best speed, all languages  |
+| 🥉   | **gemma3n:e4b**        | +41.2%      | 35 t/s | Most reliable, no outliers |
 
 **Key findings:**
 
-- ⚠️ **qwen3:8b** not recommended - catastrophic for DE/PT languages
-- **phi4:14b** achieves best accuracy, especially for German/Spanish
-- **mistral-nemo** offers best speed (60 t/s) with good accuracy
-- **Recommendation:** Use phi4:14b for quality, mistral-nemo for speed
+- **phi4:14b** is the new default - best accuracy (+52%), especially for German/Spanish
+- **mistral-nemo** offers best speed (60 t/s) with good accuracy (+43%)
+- **gemma3n:e4b** is most reliable, no negative outliers
+- **Recommendation:** Use default phi4:14b, or mistral-nemo for speed-critical use
 
 ## Next Steps
 

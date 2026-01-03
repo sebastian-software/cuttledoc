@@ -195,7 +195,18 @@ static bool runJoint(MLModel* model,
         // Extract duration: shape (1, 1, 1)
         MLFeatureValue* durationValue = [output featureValueForName:@"duration"];
         if (durationValue && durationValue.multiArrayValue) {
-            duration = (int)((float*)durationValue.multiArrayValue.dataPointer)[0];
+            MLMultiArray* durArray = durationValue.multiArrayValue;
+            // Log data type once
+            static bool durTypeLogged = false;
+            if (!durTypeLogged) {
+                NSLog(@"duration dataType: %ld (int32=131104, float32=65568)", (long)durArray.dataType);
+                durTypeLogged = true;
+            }
+            if (durArray.dataType == MLMultiArrayDataTypeInt32) {
+                duration = ((int32_t*)durArray.dataPointer)[0];
+            } else {
+                duration = (int)((float*)durArray.dataPointer)[0];
+            }
         } else {
             duration = 1;
         }
@@ -283,6 +294,11 @@ std::vector<int> TransducerDecoder::decode(const std::vector<float>& encoderOutp
                 continue;
             }
 
+
+            // Debug: Log non-blank tokens with their duration
+            if (tokenId != blankId && tokenId >= 0 && tokenId < vocabSize && iterations < 20) {
+                NSLog(@"Frame %d: token=%d, duration=%d, prob=%.3f", t, tokenId, duration, probability);
+            }
 
             if (tokenId == blankId || tokenId < 0 || tokenId >= vocabSize) {
                 // Blank or invalid token - advance time by at least 1 frame

@@ -2,7 +2,7 @@
  * Ollama-based LLM processing
  *
  * Simple HTTP client for Ollama - no tokens, no accounts, just works.
- * Requires: `brew install ollama && ollama pull gemma3n:e4b`
+ * Requires: `brew install ollama && ollama pull phi4:14b`
  */
 
 import {
@@ -73,7 +73,7 @@ export class OllamaProcessor {
   private readonly baseUrl: string
 
   constructor(options: { model?: string } = {}) {
-    this.model = options.model ?? "gemma3n:e4b"
+    this.model = options.model ?? "phi4:14b"
     this.baseUrl = OLLAMA_BASE_URL
   }
 

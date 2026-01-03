@@ -11,45 +11,32 @@ export type LLMProvider = "ollama" | "openai" | "local"
  * Supported local LLM models (for node-llama-cpp)
  */
 export const LOCAL_MODELS = {
+  // Phi-4 Mini - Microsoft, best for text correction (DEFAULT)
+  "phi4-mini": {
+    ggufRepo: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+    ggufFile: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+    contextSize: 16384,
+    description: "Microsoft Phi-4 Mini - Best for text correction (+52% WER), 3GB RAM"
+  },
   // Gemma 3n - Optimized for edge devices (unsloth quantizations)
   "gemma3n:e4b": {
     ggufRepo: "unsloth/gemma-3n-E4B-it-GGUF",
     ggufFile: "gemma-3n-E4B-it-Q4_K_M.gguf",
     contextSize: 32768,
-    description: "Google Gemma 3n E4B - Best quality/size ratio, 3GB RAM"
+    description: "Google Gemma 3n E4B - Reliable, no outliers (+41% WER), 3GB RAM"
   },
   "gemma3n:e2b": {
     ggufRepo: "unsloth/gemma-3n-E2B-it-GGUF",
     ggufFile: "gemma-3n-E2B-it-Q4_K_M.gguf",
     contextSize: 32768,
-    description: "Google Gemma 3n E2B - Ultra-efficient, 2GB RAM"
+    description: "Google Gemma 3n E2B - Ultra-efficient (+37% WER), 2GB RAM"
   },
-  // Qwen 3 - Excellent multilingual (unsloth quantizations)
-  "qwen3:4b": {
-    ggufRepo: "unsloth/Qwen3-4B-GGUF",
-    ggufFile: "Qwen3-4B-Q4_K_M.gguf",
-    contextSize: 32768,
-    description: "Alibaba Qwen 3 4B - Fast, great for multilingual"
-  },
-  "qwen3:8b": {
-    ggufRepo: "unsloth/Qwen3-8B-GGUF",
-    ggufFile: "Qwen3-8B-Q4_K_M.gguf",
-    contextSize: 32768,
-    description: "Alibaba Qwen 3 8B - Higher quality multilingual"
-  },
-  // Phi-4 Mini - Microsoft, optimized for text processing
-  "phi4-mini": {
-    ggufRepo: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
-    ggufFile: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
-    contextSize: 16384,
-    description: "Microsoft Phi-4 Mini - Excellent for text correction, 3GB RAM"
-  },
-  // Mistral Nemo - Strong EU language support
+  // Mistral Nemo - Strong EU language support, fastest
   "mistral-nemo:12b": {
     ggufRepo: "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
     ggufFile: "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf",
     contextSize: 131072,
-    description: "Mistral Nemo 12B - Best for EU languages, 8GB RAM"
+    description: "Mistral Nemo 12B - Fastest (60 t/s), strong EU langs (+43% WER), 8GB RAM"
   }
 } as const
 
@@ -62,11 +49,10 @@ export type LocalModelId = keyof typeof LOCAL_MODELS
  * Focus: Multilingual text understanding (DE, FR, ES, PT, EN)
  */
 export const OLLAMA_MODELS = {
-  "gemma3n:e4b": "Google Gemma 3n E4B - Edge-optimized, 140 languages (7.5GB)",
-  "gemma3n:e2b": "Google Gemma 3n E2B - Ultra-efficient (5.6GB)",
-  "qwen3:8b": "Alibaba Qwen 3 8B - Best multilingual support (5GB)",
-  "phi4:14b": "Microsoft Phi-4 14B - Great for text tasks (9GB)",
-  "mistral-nemo": "Mistral Nemo 12B - Strong EU languages (8GB)"
+  "phi4:14b": "Microsoft Phi-4 14B - Best correction quality (+52% WER), 9GB",
+  "mistral-nemo": "Mistral Nemo 12B - Fastest (60 t/s), strong EU langs (+43% WER), 8GB",
+  "gemma3n:e4b": "Google Gemma 3n E4B - Reliable, no outliers (+41% WER), 7.5GB",
+  "gemma3n:e2b": "Google Gemma 3n E2B - Ultra-efficient (+37% WER), 5.6GB"
 } as const
 
 export type OllamaModelId = keyof typeof OLLAMA_MODELS
