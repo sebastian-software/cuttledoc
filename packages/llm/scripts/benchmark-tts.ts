@@ -25,8 +25,8 @@ const RESULTS_DIR = join(__dirname, "..", "results")
 const STT_CACHE_DIR = join(RESULTS_DIR, "tts-stt-cache")
 const COMPARISON_DIR = join(RESULTS_DIR, "comparisons")
 
-// LLM models to benchmark
-const LLM_MODELS = ["gemma3n:latest", "phi4:14b"]
+// LLM models to benchmark (Ollama models)
+const LLM_MODELS = ["gemma3n:e4b", "gemma3n:e2b", "qwen3:8b", "phi4:14b", "mistral-nemo"]
 
 interface Sample {
   language: string
@@ -134,7 +134,7 @@ function findSamples(): Sample[] {
 
 /**
  * Transcribe audio file using cuttledoc CLI
- * Uses Whisper for all languages (more reliable multilingual support)
+ * Uses Parakeet (fast) as primary, falls back to Whisper for problematic languages
  */
 function transcribeAudio(audioPath: string, cacheKey: string, language: string): string {
   mkdirSync(STT_CACHE_DIR, { recursive: true })
@@ -146,19 +146,23 @@ function transcribeAudio(audioPath: string, cacheKey: string, language: string):
     return readFileSync(cachePath, "utf-8")
   }
 
-  // Use Whisper for all languages (Parakeet int8 has issues with some languages like FR)
-  const backend = "whisper"
+  // Use Parakeet for most languages (10x faster), Whisper only for French (Parakeet issues)
+  const backend = language === "fr" ? "whisper" : "parakeet"
   console.log(`    📝 Transcribing ${basename(audioPath)} (${backend}, lang=${language})...`)
 
   const cuttledocBin = join(WORKSPACE_ROOT, "packages", "cuttledoc", "bin", "cuttledoc.js")
+  const timeout = backend === "whisper" ? 600000 : 180000 // 10min Whisper, 3min Parakeet
 
   try {
-    const result = execSync(`node "${cuttledocBin}" "${audioPath}" --backend ${backend} --language ${language}`, {
-      encoding: "utf-8",
-      timeout: 600000, // 10 minutes for Whisper (roughly realtime)
-      cwd: WORKSPACE_ROOT,
-      stdio: ["pipe", "pipe", "pipe"]
-    })
+    const result = execSync(
+      `node "${cuttledocBin}" "${audioPath}" --backend ${backend} --language ${language} --no-correct`,
+      {
+        encoding: "utf-8",
+        timeout,
+        cwd: WORKSPACE_ROOT,
+        stdio: ["pipe", "pipe", "pipe"]
+      }
+    )
 
     // Extract just the transcript (between the separator lines)
     const lines = result.split("\n")

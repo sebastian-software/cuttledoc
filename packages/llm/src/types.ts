@@ -11,36 +11,36 @@ export type LLMProvider = "ollama" | "openai" | "local"
  * Supported local LLM models (for node-llama-cpp)
  */
 export const LOCAL_MODELS = {
-  // Gemma 3n - Optimized for edge devices
+  // Gemma 3n - Optimized for edge devices (unsloth quantizations)
   "gemma3n:e4b": {
-    ggufRepo: "bartowski/gemma-3n-E4B-it-GGUF",
+    ggufRepo: "unsloth/gemma-3n-E4B-it-GGUF",
     ggufFile: "gemma-3n-E4B-it-Q4_K_M.gguf",
     contextSize: 32768,
     description: "Google Gemma 3n E4B - Best quality/size ratio, 3GB RAM"
   },
   "gemma3n:e2b": {
-    ggufRepo: "bartowski/gemma-3n-E2B-it-GGUF",
+    ggufRepo: "unsloth/gemma-3n-E2B-it-GGUF",
     ggufFile: "gemma-3n-E2B-it-Q4_K_M.gguf",
     contextSize: 32768,
     description: "Google Gemma 3n E2B - Ultra-efficient, 2GB RAM"
   },
-  // Qwen 3 - Excellent multilingual
+  // Qwen 3 - Excellent multilingual (unsloth quantizations)
   "qwen3:4b": {
-    ggufRepo: "bartowski/Qwen3-4B-GGUF",
+    ggufRepo: "unsloth/Qwen3-4B-GGUF",
     ggufFile: "Qwen3-4B-Q4_K_M.gguf",
     contextSize: 32768,
     description: "Alibaba Qwen 3 4B - Fast, great for multilingual"
   },
   "qwen3:8b": {
-    ggufRepo: "bartowski/Qwen3-8B-GGUF",
+    ggufRepo: "unsloth/Qwen3-8B-GGUF",
     ggufFile: "Qwen3-8B-Q4_K_M.gguf",
     contextSize: 32768,
     description: "Alibaba Qwen 3 8B - Higher quality multilingual"
   },
   // Phi-4 Mini - Microsoft, optimized for text processing
   "phi4-mini": {
-    ggufRepo: "bartowski/Phi-4-mini-instruct-GGUF",
-    ggufFile: "Phi-4-mini-instruct-Q4_K_M.gguf",
+    ggufRepo: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+    ggufFile: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
     contextSize: 16384,
     description: "Microsoft Phi-4 Mini - Excellent for text correction, 3GB RAM"
   },

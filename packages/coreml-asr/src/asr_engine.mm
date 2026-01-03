@@ -39,6 +39,17 @@ struct AsrEngine::Impl {
 
     // Transducer decoder
     std::unique_ptr<TransducerDecoder> decoder;
+
+    // Last mel length from preprocessor (for encoder)
+    int32_t lastMelLength = 0;
+
+    // Last encoder length (after downsampling)
+    int32_t lastEncoderLength = 0;
+
+    // Encoder output strides for proper frame extraction
+    NSInteger encoderStride0 = 0;  // batch stride
+    NSInteger encoderStride1 = 0;  // hidden stride (includes padding!)
+    NSInteger encoderStride2 = 1;  // time stride
 };
 
 /**
@@ -102,7 +113,8 @@ AsrEngine::AsrEngine(const std::string& modelDir) : pImpl(std::make_unique<Impl>
             std::string encoderPath = modelDir + "/Encoder.mlmodelc";
             std::string decoderPath = modelDir + "/Decoder.mlmodelc";
             std::string jointPath = modelDir + "/JointDecision.mlmodelc";
-            std::string melPath = modelDir + "/Melspectrogram_15s.mlmodelc";
+            // Preprocessor model combines audio → mel spectrogram for the encoder
+            std::string melPath = modelDir + "/Preprocessor.mlmodelc";
 
             // Check if models exist, try alternative names
             NSFileManager* fm = [NSFileManager defaultManager];
@@ -115,21 +127,16 @@ AsrEngine::AsrEngine(const std::string& modelDir) : pImpl(std::make_unique<Impl>
                 decoderPath = modelDir + "/ParakeetDecoder.mlmodelc";
             }
 
-            NSLog(@"Loading encoder from: %s", encoderPath.c_str());
             pImpl->encoderModel = loadModel(encoderPath);
-
-            NSLog(@"Loading decoder from: %s", decoderPath.c_str());
             pImpl->decoderModel = loadModel(decoderPath);
-
-            NSLog(@"Loading joint model from: %s", jointPath.c_str());
             pImpl->jointModel = loadModel(jointPath);
 
-            // Mel spectrogram model is optional - we can compute it in software
+            // Preprocessor model is required - it handles audio → mel spectrogram
             if ([fm fileExistsAtPath:[NSString stringWithUTF8String:melPath.c_str()]]) {
-                NSLog(@"Loading mel spectrogram model from: %s", melPath.c_str());
                 pImpl->melModel = loadModel(melPath);
+
             } else {
-                NSLog(@"Mel spectrogram model not found, using software implementation");
+                NSLog(@"WARNING: Preprocessor model not found at %s, transcription may fail", melPath.c_str());
             }
 
             // Load vocabulary
@@ -138,14 +145,10 @@ AsrEngine::AsrEngine(const std::string& modelDir) : pImpl(std::make_unique<Impl>
                 vocabPath = modelDir + "/tokens.txt";
             }
             pImpl->vocabulary = loadVocabulary(vocabPath);
-            NSLog(@"Loaded vocabulary with %zu tokens", pImpl->vocabulary.size());
-
             // Initialize processors
             pImpl->melProcessor = std::make_unique<MelSpectrogram>();
             pImpl->decoder = std::make_unique<TransducerDecoder>(pImpl->vocabulary);
-
             pImpl->ready = true;
-            NSLog(@"ASR Engine initialized successfully");
 
         } catch (const std::exception& e) {
             NSLog(@"Failed to initialize ASR Engine: %s", e.what());
@@ -189,10 +192,14 @@ std::string AsrEngine::transcribe(const float* samples, size_t sampleCount, int 
         std::vector<float> encoderOutput = runEncoder(melFeatures);
 
         // Step 3: Run transducer decoding (greedy or beam search)
+        // Use only the actual encoder frames, not padded ones
+        int32_t actualEncoderLength = pImpl->lastEncoderLength > 0 ? pImpl->lastEncoderLength : 188;
+
         std::vector<int> tokenIds = pImpl->decoder->decode(
             encoderOutput,
             (__bridge void*)pImpl->decoderModel,
-            (__bridge void*)pImpl->jointModel
+            (__bridge void*)pImpl->jointModel,
+            actualEncoderLength
         );
 
         // Step 4: Convert token IDs to text
@@ -200,16 +207,18 @@ std::string AsrEngine::transcribe(const float* samples, size_t sampleCount, int 
         for (int tokenId : tokenIds) {
             if (tokenId >= 0 && tokenId < static_cast<int>(pImpl->vocabulary.size())) {
                 std::string token = pImpl->vocabulary[tokenId];
-                // Handle special tokens and subword markers
-                if (token == "<blk>" || token == "<blank>" || token == "<pad>") {
+
+                // Handle special tokens
+                if (token.empty() ||
+                    token == "<blk>" || token == "<blank>" || token == "<pad>" ||
+                    token == "<unk>" || token == "<|nospeech|>" ||
+                    token.find("<|") == 0) {  // Skip all special tokens like <|...|>
                     continue;
                 }
-                if (token.find("▁") == 0) {
-                    // SentencePiece space marker
-                    result += " " + token.substr(3); // Skip the ▁ character
-                } else {
-                    result += token;
-                }
+
+                // SentencePiece uses leading space for word boundaries
+                // Just append the token as-is (including the space if present)
+                result += token;
             }
         }
 
@@ -256,14 +265,30 @@ std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) 
         float* inputPtr = (float*)input.dataPointer;
         memset(inputPtr, 0, melBins * fixedFrames * sizeof(float));
 
-        // Copy and transpose data: [frames, mel_bins] -> [1, mel_bins, frames]
-        for (size_t f = 0; f < numFrames; f++) {
-            for (int m = 0; m < melBins; m++) {
-                inputPtr[m * fixedFrames + f] = melFeatures[f * melBins + m];
+
+        // Copy mel features using proper stride handling
+        // Input melFeatures is in row-major [mel_bins][time] format
+        // MLMultiArray might have different strides
+        NSInteger inStride0 = [input.strides[0] integerValue]; // batch stride
+        NSInteger inStride1 = [input.strides[1] integerValue]; // mel_bins stride
+        NSInteger inStride2 = [input.strides[2] integerValue]; // time stride
+
+        // numFrames from melFeatures = melFeatures.size() / melBins
+        size_t srcNumFrames = melFeatures.size() / melBins;
+        for (int m = 0; m < melBins; m++) {
+            for (size_t t = 0; t < srcNumFrames && t < fixedFrames; t++) {
+                // Source: row-major [m][t] where melFeatures is [melBins][srcNumFrames]
+                size_t srcIdx = m * srcNumFrames + t;
+                // Target: MLMultiArray with strides
+                NSInteger dstIdx = 0 * inStride0 + m * inStride1 + (NSInteger)t * inStride2;
+                inputPtr[dstIdx] = melFeatures[srcIdx];
             }
         }
 
         // Create mel_length input (actual number of frames without padding)
+        // Use the value from the preprocessor if available
+        int32_t actualMelLength = (pImpl->lastMelLength > 0) ? pImpl->lastMelLength : static_cast<int32_t>(numFrames);
+
         NSArray<NSNumber*>* lengthShape = @[@1];
         MLMultiArray* lengthInput = [[MLMultiArray alloc] initWithShape:lengthShape
                                                                dataType:MLMultiArrayDataTypeInt32
@@ -271,7 +296,7 @@ std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) 
         if (error) {
             throw std::runtime_error("Failed to create length array");
         }
-        ((int32_t*)lengthInput.dataPointer)[0] = static_cast<int32_t>(numFrames);
+        ((int32_t*)lengthInput.dataPointer)[0] = actualMelLength;
 
         // Create feature provider with both inputs
         NSDictionary* inputDict = @{
@@ -301,78 +326,170 @@ std::vector<float> AsrEngine::runEncoder(const std::vector<float>& melFeatures) 
         for (NSString* name in possibleNames) {
             outputValue = [output featureValueForName:name];
             if (outputValue != nil && outputValue.multiArrayValue != nil) {
-                NSLog(@"Found encoder output with name: %@", name);
                 break;
             }
         }
 
         if (outputValue == nil || outputValue.multiArrayValue == nil) {
-            // List all available feature names for debugging
-            NSLog(@"Available output features:");
-            for (NSString* name in output.featureNames) {
-                NSLog(@"  - %@", name);
-            }
             throw std::runtime_error("Failed to get encoder output");
         }
 
         MLMultiArray* outputArray = outputValue.multiArrayValue;
-        NSInteger totalElements = 1;
-        for (NSNumber* dim in outputArray.shape) {
-            totalElements *= dim.integerValue;
+
+
+        // Store strides for proper frame extraction in decoder
+        pImpl->encoderStride0 = [outputArray.strides[0] integerValue];  // batch stride
+        pImpl->encoderStride1 = [outputArray.strides[1] integerValue];  // hidden stride
+        pImpl->encoderStride2 = [outputArray.strides[2] integerValue];  // time stride
+
+        // Get encoder_length (actual number of encoder frames after downsampling)
+        MLFeatureValue* encoderLengthValue = [output featureValueForName:@"encoder_length"];
+        if (encoderLengthValue && encoderLengthValue.multiArrayValue) {
+            pImpl->lastEncoderLength = ((int32_t*)encoderLengthValue.multiArrayValue.dataPointer)[0];
+        } else {
+            // Calculate encoder length from mel_length (8x downsampling)
+            pImpl->lastEncoderLength = (pImpl->lastMelLength + 7) / 8;
         }
 
-        std::vector<float> result(totalElements);
+        // Extract encoder output with proper stride handling
+        // Shape: [1, 1024, numTimeFrames]
+        // Strides may include padding, so we can't just memcpy
+        NSInteger hiddenDim = [outputArray.shape[1] integerValue];   // 1024
+        NSInteger numTimeFrames = [outputArray.shape[2] integerValue];  // e.g. 188
+        NSInteger stride1 = [outputArray.strides[1] integerValue];  // hidden stride (may be > numTimeFrames due to padding)
+        NSInteger stride2 = [outputArray.strides[2] integerValue];  // time stride (usually 1)
+
+        // We'll reorganize data to [numTimeFrames, hiddenDim] for easier access in decoder
+        // Result format: contiguous [numTimeFrames * hiddenDim] with layout [time][hidden]
+        std::vector<float> result(numTimeFrames * hiddenDim);
         float* outputPtr = (float*)outputArray.dataPointer;
-        memcpy(result.data(), outputPtr, totalElements * sizeof(float));
+
+        for (NSInteger t = 0; t < numTimeFrames; t++) {
+            for (NSInteger h = 0; h < hiddenDim; h++) {
+                // Original layout: [batch, hidden, time]
+                // Index: batch * stride0 + hidden * stride1 + time * stride2
+                // For batch=0: hidden * stride1 + time * stride2
+                NSInteger srcIdx = h * stride1 + t * stride2;
+                // Target layout: [time, hidden]
+                NSInteger dstIdx = t * hiddenDim + h;
+                result[dstIdx] = outputPtr[srcIdx];
+            }
+        }
+
 
         return result;
     }
 }
 
 /**
- * Compute mel spectrogram using CoreML model
+ * Compute mel spectrogram using CoreML Preprocessor model
+ * FluidInference Preprocessor expects: audio_signal [1, samples], audio_length [1]
+ * Returns: mel features suitable for encoder
  */
 std::vector<float> AsrEngine::computeMelWithCoreML(const float* samples, size_t sampleCount,
                                                     int sampleRate, void* melModelPtr) {
-    MLModel* melModel = (__bridge MLModel*)melModelPtr;
+    MLModel* preprocessor = (__bridge MLModel*)melModelPtr;
     @autoreleasepool {
         NSError* error = nil;
 
-        // Create input array for audio samples
-        NSArray<NSNumber*>* shape = @[@1, @(sampleCount)];
-        MLMultiArray* input = [[MLMultiArray alloc] initWithShape:shape
-                                                         dataType:MLMultiArrayDataTypeFloat32
-                                                            error:&error];
+        // Pad audio to 240000 samples (15 seconds) as expected by the model
+        const size_t targetSamples = 240000;
+        size_t paddedCount = std::max(sampleCount, targetSamples);
+
+        // Create audio_signal input array [1, samples]
+        NSArray<NSNumber*>* shape = @[@1, @(paddedCount)];
+        MLMultiArray* audioInput = [[MLMultiArray alloc] initWithShape:shape
+                                                              dataType:MLMultiArrayDataTypeFloat32
+                                                                 error:&error];
         if (error) {
-            throw std::runtime_error("Failed to create mel input array");
+            throw std::runtime_error("Failed to create audio input array");
         }
 
-        float* inputPtr = (float*)input.dataPointer;
+        float* inputPtr = (float*)audioInput.dataPointer;
         memcpy(inputPtr, samples, sampleCount * sizeof(float));
+        // Zero-pad the rest
+        if (paddedCount > sampleCount) {
+            memset(inputPtr + sampleCount, 0, (paddedCount - sampleCount) * sizeof(float));
+        }
 
-        // Run mel spectrogram model
-        NSDictionary* inputDict = @{@"audio": input};
+        // Create audio_length input [1]
+        NSArray<NSNumber*>* lengthShape = @[@1];
+        MLMultiArray* lengthInput = [[MLMultiArray alloc] initWithShape:lengthShape
+                                                               dataType:MLMultiArrayDataTypeInt32
+                                                                  error:&error];
+        if (error) {
+            throw std::runtime_error("Failed to create length input array");
+        }
+        ((int32_t*)lengthInput.dataPointer)[0] = static_cast<int32_t>(sampleCount);
+
+        // Run preprocessor model
+        NSDictionary* inputDict = @{
+            @"audio_signal": audioInput,
+            @"audio_length": lengthInput
+        };
         MLDictionaryFeatureProvider* provider =
             [[MLDictionaryFeatureProvider alloc] initWithDictionary:inputDict error:&error];
 
-        id<MLFeatureProvider> output = [melModel predictionFromFeatures:provider error:&error];
+        id<MLFeatureProvider> output = [preprocessor predictionFromFeatures:provider error:&error];
         if (error) {
-            throw std::runtime_error("Mel spectrogram computation failed");
+            NSLog(@"Preprocessor error: %@", [error localizedDescription]);
+            throw std::runtime_error("Preprocessor computation failed");
         }
 
-        MLFeatureValue* outputValue = [output featureValueForName:@"mel_spectrogram"];
-        if (outputValue == nil) {
-            outputValue = [output featureValueForName:@"output"];
+        // Try to find mel output - common names
+        NSArray<NSString*>* possibleNames = @[@"mel", @"mel_spectrogram", @"mel_output", @"output", @"x"];
+        MLFeatureValue* outputValue = nil;
+
+        for (NSString* name in possibleNames) {
+            outputValue = [output featureValueForName:name];
+            if (outputValue != nil && outputValue.multiArrayValue != nil) {
+                break;
+            }
+        }
+
+        if (outputValue == nil || outputValue.multiArrayValue == nil) {
+            // Log available outputs
+            NSLog(@"Available preprocessor outputs:");
+            for (NSString* name in output.featureNames) {
+                NSLog(@"  - %@", name);
+            }
+            throw std::runtime_error("Failed to get preprocessor output");
         }
 
         MLMultiArray* outputArray = outputValue.multiArrayValue;
-        NSInteger totalElements = 1;
-        for (NSNumber* dim in outputArray.shape) {
-            totalElements *= dim.integerValue;
+
+
+        // Get mel_length from preprocessor (actual length without padding)
+        MLFeatureValue* melLengthValue = [output featureValueForName:@"mel_length"];
+        if (melLengthValue && melLengthValue.multiArrayValue) {
+            int32_t actualMelLength = ((int32_t*)melLengthValue.multiArrayValue.dataPointer)[0];
+            // Store this for later use (we'll need to pass it to the encoder)
+            pImpl->lastMelLength = actualMelLength;
         }
 
-        std::vector<float> result(totalElements);
-        memcpy(result.data(), (float*)outputArray.dataPointer, totalElements * sizeof(float));
+        // Extract mel features with proper stride handling
+        // Shape: [1, mel_bins, num_frames] -> expected [1, 128, 1501]
+        NSInteger melBins = [outputArray.shape[1] integerValue];   // 128
+        NSInteger numFrames = [outputArray.shape[2] integerValue]; // 1501
+        NSInteger stride0 = [outputArray.strides[0] integerValue]; // batch stride
+        NSInteger stride1 = [outputArray.strides[1] integerValue]; // mel_bins stride
+        NSInteger stride2 = [outputArray.strides[2] integerValue]; // time stride
+
+        // Result will be contiguous [mel_bins * num_frames] in row-major order
+        // The encoder expects [1, 128, 1501] layout so we store it as [mel_bins][time]
+        std::vector<float> result(melBins * numFrames);
+        float* outputPtr = (float*)outputArray.dataPointer;
+
+        for (NSInteger m = 0; m < melBins; m++) {
+            for (NSInteger t = 0; t < numFrames; t++) {
+                // Source: [0, m, t] with strides
+                NSInteger srcIdx = 0 * stride0 + m * stride1 + t * stride2;
+                // Target: row-major [m][t]
+                NSInteger dstIdx = m * numFrames + t;
+                result[dstIdx] = outputPtr[srcIdx];
+            }
+        }
+
 
         return result;
     }

@@ -226,17 +226,21 @@ All processing happens locally using [node-llama-cpp](https://github.com/withcat
 
 We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speakers each):
 
-| Model       | WER Before | WER After | Improvement | Speed  |
-| ----------- | ---------- | --------- | ----------- | ------ |
-| **gemma3n** | 9.2%       | **3.8%**  | **+59%**    | 37 t/s |
-| phi4:14b    | 9.2%       | 4.2%      | +54%        | 36 t/s |
+| Model            | Avg WER Before | Avg WER After | Improvement | Speed  |
+| ---------------- | -------------- | ------------- | ----------- | ------ |
+| **phi4:14b**     | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
+| **mistral-nemo** | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
+| gemma3n:e4b      | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
+| gemma3n:e2b      | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
+| ~~qwen3:8b~~     | 5.6%           | 11.7%         | -75.2% ⚠️   | 50 t/s |
 
 **Key findings:**
 
-- LLM correction improves WER in **9/10 cases**
-- Most effective on high-WER samples (>10%): up to **-28 percentage points**
-- Minimal degradation in edge cases (~0.7pp)
-- **Recommendation:** Enable LLM correction by default
+- **phi4:14b** achieves best accuracy (+52%), especially for German/Spanish
+- **mistral-nemo** offers best speed (60 t/s) with good accuracy (+43%)
+- **gemma3n:e4b** is most reliable, no negative outliers across all languages
+- ⚠️ **qwen3:8b** not recommended - catastrophic for DE/PT languages
+- **Recommendation:** Use phi4:14b for quality, mistral-nemo for speed
 
 ## Quality Benchmark
 

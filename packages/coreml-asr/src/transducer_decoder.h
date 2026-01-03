@@ -22,9 +22,9 @@ public:
     /**
      * Constructor
      * @param vocabulary Token vocabulary for decoding
-     * @param blankId ID of the blank token (default: 0)
+     * @param blankId ID of the blank token (default: 8192 for Parakeet-TDT-v3)
      */
-    explicit TransducerDecoder(const std::vector<std::string>& vocabulary, int blankId = 0);
+    explicit TransducerDecoder(const std::vector<std::string>& vocabulary, int blankId = 8192);
 
     ~TransducerDecoder();
 
@@ -33,11 +33,13 @@ public:
      * @param encoderOutput Encoder hidden states [num_frames, hidden_dim]
      * @param decoderModel CoreML decoder/prediction network model
      * @param jointModel CoreML joint network model
+     * @param numFrames Optional number of frames to decode (0 = use all frames)
      * @return Vector of decoded token IDs
      */
     std::vector<int> decode(const std::vector<float>& encoderOutput,
                             void* decoderModel,
-                            void* jointModel);
+                            void* jointModel,
+                            int numFrames = 0);
 
     /**
      * Decode with beam search (TODO)

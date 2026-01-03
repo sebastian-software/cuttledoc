@@ -27,13 +27,13 @@ try {
   console.log("Engine ready:", engine.isReady())
   console.log("Version:", engine.getVersion())
 
-  // Load a test audio file - use a short clip (first 10 seconds)
-  const audioFile = "../llm/fixtures/audio/fr-sample - Manon.ogg"
+  // Load a test audio file - use the English test file from the model
+  const audioFile = "../../models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8/test_wavs/en.wav"
   console.log("\nTest audio:", audioFile)
 
-  // Convert to WAV using ffmpeg - limit to 10 seconds
+  // Convert to WAV using ffmpeg - ensure 16kHz mono
   const wavFile = "/tmp/test-audio.wav"
-  execSync(`ffmpeg -y -i "${audioFile}" -t 10 -ar 16000 -ac 1 -f wav "${wavFile}"`, {
+  execSync(`ffmpeg -y -i "${audioFile}" -ar 16000 -ac 1 -f wav "${wavFile}"`, {
     stdio: "pipe",
     cwd: join(process.cwd())
   })
