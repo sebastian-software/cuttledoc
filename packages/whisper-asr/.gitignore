@@ -1,0 +1,15 @@
+# Build outputs
+build/
+dist/
+prebuilds/
+
+# Dependencies
+node_modules/
+
+# Vendor (cloned whisper.cpp)
+vendor/
+
+# Models (too large for git)
+*.bin
+*.mlmodelc/
+
