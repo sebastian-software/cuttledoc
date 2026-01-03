@@ -15,7 +15,7 @@
   "dependencies": {
     "@orama/orama": "^3.1.18",
     "@react-router/node": "^7.11.0",
-    "fumadocs-core": "16.4.1",
+    "fumadocs-core": "16.4.3",
     "fumadocs-mdx": "14.2.3",
     "fumadocs-ui": "16.4.1",
     "isbot": "^5.1.32",
