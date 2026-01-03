@@ -6,10 +6,12 @@ prebuilds/
 # Dependencies
 node_modules/
 
+# Python venv (for CoreML model generation)
+.venv/
+
 # Vendor (cloned whisper.cpp)
 vendor/
 
 # Models (too large for git)
 *.bin
 *.mlmodelc/
-

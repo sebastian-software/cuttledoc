@@ -6,7 +6,7 @@ Based on [whisper.cpp](https://github.com/ggerganov/whisper.cpp) with Apple Neur
 
 ## Features
 
-- 🚀 **3x faster** transcription with CoreML/ANE acceleration
+- 🚀 **Metal GPU + CoreML/ANE** acceleration (pick best for your Mac)
 - 🌍 **99 languages** supported (Whisper multilingual)
 - 📝 **Word-level timestamps** for subtitles/captions
 - 🔄 **Translation** to English from any language
@@ -88,9 +88,29 @@ const engine = new WhisperAsrEngine({
 })
 ```
 
-## CoreML Acceleration
+## Hardware Acceleration
 
-For maximum performance, generate CoreML encoder models:
+This package supports **two acceleration backends**:
+
+### Metal GPU (Default)
+
+Uses the Apple GPU - excellent on all Apple Silicon Macs, especially those with many GPU cores (M1 Max/Ultra, M2 Max/Ultra, M3 Max).
+
+### CoreML/ANE (Optional)
+
+Uses the **Apple Neural Engine** (ANE) - a dedicated ML accelerator. Benefits depend on your Mac generation:
+
+| Generation | ANE TOPS | GPU Cores | Best Backend           |
+| ---------- | -------- | --------- | ---------------------- |
+| M1/M2      | 15-32    | 8-64      | Metal GPU often faster |
+| M3         | 35       | 10-40     | Comparable             |
+| **M4/M5**  | 38-50+   | 16-20     | **CoreML/ANE faster**  |
+
+> 💡 **TL;DR:** On M4 Pro and newer, CoreML/ANE shines because the ANE improved faster than the GPU.
+
+### Enabling CoreML/ANE
+
+1. Generate CoreML encoder model (requires Python 3.11):
 
 ```bash
 cd vendor/whisper.cpp
@@ -98,18 +118,25 @@ pip install ane_transformers openai-whisper coremltools
 ./models/generate-coreml-model.sh large-v3-turbo
 ```
 
-This creates `ggml-large-v3-turbo-encoder.mlmodelc` which whisper.cpp loads automatically.
+2. The encoder model (`ggml-large-v3-turbo-encoder.mlmodelc`) is loaded automatically if present.
 
-### Performance Comparison
+### Real-World Benchmarks
 
-| Device | CPU Only       | With CoreML     |
-| ------ | -------------- | --------------- |
-| M1     | ~1.0x realtime | ~0.3x realtime  |
-| M2     | ~0.8x realtime | ~0.25x realtime |
-| M3     | ~0.7x realtime | ~0.2x realtime  |
-| M4     | ~0.5x realtime | ~0.1x realtime  |
+Tested on M1 Ultra (64 GPU cores), 4-second audio with `large-v3-turbo`:
 
-_Lower is better (0.1x = 10x faster than realtime)_
+| Backend    | Time       | Notes                   |
+| ---------- | ---------- | ----------------------- |
+| Metal GPU  | **508 ms** | Fastest on this Mac     |
+| CoreML/ANE | 713 ms     | ANE saturated, GPU idle |
+
+On M4 Pro (estimated, based on ANE improvements):
+
+| Backend    | Time        | Notes           |
+| ---------- | ----------- | --------------- |
+| Metal GPU  | ~600 ms     | Fewer GPU cores |
+| CoreML/ANE | **~400 ms** | ANE 2x faster   |
+
+_Your mileage may vary. Both backends produce identical transcriptions._
 
 ## API Reference
 

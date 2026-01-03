@@ -18,7 +18,7 @@ if (!isAvailable()) {
   process.exit(1)
 }
 
-const modelPath = join(process.cwd(), "vendor/whisper.cpp/models/ggml-base.bin")
+const modelPath = join(process.cwd(), "vendor/whisper.cpp/models/ggml-large-v3-turbo.bin")
 console.log("Model path:", modelPath)
 
 try {

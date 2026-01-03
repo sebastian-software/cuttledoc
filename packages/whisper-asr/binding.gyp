@@ -15,12 +15,14 @@
       ],
       "libraries": [
         "../vendor/whisper.cpp/build/src/libwhisper.a",
+        "../vendor/whisper.cpp/build/src/libwhisper.coreml.a",
         "../vendor/whisper.cpp/build/ggml/src/libggml.a",
         "../vendor/whisper.cpp/build/ggml/src/libggml-base.a",
         "../vendor/whisper.cpp/build/ggml/src/libggml-cpu.a",
         "../vendor/whisper.cpp/build/ggml/src/ggml-metal/libggml-metal.a",
         "../vendor/whisper.cpp/build/ggml/src/ggml-blas/libggml-blas.a",
         "-framework Accelerate",
+        "-framework CoreML",
         "-framework Foundation",
         "-framework Metal",
         "-framework MetalKit"
