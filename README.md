@@ -24,7 +24,7 @@
 - 🚀 **Native Performance**: Pure Node.js, no Python required
 - 📱 **Offline & Online**: Choose between local processing or cloud API
 - 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
-- 🤖 **LLM Enhancement**: Auto-correct and format transcripts (using Gemma 3n)
+- 🤖 **LLM Correction**: Auto-correct transcripts with phi4:14b (+52% WER improvement)
 - 📊 **Detailed Stats**: Processing time, word count, confidence scores
 
 ## Installation
@@ -91,16 +91,18 @@ const cloudResult = await transcribe("audio.mp3", {
 
 ```typescript
 import { transcribe } from "cuttledoc"
-import { enhanceTranscript } from "cuttledoc/llm"
+import { enhanceTranscript } from "@cuttledoc/llm"
 
 const result = await transcribe("podcast.mp3")
 
+// Correction is enabled by default, but you can customize:
 const enhanced = await enhanceTranscript(result.text, {
-  model: "gemma3n:e4b",
-  mode: "enhance" // or "correct" for minimal changes
+  model: "phi4:14b", // default, best quality
+  mode: "correct" // or "format" for full Markdown formatting
 })
 
-console.log(enhanced.markdown)
+console.log(enhanced.plainText) // Corrected text
+console.log(enhanced.markdown) // With formatting (if mode="format")
 ```
 
 ## CLI Reference
@@ -117,7 +119,7 @@ Options:
   -o, --output <file>     Write output to file
   -f, --format            Add formatting (paragraphs, headings, markdown)
   --no-correct            Disable LLM correction (raw STT output)
-  --llm-model <name>      LLM model (default: gemma3n:e4b)
+  --llm-model <name>      LLM model (default: phi4:14b via Ollama)
   -s, --stats             Show processing statistics
   -q, --quiet             Minimal output
   -h, --help              Show help
@@ -136,8 +138,9 @@ cuttledoc models list
 cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
 cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
-# Download LLM model (for --enhance)
-cuttledoc models download gemma3n:e4b
+# Download LLM model (for correction/formatting)
+# For Ollama (recommended): ollama pull phi4:14b
+# For GGUF: cuttledoc models download gemma3n:e4b
 ```
 
 ## Backends
@@ -209,18 +212,25 @@ Audio is automatically extracted and resampled to 16kHz mono.
 
 ## LLM Enhancement
 
-The optional LLM post-processing uses Gemma 3n to:
+LLM-based post-processing is enabled by default to improve transcription quality.
 
-1. Generate a **TLDR summary** (2-3 sentences)
-2. Structure text into **logical paragraphs**
-3. Add **Markdown formatting**:
-   - **Bold** for key terms
-   - _Italic_ for emphasis
-   - `##` Headings for topic changes
-   - Bullet lists where appropriate
-4. Fix obvious **transcription errors**
+**Correction Mode** (default):
 
-All processing happens locally using [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) or via Ollama.
+- Fix punctuation and capitalization
+- Correct word boundaries and contractions
+- Remove filler words and repetitions
+- Fix obvious STT errors
+
+**Format Mode** (`--format` / `mode: "format"`):
+
+- Everything from correction mode, plus:
+- Structure into logical paragraphs
+- Add Markdown headings and emphasis
+- Bullet lists where appropriate
+
+All processing happens locally using [Ollama](https://ollama.com) or [node-llama-cpp](https://github.com/withcatai/node-llama-cpp).
+
+See [packages/llm/README.md](packages/llm/README.md) for detailed documentation.
 
 ### LLM Correction Benchmark
 
@@ -303,8 +313,9 @@ This is a pnpm monorepo with the following packages:
 ```
 cuttledoc/
 ├── packages/
-│   ├── cuttledoc/     # Core transcription library
-│   ├── cli/           # CLI tool (@cuttledoc/cli)
+│   ├── cuttledoc/     # Core transcription library + CLI
+│   ├── llm/           # LLM transcript enhancement (@cuttledoc/llm)
+│   ├── ffmpeg/        # FFmpeg audio processing (@cuttledoc/ffmpeg)
 │   └── docs/          # Documentation site
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
@@ -353,7 +364,8 @@ MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 
 - [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) - Speech recognition engine
 - [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) - LLM inference
-- [@mmomtchev/ffmpeg](https://github.com/mmomtchev/ffmpeg) - Native FFmpeg bindings
+- [Ollama](https://ollama.com) - Local LLM server
 - [OpenAI Whisper](https://github.com/openai/whisper) - Speech recognition model
 - [OpenAI GPT-4o Transcribe](https://openai.com/index/introducing-our-next-generation-audio-models/) - Next-gen cloud ASR
-- [Gemma](https://ai.google.dev/gemma) - Google's open-weight LLM
+- [Microsoft Phi-4](https://huggingface.co/microsoft/phi-4) - Best LLM for transcript correction
+- [Google Gemma](https://ai.google.dev/gemma) - Reliable open-weight LLM

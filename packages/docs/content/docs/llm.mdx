@@ -1,0 +1,237 @@
+---
+title: LLM Enhancement
+description: Improve transcription quality with AI-powered post-processing
+---
+
+cuttledoc includes optional LLM-based post-processing to improve transcription quality. This page covers how to use it effectively.
+
+## Overview
+
+Speech-to-text engines produce raw transcripts with typical errors:
+
+- Missing or incorrect punctuation
+- Word boundary issues ("gonna" vs "going to")
+- Homophones ("their" vs "there")
+- Filler words and repetitions
+
+LLM enhancement corrects these issues while preserving the original meaning.
+
+## Quick Start
+
+### With CLI
+
+```bash
+# Correction is enabled by default
+cuttledoc audio.mp3
+
+# Disable correction
+cuttledoc audio.mp3 --no-correct
+
+# Full formatting (adds Markdown structure)
+cuttledoc audio.mp3 --format
+```
+
+### With API
+
+```typescript
+import { transcribe } from 'cuttledoc'
+import { enhanceTranscript } from '@cuttledoc/llm'
+
+const result = await transcribe('audio.mp3')
+
+// Correct errors (recommended)
+const corrected = await enhanceTranscript(result.text, {
+  mode: 'correct'
+})
+
+// Full formatting
+const formatted = await enhanceTranscript(result.text, {
+  mode: 'format'
+})
+```
+
+## Processing Modes
+
+### `correct` (Default)
+
+Fixes transcription errors without changing structure:
+
+- Punctuation and capitalization
+- Word boundaries and contractions
+- Obvious spelling errors
+- Filler word removal
+
+**Does NOT:**
+
+- Add headings or sections
+- Summarize content
+- Change vocabulary or style
+
+### `format`
+
+Full Markdown formatting:
+
+- Everything from `correct`
+- Section headings (`##`)
+- Bullet lists where appropriate
+- **Bold** for key terms
+- _Italic_ for emphasis
+
+## Available Models
+
+### Ollama (Recommended)
+
+Easiest setup, best quality. Install [Ollama](https://ollama.com) and pull a model:
+
+```bash
+brew install ollama
+ollama pull phi4:14b  # Best quality (default)
+```
+
+| Model          | Quality    | Speed  | RAM   | Use Case                    |
+| -------------- | ---------- | ------ | ----- | --------------------------- |
+| `phi4:14b`     | ⭐⭐⭐⭐⭐ | 36 t/s | 9 GB  | Best overall (default)      |
+| `mistral-nemo` | ⭐⭐⭐⭐   | 60 t/s | 8 GB  | Speed-critical applications |
+| `gemma3n:e4b`  | ⭐⭐⭐⭐   | 35 t/s | 7.5GB | Reliable, no edge cases     |
+| `gemma3n:e2b`  | ⭐⭐⭐     | 44 t/s | 5.6GB | Low-memory systems          |
+
+### GGUF Models (Embedded)
+
+For applications without external dependencies. Models auto-download on first use.
+
+```typescript
+import { enhanceTranscript } from '@cuttledoc/llm'
+
+const result = await enhanceTranscript(text, {
+  provider: 'local',
+  model: 'gemma3n:e4b' // default for GGUF
+})
+```
+
+### OpenAI (Cloud)
+
+For highest quality when latency isn't critical:
+
+```bash
+export OPENAI_API_KEY=sk-...
+```
+
+```typescript
+const result = await enhanceTranscript(text, {
+  provider: 'openai',
+  model: 'gpt-5-mini'
+})
+```
+
+## Benchmark Results
+
+Tested on TTS-generated audio (5-7 min per language, 2 speakers each).
+
+### Overall Performance
+
+| Model                  | WER Before | WER After | Improvement | Speed  |
+| ---------------------- | ---------- | --------- | ----------- | ------ |
+| **phi4:14b** (default) | 5.6%       | **2.8%**  | **+52.0%**  | 36 t/s |
+| mistral-nemo           | 5.6%       | 3.2%      | +42.7%      | 60 t/s |
+| gemma3n:e4b            | 5.6%       | 3.3%      | +41.2%      | 35 t/s |
+| gemma3n:e2b            | 5.6%       | 3.6%      | +36.9%      | 44 t/s |
+
+### Per-Language (phi4:14b)
+
+| Language      | Before | After | Improvement |
+| ------------- | ------ | ----- | ----------- |
+| 🇩🇪 German     | 6.7%   | 1.6%  | +76%        |
+| 🇬🇧 English    | 5.5%   | 2.8%  | +49%        |
+| 🇪🇸 Spanish    | 3.5%   | 1.3%  | +63%        |
+| 🇫🇷 French     | 6.5%   | 5.7%  | +12%        |
+| 🇧🇷 Portuguese | 6.0%   | 3.3%  | +45%        |
+
+### Key Findings
+
+1. **Model choice matters significantly**
+   - phi4:14b achieves 52% WER improvement vs 37% for gemma3n:e2b
+   - 15 percentage points difference in correction quality
+
+2. **Language-specific performance**
+   - German and Spanish benefit most (+63-77%)
+   - French improvement is limited (+12%)
+   - All languages improve with phi4:14b
+
+3. **Some models are dangerous**
+   - qwen3 produced **-75% WER** (worse than input) for German/Portuguese
+   - Always use tested, recommended models
+
+4. **Speed vs quality tradeoff**
+   - mistral-nemo: 67% faster, 9pp less improvement
+   - Worth considering for real-time applications
+
+## Best Practices
+
+### When to Use LLM Correction
+
+✅ **Recommended:**
+
+- Podcasts, interviews, meetings
+- Content that will be read by humans
+- When accuracy matters more than speed
+
+⚠️ **Consider disabling:**
+
+- Real-time/streaming transcription
+- Very short clips (<30 seconds)
+- Technical dictation with specialized vocabulary
+
+### Model Selection
+
+```typescript
+// Best quality (default)
+await enhanceTranscript(text, { model: 'phi4:14b' })
+
+// Fast processing
+await enhanceTranscript(text, { model: 'mistral-nemo' })
+
+// Low memory (<6GB RAM)
+await enhanceTranscript(text, { model: 'gemma3n:e2b' })
+```
+
+### Handling Long Transcripts
+
+The library automatically chunks long transcripts to fit context windows:
+
+```typescript
+const result = await enhanceTranscript(longText, {
+  // Automatically handled - no configuration needed
+})
+```
+
+## Troubleshooting
+
+### "Ollama not running"
+
+```bash
+# Start Ollama
+ollama serve
+
+# Or run in background
+brew services start ollama
+```
+
+### "Model not found"
+
+```bash
+# List available models
+ollama list
+
+# Pull the model
+ollama pull phi4:14b
+```
+
+### Slow performance
+
+1. Use a smaller model: `gemma3n:e2b` or `mistral-nemo`
+2. Disable LLM for short clips: `--no-correct`
+3. Ensure GPU acceleration is enabled (check Ollama docs)
+
+## API Reference
+
+See [@cuttledoc/llm documentation](https://github.com/sebastian-software/cuttledoc/tree/main/packages/llm) for full API details.

@@ -20,11 +20,14 @@ pnpm add cuttledoc
 ## CLI Usage
 
 ```bash
-# Basic transcription (uses local Parakeet)
+# Basic transcription with LLM correction (default)
 npx cuttledoc video.mp4
 
-# With LLM enhancement (adds formatting, TLDR, corrections)
-npx cuttledoc podcast.mp3 --enhance -o transcript.md
+# Raw STT output without LLM correction
+npx cuttledoc video.mp4 --no-correct
+
+# With full formatting (paragraphs, headings, markdown)
+npx cuttledoc podcast.mp3 --format -o transcript.md
 
 # Use specific backend and language
 npx cuttledoc meeting.m4a -b parakeet -l de
@@ -62,17 +65,21 @@ const cloudResult = await transcribe('audio.mp3', {
 
 ```typescript
 import { transcribe } from 'cuttledoc'
-import { enhanceTranscript } from 'cuttledoc/llm'
+import { enhanceTranscript } from '@cuttledoc/llm'
 
 const result = await transcribe('podcast.mp3')
 
+// Correction is enabled by default via CLI
+// For API usage, call enhanceTranscript explicitly:
 const enhanced = await enhanceTranscript(result.text, {
-  model: 'phi4:14b', // default, best quality
-  mode: 'correct' // or 'format' for full formatting
+  model: 'phi4:14b', // default, best quality (+52% WER)
+  mode: 'correct' // or 'format' for Markdown formatting
 })
 
-console.log(enhanced.markdown)
+console.log(enhanced.plainText)
 ```
+
+See [LLM Enhancement](/docs/llm) for detailed documentation.
 
 ## Quality Benchmark
 
@@ -133,8 +140,12 @@ cuttledoc models list
 cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
 cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
-# Download LLM model (for --format)
-cuttledoc models download phi4:14b
+# LLM models (for correction/formatting)
+# Option 1: Ollama (recommended)
+brew install ollama && ollama pull phi4:14b
+
+# Option 2: GGUF (for embedded use)
+cuttledoc models download gemma3n:e4b
 ```
 
 ## LLM Correction Benchmark
@@ -166,6 +177,7 @@ We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speaker
 ## Next Steps
 
 <Cards>
+  <Card title="LLM Enhancement" href="/docs/llm" />
   <Card title="API Reference" href="/docs/api" />
   <Card title="GitHub" href="https://github.com/sebastian-software/cuttledoc" />
 </Cards>

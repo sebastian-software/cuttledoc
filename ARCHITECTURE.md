@@ -71,15 +71,35 @@ Audio Transform (resample to 16kHz mono)
 Float32Array samples → Backend
 ```
 
-### 3. LLM Enhancement
+### 3. LLM Enhancement (`@cuttledoc/llm`)
 
-Optional post-processing (`llm/`):
+Dedicated package for transcript post-processing. See [packages/llm/README.md](packages/llm/README.md) for full details.
 
-- Uses Gemma 3n model via node-llama-cpp
-- Generates TLDR summaries
-- Formats text with Markdown
-- Fixes transcription errors
-- Runs entirely offline
+**Providers:**
+
+- **Ollama** (recommended) – Local, easy setup, best quality with phi4:14b
+- **node-llama-cpp** – Embedded GGUF models, no external dependencies
+- **OpenAI** – Cloud fallback for highest quality
+
+**Processing Modes:**
+
+- `correct` – Fix STT errors, punctuation, sentence boundaries (default)
+- `format` – Add Markdown structure, headings, emphasis
+
+**Benchmark Results (January 2025):**
+
+| Model        | WER Improvement | Speed  | Recommendation         |
+| ------------ | --------------- | ------ | ---------------------- |
+| phi4:14b     | +52%            | 36 t/s | Best quality (default) |
+| mistral-nemo | +43%            | 60 t/s | Best speed             |
+| gemma3n:e4b  | +41%            | 35 t/s | Most reliable for GGUF |
+
+**Key Learnings:**
+
+1. **Model selection matters significantly** – phi4:14b achieves 52% WER improvement vs 41% for gemma3n
+2. **Some models fail catastrophically** – qwen3 produced -75% WER (worse than input) for German/Portuguese
+3. **Language-specific performance varies** – phi4 excels at German (+77%), French improvement is limited (+6-38%)
+4. **Speed vs quality tradeoff** – mistral-nemo is 67% faster but 9pp less improvement
 
 ### 4. CLI Interface
 
@@ -95,17 +115,36 @@ Command-line interface (`cli/`):
 ```
 cuttledoc/
 ├── packages/
-│   ├── cuttledoc/          # Core library
+│   ├── cuttledoc/          # Core library (speech-to-text)
 │   │   ├── src/
 │   │   │   ├── index.ts           # Public API
 │   │   │   ├── backend.ts         # Backend selection
 │   │   │   ├── backends/          # Backend implementations
-│   │   │   │   └── sherpa/        # ONNX backend (Whisper/Parakeet)
+│   │   │   │   ├── sherpa/        # ONNX backend (Whisper/Parakeet)
+│   │   │   │   └── openai/        # OpenAI Transcribe API
 │   │   │   ├── cli/               # CLI implementation
-│   │   │   ├── llm/               # LLM enhancement
-│   │   │   ├── types/             # Type definitions
-│   │   │   └── utils/             # Utilities (audio processing)
-│   └── docs/              # Documentation website
+│   │   │   ├── types.ts           # Type definitions
+│   │   │   └── utils/             # Utilities
+│   │   └── bin/cuttledoc.js       # CLI wrapper
+│   │
+│   ├── llm/                # LLM transcript enhancement
+│   │   ├── src/
+│   │   │   ├── index.ts           # Public API
+│   │   │   ├── types.ts           # Types, prompts, models
+│   │   │   └── providers/         # Provider implementations
+│   │   │       ├── ollama.ts      # Ollama provider
+│   │   │       ├── local.ts       # node-llama-cpp (GGUF)
+│   │   │       └── openai.ts      # OpenAI provider
+│   │   ├── fixtures/              # Benchmark audio/text
+│   │   ├── scripts/               # Benchmark scripts
+│   │   └── results/               # Benchmark results
+│   │
+│   ├── ffmpeg/             # FFmpeg audio processing
+│   │   └── src/
+│   │       └── index.ts           # Audio decode/preprocess
+│   │
+│   └── docs/               # Documentation website
+│       └── content/docs/          # MDX documentation pages
 ```
 
 ## Data Flow
