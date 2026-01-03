@@ -1,12 +1,12 @@
 # @cuttledoc/whisper-asr
 
-OpenAI Whisper ASR for Node.js with **CoreML acceleration** on Apple Silicon.
+OpenAI Whisper ASR for Node.js with **CoreML/ANE acceleration** on Apple Silicon.
 
 Based on [whisper.cpp](https://github.com/ggerganov/whisper.cpp) with Apple Neural Engine (ANE) support for optimal performance on M1/M2/M3/M4 Macs.
 
 ## Features
 
-- 🚀 **Metal GPU + CoreML/ANE** acceleration (pick best for your Mac)
+- 🚀 **CoreML/ANE accelerated** - runs on Apple Neural Engine
 - 🌍 **99 languages** supported (Whisper multilingual)
 - 📝 **Word-level timestamps** for subtitles/captions
 - 🔄 **Translation** to English from any language
@@ -34,14 +34,15 @@ npm run download:model large-v3-turbo
 ```
 
 Available models:
-| Model | Size | Speed | Accuracy |
-|-------|------|-------|----------|
-| `tiny` | 75 MB | Fastest | Basic |
-| `base` | 142 MB | Fast | Good |
-| `small` | 466 MB | Medium | Better |
-| `medium` | 1.5 GB | Slow | High |
-| `large-v3` | 2.9 GB | Slowest | Best |
-| `large-v3-turbo` | 1.5 GB | Fast | Near-best |
+
+| Model            | Size   | Speed   | Accuracy  |
+| ---------------- | ------ | ------- | --------- |
+| `tiny`           | 75 MB  | Fastest | Basic     |
+| `base`           | 142 MB | Fast    | Good      |
+| `small`          | 466 MB | Medium  | Better    |
+| `medium`         | 1.5 GB | Slow    | High      |
+| `large-v3`       | 2.9 GB | Slowest | Best      |
+| `large-v3-turbo` | 1.5 GB | Fast    | Near-best |
 
 ## Usage
 
@@ -62,7 +63,7 @@ const engine = new WhisperAsrEngine({
 
 await engine.initialize()
 
-// Transcribe audio (Float32Array, mono, any sample rate)
+// Transcribe audio (Float32Array, mono, 16kHz)
 const result = await engine.transcribe(audioSamples, 16000)
 
 console.log(result.text)
@@ -87,56 +88,6 @@ const engine = new WhisperAsrEngine({
   translate: true // Translate to English
 })
 ```
-
-## Hardware Acceleration
-
-This package supports **two acceleration backends**:
-
-### Metal GPU (Default)
-
-Uses the Apple GPU - excellent on all Apple Silicon Macs, especially those with many GPU cores (M1 Max/Ultra, M2 Max/Ultra, M3 Max).
-
-### CoreML/ANE (Optional)
-
-Uses the **Apple Neural Engine** (ANE) - a dedicated ML accelerator. Benefits depend on your Mac generation:
-
-| Generation | ANE TOPS | GPU Cores | Best Backend           |
-| ---------- | -------- | --------- | ---------------------- |
-| M1/M2      | 15-32    | 8-64      | Metal GPU often faster |
-| M3         | 35       | 10-40     | Comparable             |
-| **M4/M5**  | 38-50+   | 16-20     | **CoreML/ANE faster**  |
-
-> 💡 **TL;DR:** On M4 Pro and newer, CoreML/ANE shines because the ANE improved faster than the GPU.
-
-### Enabling CoreML/ANE
-
-1. Generate CoreML encoder model (requires Python 3.11):
-
-```bash
-cd vendor/whisper.cpp
-pip install ane_transformers openai-whisper coremltools
-./models/generate-coreml-model.sh large-v3-turbo
-```
-
-2. The encoder model (`ggml-large-v3-turbo-encoder.mlmodelc`) is loaded automatically if present.
-
-### Real-World Benchmarks
-
-Tested on M1 Ultra (64 GPU cores), 4-second audio with `large-v3-turbo`:
-
-| Backend    | Time       | Notes                   |
-| ---------- | ---------- | ----------------------- |
-| Metal GPU  | **508 ms** | Fastest on this Mac     |
-| CoreML/ANE | 713 ms     | ANE saturated, GPU idle |
-
-On M4 Pro (estimated, based on ANE improvements):
-
-| Backend    | Time        | Notes           |
-| ---------- | ----------- | --------------- |
-| Metal GPU  | ~600 ms     | Fewer GPU cores |
-| CoreML/ANE | **~400 ms** | ANE 2x faster   |
-
-_Your mileage may vary. Both backends produce identical transcriptions._
 
 ## API Reference
 
@@ -179,6 +130,8 @@ interface TranscriptionResult {
 | Architecture | Encoder-Decoder       | RNN-T/TDT                 |
 | Model Size   | 75MB - 2.9GB          | 600MB                     |
 | Best For     | Accuracy, translation | Speed, European languages |
+
+Both use **CoreML/ANE** for hardware acceleration.
 
 ## License
 
