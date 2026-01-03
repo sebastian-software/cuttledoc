@@ -11,14 +11,7 @@ export type LLMProvider = "ollama" | "openai" | "local"
  * Supported local LLM models (for node-llama-cpp)
  */
 export const LOCAL_MODELS = {
-  // Phi-4 Mini - Microsoft, best for text correction (DEFAULT)
-  "phi4-mini": {
-    ggufRepo: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
-    ggufFile: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
-    contextSize: 16384,
-    description: "Microsoft Phi-4 Mini - Best for text correction (+52% WER), 3GB RAM"
-  },
-  // Gemma 3n - Optimized for edge devices (unsloth quantizations)
+  // Gemma 3n - Best tested GGUF model, reliable (DEFAULT for node-llama-cpp)
   "gemma3n:e4b": {
     ggufRepo: "unsloth/gemma-3n-E4B-it-GGUF",
     ggufFile: "gemma-3n-E4B-it-Q4_K_M.gguf",
@@ -37,6 +30,13 @@ export const LOCAL_MODELS = {
     ggufFile: "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf",
     contextSize: 131072,
     description: "Mistral Nemo 12B - Fastest (60 t/s), strong EU langs (+43% WER), 8GB RAM"
+  },
+  // Phi-4 Mini - Smaller variant, not benchmarked with phi4:14b
+  "phi4-mini": {
+    ggufRepo: "bartowski/microsoft_Phi-4-mini-instruct-GGUF",
+    ggufFile: "microsoft_Phi-4-mini-instruct-Q4_K_M.gguf",
+    contextSize: 16384,
+    description: "Microsoft Phi-4 Mini - Compact (~3B), 3GB RAM (use Ollama phi4:14b for best results)"
   }
 } as const
 

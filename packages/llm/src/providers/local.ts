@@ -154,7 +154,7 @@ export class LocalProcessor {
       contextSize?: number
     } = {}
   ) {
-    this.modelId = options.model ?? "phi4-mini"
+    this.modelId = options.model ?? "gemma3n:e4b"
     this.modelPath = options.modelPath
     this.gpuLayers = options.gpuLayers ?? -1 // All layers on GPU by default
     const modelInfo = LOCAL_MODELS[this.modelId]
