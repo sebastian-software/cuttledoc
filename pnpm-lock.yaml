@@ -49,9 +49,12 @@ importers:
       "@cuttledoc/llm":
         specifier: workspace:*
         version: link:../llm
-      sherpa-onnx-node:
-        specifier: ^1.12.20
-        version: 1.12.20
+      parakeet-coreml:
+        specifier: ^2.1.0
+        version: 2.1.0
+      whisper-coreml:
+        specifier: ^1.0.2
+        version: 1.0.2
     devDependencies:
       "@release-it/conventional-changelog":
         specifier: ^10.0.4
@@ -2545,6 +2548,10 @@ packages:
     resolution:
       { integrity: sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ== }
 
+  bindings@1.5.0:
+    resolution:
+      { integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ== }
+
   bluebird@3.7.2:
     resolution:
       { integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg== }
@@ -3403,6 +3410,10 @@ packages:
     resolution:
       { integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ== }
     engines: { node: ">=16.0.0" }
+
+  file-uri-to-path@1.0.0:
+    resolution:
+      { integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw== }
 
   filename-reserved-regex@3.0.0:
     resolution:
@@ -4842,6 +4853,14 @@ packages:
       { integrity: sha512-5NPgf87AT2STgwa2ntRMr45jTKrYBGkVU36yT0ig/n/GMAa3oPqhZfIQ2kMEimReg0+t9kZViDVZ83qfVUlckg== }
     engines: { node: ">= 14" }
 
+  parakeet-coreml@2.1.0:
+    resolution:
+      { integrity: sha512-qkBsYsBD8pC0Gg+frEEtVXNbYxgoutLRlmJ7Fpzr8l1GA4cxScZ2aF70A6VTfL6yUxkym7mcrveGmngSuKX2DA== }
+    engines: { node: ">=20.0.0" }
+    cpu: [arm64]
+    os: [darwin]
+    hasBin: true
+
   parent-module@1.0.1:
     resolution:
       { integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g== }
@@ -5383,40 +5402,6 @@ packages:
     resolution:
       { integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw== }
     engines: { node: ">= 0.4" }
-
-  sherpa-onnx-darwin-arm64@1.12.20:
-    resolution:
-      { integrity: sha512-eTWjmFEfm/tK+iwt+km41KQ4Dhb5uVP8rFRpuWk9rWTQcfTA4FBQit+ClNK0tV872mKlhlLkT2EV1FnMdvjhYg== }
-    cpu: [arm64]
-    os: [darwin]
-
-  sherpa-onnx-darwin-x64@1.12.20:
-    resolution:
-      { integrity: sha512-E2fvG/GhJEsG6HJUbr8GifgcQQ975YGb51z6V6njmwgU6a/WvVs7zeLmrt55w9QFhhqNih9GPwF53+zsw4TMsw== }
-    cpu: [x64]
-    os: [darwin]
-
-  sherpa-onnx-linux-x64@1.12.20:
-    resolution:
-      { integrity: sha512-cBf5VGBvogzFZG+uNslDopo3E7p+KAyNKc6ryTHTzl+9xjAP1ncwcPiKJjhzx3u+FpyGP/PqGMoZKPwEXewl3A== }
-    cpu: [x64]
-    os: [linux]
-
-  sherpa-onnx-node@1.12.20:
-    resolution:
-      { integrity: sha512-GLr0QOVWJvR8XjXmJsmeHXrGLOLJnx0wOBXKcDbu4KHJoIshZVDBO4rgFmOGywKoc451wNlgvV8GfDUjyMibZw== }
-
-  sherpa-onnx-win-ia32@1.12.20:
-    resolution:
-      { integrity: sha512-5puHUN1pgiyDKNwJkV2ne6kb6XNxlLVZ5bj9GXnV8PTME8/On+M9gRoZEE9fizWrvg6B5NYkknptRQ/bl19okA== }
-    cpu: [ia32]
-    os: [win32]
-
-  sherpa-onnx-win-x64@1.12.20:
-    resolution:
-      { integrity: sha512-i/dqSmYnQmH12oMkyb7rz+4GtFsP2qiMg6UiE2ha8EV0PwgOGvYd7E6DAZKgoY/DrqSMavD1xyvd459A+PGnRg== }
-    cpu: [x64]
-    os: [win32]
 
   shiki@3.20.0:
     resolution:
@@ -6086,6 +6071,14 @@ packages:
     resolution:
       { integrity: sha512-JEdGzHwwkrbWoGOlIHqQ5gtprKGOenpDHpxE9zVR1bWbOtYRyPPHMe9FaP6x61CmNaTThSkb0DAJte5jD+DmzQ== }
     engines: { node: ^18.17.0 || >=20.5.0 }
+    hasBin: true
+
+  whisper-coreml@1.0.2:
+    resolution:
+      { integrity: sha512-aoncPk6CTzLa7gN5vX4BzDcYqQjRl1ghjSMftt4y0BsKduuu00rk0FDD+lssCdFGeieAq4kLU8QVsJsGtrBCQg== }
+    engines: { node: ">=20.0.0" }
+    cpu: [arm64]
+    os: [darwin]
     hasBin: true
 
   why-is-node-running@2.3.0:
@@ -8309,6 +8302,10 @@ snapshots:
 
   before-after-hook@4.0.0: {}
 
+  bindings@1.5.0:
+    dependencies:
+      file-uri-to-path: 1.0.0
+
   bluebird@3.7.2: {}
 
   bottleneck@2.19.5: {}
@@ -9026,6 +9023,8 @@ snapshots:
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
+
+  file-uri-to-path@1.0.0: {}
 
   filename-reserved-regex@3.0.0: {}
 
@@ -10521,6 +10520,10 @@ snapshots:
       degenerator: 5.0.1
       netmask: 2.0.2
 
+  parakeet-coreml@2.1.0:
+    dependencies:
+      bindings: 1.5.0
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -11088,29 +11091,6 @@ snapshots:
 
   shell-quote@1.8.3: {}
 
-  sherpa-onnx-darwin-arm64@1.12.20:
-    optional: true
-
-  sherpa-onnx-darwin-x64@1.12.20:
-    optional: true
-
-  sherpa-onnx-linux-x64@1.12.20:
-    optional: true
-
-  sherpa-onnx-node@1.12.20:
-    optionalDependencies:
-      sherpa-onnx-darwin-arm64: 1.12.20
-      sherpa-onnx-darwin-x64: 1.12.20
-      sherpa-onnx-linux-x64: 1.12.20
-      sherpa-onnx-win-ia32: 1.12.20
-      sherpa-onnx-win-x64: 1.12.20
-
-  sherpa-onnx-win-ia32@1.12.20:
-    optional: true
-
-  sherpa-onnx-win-x64@1.12.20:
-    optional: true
-
   shiki@3.20.0:
     dependencies:
       "@shikijs/core": 3.20.0
@@ -11668,6 +11648,10 @@ snapshots:
   which@5.0.0:
     dependencies:
       isexe: 3.1.1
+
+  whisper-coreml@1.0.2:
+    dependencies:
+      bindings: 1.5.0
 
   why-is-node-running@2.3.0:
     dependencies:

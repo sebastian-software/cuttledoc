@@ -19,7 +19,7 @@ import {
 } from "./types.js"
 
 import type { OpenAIBackend } from "./backends/openai/index.js"
-import type { SherpaBackend, SherpaModelType } from "./backends/sherpa/index.js"
+import type { CoreMLBackend, CoreMLModelType } from "./backends/coreml/index.js"
 
 // Re-export core types and functions
 export { getAvailableBackends, getBackend, selectBestBackend, setBackend }
@@ -39,20 +39,13 @@ export type {
   WordTimestamp
 }
 
-// Re-export sherpa types and functions for CLI
+// Re-export CoreML types and functions
 export {
-  SHERPA_MODELS,
-  SHERPA_MODEL_TYPES,
-  type SherpaModelType,
-  type SherpaModelInfo
-} from "./backends/sherpa/types.js"
-export {
-  downloadSherpaModel,
-  isModelDownloaded as isSherpaModelDownloaded,
-  getAvailableModels as getAvailableSherpaModels,
-  downloadVadModel,
-  isVadModelDownloaded
-} from "./backends/sherpa/download.js"
+  COREML_MODELS,
+  COREML_MODEL_TYPES,
+  type CoreMLModelType,
+  type CoreMLModelInfo
+} from "./backends/coreml/index.js"
 
 // Re-export LLM types for CLI
 export {
@@ -63,19 +56,19 @@ export {
 } from "./llm/index.js"
 
 // Cached backend instances
-const sherpaBackendCache = new Map<SherpaModelType, SherpaBackend>()
+const coremlBackendCache = new Map<CoreMLModelType, CoreMLBackend>()
 let openaiBackendInstance: OpenAIBackend | null = null
 
 /**
- * Get or create a cached Sherpa backend instance
+ * Get or create a cached CoreML backend instance
  */
-async function getOrCreateSherpaBackend(model: SherpaModelType): Promise<SherpaBackend> {
-  let backend = sherpaBackendCache.get(model)
+async function getOrCreateCoreMLBackend(model: CoreMLModelType): Promise<CoreMLBackend> {
+  let backend = coremlBackendCache.get(model)
   if (backend === undefined) {
-    const { SherpaBackend } = await import("./backends/sherpa/index.js")
-    backend = new SherpaBackend({ model })
+    const { CoreMLBackend } = await import("./backends/coreml/index.js")
+    backend = new CoreMLBackend({ model })
     await backend.initialize()
-    sherpaBackendCache.set(model, backend)
+    coremlBackendCache.set(model, backend)
   }
   return backend
 }
@@ -106,12 +99,12 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
-      const parakeetBackend = await getOrCreateSherpaBackend("parakeet-tdt-0.6b-v3")
+      const parakeetBackend = await getOrCreateCoreMLBackend("parakeet")
       return parakeetBackend.transcribe(audioPath, options)
     }
 
     case BACKEND_TYPES.whisper: {
-      const whisperBackend = await getOrCreateSherpaBackend("whisper-large-v3")
+      const whisperBackend = await getOrCreateCoreMLBackend("whisper")
       return whisperBackend.transcribe(audioPath, options)
     }
 
@@ -128,25 +121,24 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
   }
 }
 
-/** Default models for each backend (only local backends that need downloads) */
-const DEFAULT_MODELS: Record<Exclude<BackendType, "auto" | "openai">, string> = {
-  parakeet: "parakeet-tdt-0.6b-v3",
-  whisper: "whisper-large-v3"
-}
-
 /**
- * Download a model for the specified backend
+ * Download models for the specified backend
  *
  * @param backend - Backend to download model for
- * @param model - Specific model variant to download (defaults to recommended model for backend)
  */
-export async function downloadModel(backend: BackendType, model?: string): Promise<void> {
+export async function downloadModel(backend: BackendType): Promise<void> {
   switch (backend) {
-    case BACKEND_TYPES.parakeet:
+    case BACKEND_TYPES.parakeet: {
+      const { downloadModels, downloadVadModel } = await import("parakeet-coreml")
+      await downloadModels()
+      await downloadVadModel()
+      return
+    }
+
     case BACKEND_TYPES.whisper: {
-      const { downloadSherpaModel } = await import("./backends/sherpa/download.js")
-      const defaultModel = DEFAULT_MODELS[backend]
-      await downloadSherpaModel(model ?? defaultModel)
+      const { downloadModel: downloadWhisperModel } = await import("whisper-coreml")
+      // Downloads both bin and CoreML model if available
+      await downloadWhisperModel()
       return
     }
 
@@ -162,16 +154,41 @@ export async function downloadModel(backend: BackendType, model?: string): Promi
 }
 
 /**
+ * Check if models are downloaded for a backend
+ */
+export async function isModelDownloaded(backend: BackendType): Promise<boolean> {
+  switch (backend) {
+    case BACKEND_TYPES.parakeet: {
+      const { areModelsDownloaded, isVadModelDownloaded } = await import("parakeet-coreml")
+      return areModelsDownloaded() && isVadModelDownloaded()
+    }
+
+    case BACKEND_TYPES.whisper: {
+      const { isModelDownloaded: isWhisperModelDownloaded } = await import("whisper-coreml")
+      return isWhisperModelDownloaded()
+    }
+
+    case BACKEND_TYPES.openai: {
+      return true // No download needed
+    }
+
+    case BACKEND_TYPES.auto: {
+      return false
+    }
+  }
+}
+
+/**
  * Clean up all cached backend instances
  */
 export async function cleanup(): Promise<void> {
   const disposePromises: Promise<void>[] = []
 
-  // Dispose Sherpa backends
-  for (const backend of sherpaBackendCache.values()) {
+  // Dispose CoreML backends
+  for (const backend of coremlBackendCache.values()) {
     disposePromises.push(backend.dispose())
   }
-  sherpaBackendCache.clear()
+  coremlBackendCache.clear()
 
   // Dispose OpenAI backend
   if (openaiBackendInstance !== null) {

@@ -4,9 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { isModelDownloaded } from "./backends/sherpa/download.js"
-
-import { cleanup, transcribe, BACKEND_TYPES } from "./index.js"
+import { cleanup, transcribe, isModelDownloaded, BACKEND_TYPES } from "./index.js"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 const fixturesDir = resolve(__dirname, "../fixtures")
@@ -46,23 +44,30 @@ async function fixtureExists(name: string): Promise<boolean> {
   }
 }
 
-// Check if Parakeet model is available and sherpa-onnx can be loaded
-const hasParakeetModel = isModelDownloaded("parakeet-tdt-0.6b-v3")
+// Check if we're on macOS (required for CoreML)
+const isMacOS = process.platform === "darwin"
 
-// Check if sherpa-onnx-node can be loaded (may fail due to pnpm path issues)
-let canLoadSherpa = false
-try {
-  const { SherpaBackend } = await import("./backends/sherpa/index.js")
-  const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
-  await backend.initialize()
-  await backend.dispose()
-  canLoadSherpa = true
-} catch {
-  // sherpa-onnx-node failed to load (pnpm path issues)
-  canLoadSherpa = false
+// Check if Parakeet model is available
+let hasParakeetModel = false
+if (isMacOS) {
+  hasParakeetModel = await isModelDownloaded(BACKEND_TYPES.parakeet)
 }
 
-const canRunIntegrationTests = hasParakeetModel && canLoadSherpa
+// Check if CoreML backend can be loaded
+let canLoadCoreML = false
+if (isMacOS && hasParakeetModel) {
+  try {
+    const { CoreMLBackend } = await import("./backends/coreml/index.js")
+    const backend = new CoreMLBackend({ model: "parakeet" })
+    await backend.initialize()
+    await backend.dispose()
+    canLoadCoreML = true
+  } catch {
+    canLoadCoreML = false
+  }
+}
+
+const canRunIntegrationTests = isMacOS && hasParakeetModel && canLoadCoreML
 
 describe("integration", () => {
   // Clean up after all tests
@@ -70,10 +75,10 @@ describe("integration", () => {
     await cleanup()
   })
 
-  describe("Parakeet backend", () => {
-    it.skipIf(!canRunIntegrationTests)("should be available when model is downloaded", async () => {
-      const { SherpaBackend } = await import("./backends/sherpa/index.js")
-      const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+  describe("Parakeet CoreML backend", () => {
+    it.skipIf(!canRunIntegrationTests)("should be available on macOS", async () => {
+      const { CoreMLBackend } = await import("./backends/coreml/index.js")
+      const backend = new CoreMLBackend({ model: "parakeet" })
       expect(backend.isAvailable()).toBe(true)
     })
 
@@ -92,8 +97,8 @@ describe("integration", () => {
         const audioPath = resolve(fixturesDir, "fleurs-en-000.ogg")
         const expectedText = await readFile(resolve(fixturesDir, "fleurs-en-000.txt"), "utf-8")
 
-        const { SherpaBackend } = await import("./backends/sherpa/index.js")
-        const backend = new SherpaBackend({ model: "parakeet-tdt-0.6b-v3" })
+        const { CoreMLBackend } = await import("./backends/coreml/index.js")
+        const backend = new CoreMLBackend({ model: "parakeet" })
         await backend.initialize()
         const result = await backend.transcribe(audioPath, { language: "en" })
 

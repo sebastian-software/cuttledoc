@@ -1,4 +1,5 @@
 import { BACKEND_TYPES, type BackendInfo, type BackendType, PARAKEET_MODELS, WHISPER_MODELS } from "./types.js"
+import { COREML_MODELS } from "./backends/coreml/index.js"
 
 /**
  * Languages supported by Parakeet TDT v3 (25 languages)
@@ -54,19 +55,22 @@ export function getBackend(): BackendType {
 export function getAvailableBackends(): readonly BackendInfo[] {
   const backends: BackendInfo[] = []
 
-  // Parakeet (ONNX - cross-platform, fastest, 25 languages)
+  // Check if we're on macOS (required for CoreML)
+  const isMacOS = process.platform === "darwin"
+
+  // Parakeet (CoreML - macOS only, fastest, 25 languages)
   backends.push({
     name: BACKEND_TYPES.parakeet,
-    isAvailable: true,
-    languages: PARAKEET_LANGUAGES,
+    isAvailable: isMacOS,
+    languages: COREML_MODELS.parakeet.languages,
     models: Object.keys(PARAKEET_MODELS),
     requiresDownload: true
   })
 
-  // Whisper (cross-platform, 99 languages)
+  // Whisper (CoreML - macOS only, 99 languages)
   backends.push({
     name: BACKEND_TYPES.whisper,
-    isAvailable: true,
+    isAvailable: isMacOS,
     languages: ["multilingual"], // Whisper supports 99 languages
     models: Object.keys(WHISPER_MODELS),
     requiresDownload: true

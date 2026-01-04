@@ -62,7 +62,8 @@
   "dependencies": {
     "@cuttledoc/ffmpeg": "workspace:*",
     "@cuttledoc/llm": "workspace:*",
-    "sherpa-onnx-node": "^1.12.20"
+    "parakeet-coreml": "^2.1.0",
+    "whisper-coreml": "^1.0.2"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.4",

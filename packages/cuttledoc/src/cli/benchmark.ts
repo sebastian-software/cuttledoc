@@ -6,9 +6,8 @@ import { execSync } from "node:child_process"
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { isModelDownloaded } from "../backends/sherpa/download.js"
-import { SherpaBackend } from "../backends/sherpa/index.js"
-import { SHERPA_MODELS, type SherpaModelType } from "../backends/sherpa/types.js"
+import { COREML_MODELS, type CoreMLModelType } from "../backends/coreml/index.js"
+import { isModelDownloaded, BACKEND_TYPES } from "../index.js"
 import { calculateAverageWER, calculateWER, type WERResult } from "../utils/wer.js"
 
 /**
@@ -29,7 +28,7 @@ interface BenchmarkSample {
  * Benchmark result for a model
  */
 interface ModelBenchmark {
-  model: SherpaModelType
+  model: CoreMLModelType
   samples: BenchmarkSample[]
   averageWER: WERResult
   averageRTF: number
@@ -69,7 +68,7 @@ OPTIONS:
 
 EXAMPLES:
   cuttledoc benchmark run                    # Benchmark all downloaded models
-  cuttledoc benchmark run whisper-medium     # Benchmark specific model
+  cuttledoc benchmark run whisper            # Benchmark Whisper only
   cuttledoc benchmark report                 # Show previous results
 `)
 }
@@ -147,11 +146,12 @@ function getAudioDuration(audioPath: string): number {
  * Run benchmark for a single model
  */
 async function benchmarkModel(
-  model: SherpaModelType,
+  model: CoreMLModelType,
   fixtures: { audio: string; reference: string }[],
   onProgress?: (current: number, total: number, file: string) => void
 ): Promise<ModelBenchmark> {
-  const backend = new SherpaBackend({ model })
+  const { CoreMLBackend } = await import("../backends/coreml/index.js")
+  const backend = new CoreMLBackend({ model })
   await backend.initialize()
 
   const samples: BenchmarkSample[] = []
@@ -314,24 +314,34 @@ export async function runBenchmark(args: string[]): Promise<void> {
     }
 
     // Determine which models to benchmark
-    let modelsToTest: SherpaModelType[]
+    let modelsToTest: CoreMLModelType[]
 
     if (specifiedModels.length > 0) {
       // Validate specified models
-      modelsToTest = specifiedModels.filter((m): m is SherpaModelType => {
-        if (!(m in SHERPA_MODELS)) {
+      modelsToTest = []
+      for (const m of specifiedModels) {
+        if (!(m in COREML_MODELS)) {
           console.warn(`Unknown model: ${m}`)
-          return false
+          continue
         }
-        if (!isModelDownloaded(m as SherpaModelType)) {
+        const backendType = m === "parakeet" ? BACKEND_TYPES.parakeet : BACKEND_TYPES.whisper
+        const downloaded = await isModelDownloaded(backendType)
+        if (!downloaded) {
           console.warn(`Model not downloaded: ${m}. Run 'cuttledoc models download ${m}' first.`)
-          return false
+          continue
         }
-        return true
-      })
+        modelsToTest.push(m as CoreMLModelType)
+      }
     } else {
       // Use all downloaded models
-      modelsToTest = (Object.keys(SHERPA_MODELS) as SherpaModelType[]).filter(isModelDownloaded)
+      modelsToTest = []
+      for (const m of Object.keys(COREML_MODELS) as CoreMLModelType[]) {
+        const backendType = m === "parakeet" ? BACKEND_TYPES.parakeet : BACKEND_TYPES.whisper
+        const downloaded = await isModelDownloaded(backendType)
+        if (downloaded) {
+          modelsToTest.push(m)
+        }
+      }
     }
 
     if (modelsToTest.length === 0) {

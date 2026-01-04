@@ -15,13 +15,13 @@ import { basename } from "node:path"
 
 import {
   transcribe,
+  downloadModel,
+  isModelDownloaded,
   BACKEND_TYPES,
+  COREML_MODELS,
   LOCAL_MODELS,
-  SHERPA_MODELS,
   downloadLLMModel,
-  downloadSherpaModel,
-  isLLMModelDownloaded,
-  isSherpaModelDownloaded
+  isLLMModelDownloaded
 } from "../index.js"
 import { enhanceTranscript } from "../llm/index.js"
 
@@ -62,16 +62,20 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
   const subcommand = args.positional[0]
 
   if (subcommand === "list" || subcommand === undefined) {
-    // Convert to simpler format for printModels
-    const sherpaModelsSimple: Record<string, { description?: string }> = {}
-    for (const [id, info] of Object.entries(SHERPA_MODELS)) {
-      sherpaModelsSimple[id] = { description: info.languages.join(", ") }
+    // Convert CoreML models to simpler format for printModels
+    const asrModels: Record<string, { description?: string }> = {}
+    for (const [id, info] of Object.entries(COREML_MODELS)) {
+      asrModels[id] = { description: `${info.name} - ${info.speed}` }
     }
 
+    // Check download status
+    const parakeetDownloaded = await isModelDownloaded(BACKEND_TYPES.parakeet)
+    const whisperDownloaded = await isModelDownloaded(BACKEND_TYPES.whisper)
+
     printModels(
-      sherpaModelsSimple,
+      asrModels,
       LOCAL_MODELS,
-      (id) => isSherpaModelDownloaded(id as keyof typeof SHERPA_MODELS),
+      (id) => (id === "parakeet" ? parakeetDownloaded : id === "whisper" ? whisperDownloaded : false),
       (id) => isLLMModelDownloaded(id as keyof typeof LOCAL_MODELS)
     )
     return
@@ -82,6 +86,7 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
     if (modelId === undefined) {
       console.error("Error: Please specify a model to download")
       console.error("Usage: cuttledoc models download <model-id>")
+      console.error("Available: parakeet, whisper, or LLM model names")
       process.exit(1)
     }
 
@@ -97,16 +102,27 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
       return
     }
 
-    // Try Sherpa models
-    if (modelId in SHERPA_MODELS) {
-      console.log(`Downloading speech model: ${modelId}...`)
-      await downloadSherpaModel(modelId, {
-        onProgress: ({ downloaded, total }) => {
-          const pct = total > 0 ? (downloaded / total) * 100 : 0
-          process.stdout.write(`\rProgress: ${pct.toFixed(1)}%`)
-        }
-      })
-      console.log("\nDone!")
+    // Try ASR models (parakeet or whisper)
+    if (modelId === "parakeet") {
+      console.log("Downloading Parakeet CoreML models...")
+      await downloadModel(BACKEND_TYPES.parakeet)
+      console.log("Done!")
+      return
+    }
+
+    if (modelId === "whisper") {
+      console.log("Downloading Whisper CoreML models...")
+      await downloadModel(BACKEND_TYPES.whisper)
+      console.log("Done!")
+      return
+    }
+
+    // Download all ASR models
+    if (modelId === "all" || modelId === "asr") {
+      console.log("Downloading all ASR models...")
+      await downloadModel(BACKEND_TYPES.parakeet)
+      await downloadModel(BACKEND_TYPES.whisper)
+      console.log("Done!")
       return
     }
 
