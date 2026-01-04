@@ -129,9 +129,9 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 export async function downloadModel(backend: BackendType): Promise<void> {
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
-      const { downloadModels, downloadVadModel } = await import("parakeet-coreml")
+      const { downloadModels } = await import("parakeet-coreml")
       await downloadModels()
-      await downloadVadModel()
+      // VAD model is downloaded automatically on first transcribe()
       return
     }
 
@@ -159,8 +159,8 @@ export async function downloadModel(backend: BackendType): Promise<void> {
 export async function isModelDownloaded(backend: BackendType): Promise<boolean> {
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
-      const { areModelsDownloaded, isVadModelDownloaded } = await import("parakeet-coreml")
-      return areModelsDownloaded() && isVadModelDownloaded()
+      const { areModelsDownloaded } = await import("parakeet-coreml")
+      return areModelsDownloaded()
     }
 
     case BACKEND_TYPES.whisper: {
