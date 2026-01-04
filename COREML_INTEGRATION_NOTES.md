@@ -1,58 +1,52 @@
 # CoreML Integration Notes
 
-## Gefundene Issues bei der Integration
+## Status
 
-### 1. whisper-coreml API Mismatch
+Die Integration ist vollständig. Beide CoreML-Pakete funktionieren wie erwartet.
 
-**Status:** Offen
+## Architektur
 
-**Beschreibung:**
-Die lokale Entwicklungsversion von `whisper-coreml` (im Workspace) hat zusätzliche Exports, die in der veröffentlichten npm Version 1.0.2 noch nicht vorhanden sind:
+```
+cuttledoc (macOS only)
+├── parakeet-coreml  → 40x real-time, 25 Sprachen
+├── whisper-coreml   → 14x real-time, 99 Sprachen
+└── openai           → Cloud API (optional)
+```
 
-- `downloadCoreMLModel` - Nicht in npm Version 1.0.2
-- `getCoreMLModelPath` - Nicht in npm Version 1.0.2
-- `isBinModelDownloaded` - Nicht in npm Version 1.0.2
-- `isCoreMLModelDownloaded` - Nicht in npm Version 1.0.2
+## Model Downloads
 
-**Workaround:**
-`downloadModel()` wird verwendet, welches nur das .bin Model herunterlädt. Das CoreML Model muss separat behandelt werden.
+Die CoreML-Pakete haben `autoDownload: true` als Default:
 
-**Empfehlung:**
-Nach dem nächsten Release von `whisper-coreml` die Dependency in cuttledoc aktualisieren und die Download-Logik erweitern.
+- Beim ersten `initialize()` werden Models automatisch heruntergeladen
+- Kein manueller Download erforderlich
 
----
-
-### 2. Model Download Logik
-
-**Status:** Vereinfacht
-
-**Beschreibung:**
-Die CoreML-Pakete laden Models automatisch beim ersten `initialize()` herunter wenn `autoDownload: true` (default) gesetzt ist.
-
-Für `cuttledoc models download` wird die manuelle Download-Funktion verwendet:
+Für explizites Pre-Download (`cuttledoc models download`):
 
 - `parakeet-coreml`: `downloadModels()` + `downloadVadModel()`
 - `whisper-coreml`: `downloadModel()`
 
----
+## Platform
 
-### 3. Platform Check
-
-**Status:** Implementiert
-
-**Beschreibung:**
-CoreML ist nur auf macOS verfügbar. Die Integration prüft `process.platform === "darwin"` und gibt entsprechende Fehlermeldungen aus.
+CoreML ist nur auf macOS verfügbar. Die Integration prüft `process.platform === "darwin"`.
 
 ---
 
-## Nächste Schritte
+## Verbesserungsvorschläge für CoreML-Pakete
 
-1. [ ] `whisper-coreml` neue Version veröffentlichen mit `downloadCoreMLModel` Export
-2. [ ] `parakeet-coreml` + `whisper-coreml`: Sprachlisten exportieren (DRY)
-   - `SUPPORTED_LANGUAGES` Konstante exportieren
-   - Aktuell dupliziert in `cuttledoc/src/backends/coreml/index.ts`
-3. [ ] cuttledoc auf neue Versionen updaten
-4. [ ] E2E Tests mit echten Models durchführen
+### Sprachlisten exportieren (DRY)
+
+**Status:** Offen
+
+Die Sprachliste für Parakeet ist aktuell in `cuttledoc/src/backends/coreml/index.ts` dupliziert.
+
+**Empfehlung:**
+
+```typescript
+// parakeet-coreml sollte exportieren:
+export const SUPPORTED_LANGUAGES = ["en", "de", "fr", ...] as const
+```
+
+---
 
 ## Betroffene Dateien
 
