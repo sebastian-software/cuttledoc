@@ -16,7 +16,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-green.svg)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-10%2B-orange.svg)](https://pnpm.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/sebastian-software/cuttledoc)
+[![Platform](<https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon)-lightgrey.svg>)](https://github.com/sebastian-software/cuttledoc)
 
 ## Features
 
@@ -37,7 +37,8 @@ pnpm add cuttledoc
 
 ### Requirements
 
-- Node.js 24+
+- macOS with Apple Silicon (M1/M2/M3/M4)
+- Node.js 22+
 - ~2GB disk space for models
 
 ## Quick Start
@@ -196,12 +197,12 @@ We chose these three backends for simplicity and reliability:
 
 ### Long Audio Support
 
-Whisper has a 30-second context window limit. For longer audio:
+Both backends use CoreML and process audio without length limits:
 
-- **Parakeet**: No limit, processes entire audio at once
-- **Whisper**: Uses Silero VAD (Voice Activity Detection) to automatically split audio at natural pauses
+- **Parakeet**: Streaming transducer, handles any audio length
+- **Whisper**: Based on whisper.cpp with chunked processing
 
-This happens transparently - just pass your audio file and get the complete transcript.
+Just pass your audio file and get the complete transcript.
 
 ## Supported Formats
 
@@ -287,7 +288,7 @@ Benchmark methodology:
 
 - WER measured on **raw STT output** (before LLM enhancement)
 - Dataset: [FLEURS](https://huggingface.co/datasets/google/fleurs) – native speaker recordings (10 samples × 5 languages)
-- Hardware: Apple M1 Pro, sherpa-onnx int8 models
+- Hardware: Apple M1 Pro with CoreML (Neural Engine + GPU)
 - OpenAI: gpt-4o-transcribe via API
 
 ## Performance
@@ -300,7 +301,7 @@ Typical processing speed on M1 MacBook Pro:
 | 10 min audio | Whisper        | ~20 min       | -   | ~20min  |
 | 10 min audio | Parakeet + LLM | ~2.5 min      | 20s | ~3min   |
 
-Note: Whisper is slower than realtime on CPU but delivers better accuracy. First invocation has ~5-15s model loading overhead.
+Note: Both local backends use CoreML for hardware acceleration (Neural Engine + GPU). First invocation has ~5-15s model loading overhead.
 
 ## Documentation
 
@@ -362,10 +363,11 @@ MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 
 ## Acknowledgments
 
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) - Speech recognition engine
+- [parakeet-coreml](https://github.com/sebastian-software/parakeet-node) - NVIDIA Parakeet TDT for CoreML
+- [whisper-coreml](https://github.com/sebastian-software/whisper-node) - OpenAI Whisper for CoreML
+- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) - High-performance Whisper inference
 - [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) - LLM inference
 - [Ollama](https://ollama.com) - Local LLM server
-- [OpenAI Whisper](https://github.com/openai/whisper) - Speech recognition model
 - [OpenAI GPT-4o Transcribe](https://openai.com/index/introducing-our-next-generation-audio-models/) - Next-gen cloud ASR
 - [Microsoft Phi-4](https://huggingface.co/microsoft/phi-4) - Best LLM for transcript correction
 - [Google Gemma](https://ai.google.dev/gemma) - Reliable open-weight LLM
