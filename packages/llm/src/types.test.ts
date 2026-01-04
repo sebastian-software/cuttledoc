@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { countParagraphs, findCorrections, LOCAL_MODELS, stripMarkdown } from "@cuttledoc/llm"
+import { countParagraphs, findCorrections, LOCAL_MODELS, stripMarkdown } from "./index.js"
 
 describe("LLM types", () => {
   describe("LOCAL_MODELS", () => {
