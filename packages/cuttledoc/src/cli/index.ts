@@ -23,7 +23,7 @@ import {
   downloadLLMModel,
   isLLMModelDownloaded
 } from "../index.js"
-import { enhanceTranscript } from "../llm/index.js"
+import { enhanceTranscript } from "@cuttledoc/llm"
 
 import { parseArgs } from "./args.js"
 import { runBenchmark } from "./benchmark.js"

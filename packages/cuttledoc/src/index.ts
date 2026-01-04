@@ -53,7 +53,7 @@ export {
   type LocalModelId,
   downloadModel as downloadLLMModel,
   isModelDownloaded as isLLMModelDownloaded
-} from "./llm/index.js"
+} from "@cuttledoc/llm"
 
 // Cached backend instances
 const coremlBackendCache = new Map<CoreMLModelType, CoreMLBackend>()

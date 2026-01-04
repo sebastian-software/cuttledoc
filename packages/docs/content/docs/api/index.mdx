@@ -106,7 +106,7 @@ await cleanup()
 Enhance raw transcripts with formatting, corrections, and structure.
 
 ```typescript
-import { enhanceTranscript } from 'cuttledoc/llm'
+import { enhanceTranscript } from '@cuttledoc/llm'
 
 const result = await transcribe('podcast.mp3')
 const enhanced = await enhanceTranscript(result.text)
@@ -131,7 +131,7 @@ console.log(`Corrections: ${enhanced.stats.correctionsCount}`)
 Class for more control over LLM processing.
 
 ```typescript
-import { LLMProcessor } from 'cuttledoc/llm'
+import { LLMProcessor } from '@cuttledoc/llm'
 
 const processor = new LLMProcessor({
   model: 'gemma3n:e4b',
@@ -145,29 +145,29 @@ await processor.dispose()
 
 ---
 
-### downloadLLMModel()
+### downloadModel()
 
 Download an LLM model.
 
 ```typescript
-import { downloadLLMModel } from 'cuttledoc/llm'
+import { downloadModel } from '@cuttledoc/llm'
 
-await downloadLLMModel('gemma3n:e4b', {
+await downloadModel('gemma3n:e4b', {
   onProgress: (progress) => console.log(`${progress}%`)
 })
 ```
 
 ---
 
-### isLLMModelDownloaded()
+### isModelDownloaded()
 
 Check if an LLM model is already downloaded.
 
 ```typescript
-import { isLLMModelDownloaded } from 'cuttledoc/llm'
+import { isModelDownloaded } from '@cuttledoc/llm'
 
-if (!isLLMModelDownloaded('gemma3n:e4b')) {
-  await downloadLLMModel('gemma3n:e4b')
+if (!isModelDownloaded('gemma3n:e4b')) {
+  await downloadModel('gemma3n:e4b')
 }
 ```
 

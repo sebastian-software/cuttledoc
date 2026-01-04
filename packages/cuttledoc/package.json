@@ -18,11 +18,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./llm": {
-      "types": "./dist/llm/index.d.ts",
-      "import": "./dist/llm/index.js",
-      "require": "./dist/llm/index.cjs"
     }
   },
   "engines": {

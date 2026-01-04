@@ -3,8 +3,7 @@ import { defineConfig } from "tsup"
 export default defineConfig([
   {
     entry: {
-      index: "src/index.ts",
-      "llm/index": "src/llm/index.ts"
+      index: "src/index.ts"
     },
     format: ["esm", "cjs"],
     dts: true,
@@ -14,7 +13,7 @@ export default defineConfig([
     treeshake: true,
     splitting: false,
     // Native addons are bundled with their packages
-    external: ["parakeet-coreml", "whisper-coreml"]
+    external: ["parakeet-coreml", "whisper-coreml", "@cuttledoc/llm"]
   },
   {
     entry: {
@@ -25,6 +24,6 @@ export default defineConfig([
     sourcemap: true,
     target: "node22",
     treeshake: true,
-    external: ["parakeet-coreml", "whisper-coreml"]
+    external: ["parakeet-coreml", "whisper-coreml", "@cuttledoc/llm"]
   }
 ])
