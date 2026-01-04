@@ -5,6 +5,9 @@
  * macOS only - leverages Apple Silicon's dedicated ML hardware.
  */
 
+import type { ParakeetAsrEngine } from "parakeet-coreml"
+import type { WhisperAsrEngine } from "whisper-coreml"
+
 import { decodeAudio, isFFmpegAvailable } from "@cuttledoc/ffmpeg"
 
 import {
@@ -82,46 +85,6 @@ export const COREML_MODELS: Record<CoreMLModelType, CoreMLModelInfo> = {
 }
 
 /**
- * Parakeet engine interface (from parakeet-coreml)
- */
-interface ParakeetEngine {
-  initialize(): Promise<void>
-  isReady(): boolean
-  transcribe(
-    samples: Float32Array,
-    options?: {
-      sampleRate?: number
-      vadThreshold?: number
-      minSilenceDurationMs?: number
-      minSpeechDurationMs?: number
-    }
-  ): Promise<{
-    text: string
-    durationMs: number
-    segments: Array<{ startTime: number; endTime: number; text: string }>
-  }>
-  cleanup(): void
-}
-
-/**
- * Whisper engine interface (from whisper-coreml)
- */
-interface WhisperEngine {
-  initialize(): Promise<void>
-  isReady(): boolean
-  transcribe(
-    samples: Float32Array,
-    sampleRate?: number
-  ): Promise<{
-    text: string
-    language: string
-    durationMs: number
-    segments: Array<{ startMs: number; endMs: number; text: string; confidence: number }>
-  }>
-  cleanup(): void
-}
-
-/**
  * CoreML Backend for macOS
  *
  * Supports:
@@ -130,8 +93,8 @@ interface WhisperEngine {
  */
 export class CoreMLBackend implements Backend {
   private modelType: CoreMLModelType
-  private parakeetEngine: ParakeetEngine | null = null
-  private whisperEngine: WhisperEngine | null = null
+  private parakeetEngine: ParakeetAsrEngine | null = null
+  private whisperEngine: WhisperAsrEngine | null = null
   private isInitialized = false
 
   constructor(options: { model?: CoreMLModelType } = {}) {
@@ -159,14 +122,14 @@ export class CoreMLBackend implements Backend {
 
     if (this.modelType === "parakeet") {
       const { ParakeetAsrEngine } = await import("parakeet-coreml")
-      this.parakeetEngine = new ParakeetAsrEngine() as unknown as ParakeetEngine
+      this.parakeetEngine = new ParakeetAsrEngine()
       await this.parakeetEngine.initialize()
     } else {
       const { WhisperAsrEngine, getModelPath } = await import("whisper-coreml")
       this.whisperEngine = new WhisperAsrEngine({
         modelPath: getModelPath(),
         language: language ?? "auto"
-      }) as unknown as WhisperEngine
+      })
       await this.whisperEngine.initialize()
     }
 
