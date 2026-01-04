@@ -62,8 +62,8 @@
   "dependencies": {
     "@cuttledoc/ffmpeg": "workspace:*",
     "@cuttledoc/llm": "workspace:*",
-    "parakeet-coreml": "^2.1.0",
-    "whisper-coreml": "^1.0.2"
+    "parakeet-coreml": "^2.2.0",
+    "whisper-coreml": "^1.1.0"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.4",

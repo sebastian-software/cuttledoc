@@ -50,11 +50,11 @@ importers:
         specifier: workspace:*
         version: link:../llm
       parakeet-coreml:
-        specifier: ^2.1.0
-        version: 2.1.0
+        specifier: ^2.2.0
+        version: 2.2.0
       whisper-coreml:
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
     devDependencies:
       "@release-it/conventional-changelog":
         specifier: ^10.0.4
@@ -4853,9 +4853,9 @@ packages:
       { integrity: sha512-5NPgf87AT2STgwa2ntRMr45jTKrYBGkVU36yT0ig/n/GMAa3oPqhZfIQ2kMEimReg0+t9kZViDVZ83qfVUlckg== }
     engines: { node: ">= 14" }
 
-  parakeet-coreml@2.1.0:
+  parakeet-coreml@2.2.0:
     resolution:
-      { integrity: sha512-qkBsYsBD8pC0Gg+frEEtVXNbYxgoutLRlmJ7Fpzr8l1GA4cxScZ2aF70A6VTfL6yUxkym7mcrveGmngSuKX2DA== }
+      { integrity: sha512-G5LEjeLiCnq6F0rCiCgEP3rquq5qKWs2cs53hExtW5li4z9INkPVNNZTgVVNaTsQmUuR9xbFWmicuo5BZihxAw== }
     engines: { node: ">=20.0.0" }
     cpu: [arm64]
     os: [darwin]
@@ -6073,9 +6073,9 @@ packages:
     engines: { node: ^18.17.0 || >=20.5.0 }
     hasBin: true
 
-  whisper-coreml@1.0.2:
+  whisper-coreml@1.1.0:
     resolution:
-      { integrity: sha512-aoncPk6CTzLa7gN5vX4BzDcYqQjRl1ghjSMftt4y0BsKduuu00rk0FDD+lssCdFGeieAq4kLU8QVsJsGtrBCQg== }
+      { integrity: sha512-thcm1EoyNpiM5loFzH1bw4umJXZVMCOU0ajCSBIjIfsOFjYgA9JA4WD/h14dgFh96t+g5lk/ndWdtvGk/bDTmA== }
     engines: { node: ">=20.0.0" }
     cpu: [arm64]
     os: [darwin]
@@ -10520,7 +10520,7 @@ snapshots:
       degenerator: 5.0.1
       netmask: 2.0.2
 
-  parakeet-coreml@2.1.0:
+  parakeet-coreml@2.2.0:
     dependencies:
       bindings: 1.5.0
 
@@ -11649,7 +11649,7 @@ snapshots:
     dependencies:
       isexe: 3.1.1
 
-  whisper-coreml@1.0.2:
+  whisper-coreml@1.1.0:
     dependencies:
       bindings: 1.5.0
 

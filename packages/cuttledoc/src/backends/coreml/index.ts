@@ -6,7 +6,9 @@
  */
 
 import type { ParakeetAsrEngine } from "parakeet-coreml"
+import { SUPPORTED_LANGUAGES as PARAKEET_LANGUAGES } from "parakeet-coreml"
 import type { WhisperAsrEngine } from "whisper-coreml"
+import { SUPPORTED_LANGUAGES as WHISPER_LANGUAGES } from "whisper-coreml"
 
 import { decodeAudio, isFFmpegAvailable } from "@cuttledoc/ffmpeg"
 
@@ -39,36 +41,6 @@ export interface CoreMLModelInfo {
   speed: string
 }
 
-// TODO: Import SUPPORTED_LANGUAGES from parakeet-coreml/whisper-coreml when exported
-// See: COREML_INTEGRATION_NOTES.md
-const PARAKEET_LANGUAGES = [
-  "en",
-  "de",
-  "fr",
-  "es",
-  "it",
-  "pt",
-  "nl",
-  "pl",
-  "cs",
-  "sk",
-  "hu",
-  "ro",
-  "bg",
-  "el",
-  "sv",
-  "da",
-  "fi",
-  "no",
-  "hr",
-  "sl",
-  "et",
-  "lv",
-  "lt",
-  "mt",
-  "uk"
-] as const
-
 export const COREML_MODELS: Record<CoreMLModelType, CoreMLModelInfo> = {
   parakeet: {
     id: "parakeet",
@@ -79,7 +51,7 @@ export const COREML_MODELS: Record<CoreMLModelType, CoreMLModelInfo> = {
   whisper: {
     id: "whisper",
     name: "Whisper large-v3-turbo",
-    languages: ["multilingual"], // 99 languages
+    languages: WHISPER_LANGUAGES,
     speed: "14x real-time"
   }
 }
