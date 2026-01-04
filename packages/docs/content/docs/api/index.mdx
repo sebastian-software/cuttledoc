@@ -58,8 +58,8 @@ Set or get the default transcription backend.
 ```typescript
 import { setBackend, getBackend } from 'cuttledoc'
 
-setBackend('apple') // Use Apple Speech
-console.log(getBackend()) // "apple"
+setBackend('parakeet') // Use Parakeet (fastest)
+console.log(getBackend()) // "parakeet"
 ```
 
 ---
@@ -83,7 +83,8 @@ Download models for a specific backend.
 ```typescript
 import { downloadModel } from 'cuttledoc'
 
-await downloadModel('parakeet', 'parakeet-tdt-0.6b-v3')
+await downloadModel('parakeet') // Downloads Parakeet CoreML models
+await downloadModel('whisper') // Downloads Whisper CoreML models
 ```
 
 ---
@@ -210,7 +211,7 @@ interface TranscriptionSegment {
 ### BackendType
 
 ```typescript
-type BackendType = 'auto' | 'apple' | 'parakeet' | 'whisper' | 'canary'
+type BackendType = 'auto' | 'parakeet' | 'whisper' | 'openai'
 ```
 
 ### LLMProcessResult
@@ -243,25 +244,64 @@ Available backend types.
 ```typescript
 const BACKEND_TYPES = {
   auto: 'auto',
-  apple: 'apple',
   parakeet: 'parakeet',
   whisper: 'whisper',
-  canary: 'canary'
+  openai: 'openai'
 } as const
 ```
 
-### WHISPER_MODELS
+### PARAKEET_LANGUAGES
 
-Whisper model variants.
+25 supported languages for Parakeet.
 
 ```typescript
-const WHISPER_MODELS = {
-  tiny: 'tiny',
-  base: 'base',
-  small: 'small',
-  medium: 'medium',
-  large: 'large'
-} as const
+const PARAKEET_LANGUAGES = [
+  'en',
+  'de',
+  'es',
+  'fr',
+  'it',
+  'pl',
+  'pt',
+  'nl',
+  'uk',
+  'el',
+  'ro',
+  'ru',
+  'hu',
+  'cs',
+  'sv',
+  'fi',
+  'da',
+  'no',
+  'bg',
+  'hr',
+  'sk',
+  'sl',
+  'lt',
+  'lv',
+  'et'
+] as const
+```
+
+### WHISPER_LANGUAGES
+
+99 supported languages for Whisper (subset shown).
+
+```typescript
+const WHISPER_LANGUAGES = [
+  'en',
+  'zh',
+  'de',
+  'es',
+  'ru',
+  'ko',
+  'fr',
+  'ja',
+  'pt',
+  'tr'
+  // ... 89 more languages
+] as const
 ```
 
 ### LLM_MODELS

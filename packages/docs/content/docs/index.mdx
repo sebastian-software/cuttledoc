@@ -14,7 +14,8 @@ pnpm add cuttledoc
 
 ### Requirements
 
-- Node.js 24+
+- macOS with Apple Silicon (M1/M2/M3/M4)
+- Node.js 22+
 - ~2GB disk space for models
 
 ## CLI Usage
@@ -87,41 +88,41 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 
 | Backend                    | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
 | -------------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
+| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.03 |
+| **Whisper large-v3-turbo** | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 0.07 |
 | **gpt-4o-mini-transcribe** | 5.7%  | 1.3%  | 3.4%  | 7.3%  | 6.0%  | 4.8%    | 0.10 |
 | **gpt-4o-transcribe**      | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
-| **Whisper large-v3**       | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
-| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
 
-_RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
+_RTF = Real-Time Factor (lower = faster). Local backends use CoreML with Neural Engine + GPU._
 
 ### 🏆 Ranking by Accuracy
 
-| Rank | Backend                    | Avg WER | Best for                           |
-| ---- | -------------------------- | ------- | ---------------------------------- |
-| 🥇   | **gpt-4o-mini-transcribe** | 4.8%    | Cloud, best overall + cheapest     |
-| 🥈   | **gpt-4o-transcribe**      | 5.1%    | Cloud, best for DE                 |
-| 🥈   | **Whisper large-v3**       | 5.1%    | Offline, broadest language support |
-| 4    | **Parakeet v3**            | 6.4%    | Fast + accurate, 25 European langs |
+| Rank | Backend                    | Avg WER | Best for                       |
+| ---- | -------------------------- | ------- | ------------------------------ |
+| 🥇   | **gpt-4o-mini-transcribe** | 4.8%    | Cloud, best overall + cheapest |
+| 🥈   | **gpt-4o-transcribe**      | 5.1%    | Cloud, best for DE             |
+| 🥈   | **Whisper large-v3-turbo** | 5.1%    | Offline, 99 languages          |
+| 4    | **Parakeet v3**            | 6.4%    | Fast + accurate, 25 languages  |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend                    | RTF  | Best for                    |
-| ---- | -------------------------- | ---- | --------------------------- |
-| 🥇   | **gpt-4o-mini-transcribe** | 0.10 | Cloud, fastest + cheapest   |
-| 🥈   | **gpt-4o-transcribe**      | 0.16 | Cloud, premium quality      |
-| 🥉   | **Parakeet v3**            | 0.24 | Real-time, batch processing |
-| 4    | **Whisper large-v3**       | 2.2  | Quality-focused, offline    |
+| Rank | Backend                    | RTF  | Best for                |
+| ---- | -------------------------- | ---- | ----------------------- |
+| 🥇   | **Parakeet v3**            | 0.03 | Fastest, 25 languages   |
+| 🥈   | **Whisper large-v3-turbo** | 0.07 | Fast, 99 languages      |
+| 🥉   | **gpt-4o-mini-transcribe** | 0.10 | Cloud, no local compute |
+| 4    | **gpt-4o-transcribe**      | 0.16 | Cloud, premium quality  |
 
-_RTF = Real-Time Factor. 0.10 means 10s audio transcribed in 1.0s._
+_RTF = Real-Time Factor. 0.03 means 10s audio transcribed in 0.3s._
 
 ## Available Backends
 
-### Local Backends (Offline, No API Key)
+### Local Backends (macOS Apple Silicon, Offline)
 
-| Backend                   | RTF  | Avg WER | Languages | Size   |
-| ------------------------- | ---- | ------- | --------- | ------ |
-| **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB |
-| **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB |
+| Backend                    | RTF  | Avg WER | Languages | Size   |
+| -------------------------- | ---- | ------- | --------- | ------ |
+| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB |
+| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | 800 MB |
 
 ### Cloud Backends (Requires API Key)
 
@@ -137,8 +138,8 @@ _RTF = Real-Time Factor. 0.10 means 10s audio transcribed in 1.0s._
 cuttledoc models list
 
 # Download speech models
-cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
-cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
+cuttledoc models download parakeet    # 160 MB, 25 languages
+cuttledoc models download whisper     # 800 MB, 99 languages
 
 # LLM models (for correction/formatting)
 # Option 1: Ollama (recommended)
