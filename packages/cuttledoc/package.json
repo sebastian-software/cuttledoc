@@ -49,8 +49,9 @@
     "transcription",
     "whisper",
     "parakeet",
-    "sherpa-onnx",
-    "local",
+    "coreml",
+    "apple-silicon",
+    "macos",
     "offline"
   ],
   "author": {

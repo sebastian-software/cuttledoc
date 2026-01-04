@@ -27,19 +27,20 @@ This document provides a high-level overview of cuttledoc's architecture. For de
 │  └────────────────────┬─────────────────────────────────┘  │
 └───────────────────────┼──────────────────────────────────────┘
                         │
-                ┌───────┴───────┐
-                │               │
-                ▼               ▼
-         ┌──────────────┐ ┌──────────────┐
-         │Sherpa Backend│ │  LLM Module  │
-         │  (ONNX)      │ │  (Gemma 3n)  │
-         └──────┬───────┘ └──────┬───────┘
-                │                │
-                ▼                ▼
-         ┌──────────────┐ ┌──────────────┐
-         │sherpa-onnx   │ │node-llama-cpp│
-         │  Runtime     │ │  Runtime     │
-         └──────────────┘ └──────────────┘
+          ┌─────────────┼─────────────┐
+          │             │             │
+          ▼             ▼             ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │CoreML Backend│ │OpenAI Backend│ │  LLM Module  │
+   │(Parakeet/    │ │  (Cloud)     │ │  (Gemma 3n)  │
+   │ Whisper)     │ │              │ │              │
+   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+          │                │                │
+          ▼                ▼                ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │parakeet-coreml│ │ OpenAI API  │ │node-llama-cpp│
+   │whisper-coreml │ │             │ │  Runtime     │
+   └──────────────┘ └──────────────┘ └──────────────┘
 ```
 
 ## Core Components
@@ -48,25 +49,31 @@ This document provides a high-level overview of cuttledoc's architecture. For de
 
 The backend system provides a unified interface for speech recognition:
 
-- **Sherpa Backend** (`backends/sherpa/`)
-  - Cross-platform ONNX runtime via sherpa-onnx
+- **CoreML Backend** (`backends/coreml/`)
+  - macOS-only with Apple Silicon optimization
+  - Uses Neural Engine (ANE) and Metal GPU for acceleration
   - Two optimized models:
-    - **Parakeet TDT v3** (160 MB) – fastest, 25 European languages
-    - **Whisper large-v3** (1.6 GB) – best quality, 99 languages
-  - Model download from GitHub Releases and Hugging Face
+    - **Parakeet TDT v3** (160 MB) – fastest, 25 languages, RTF 0.03
+    - **Whisper large-v3-turbo** (800 MB) – best coverage, 99 languages, RTF 0.07
+  - Based on `parakeet-coreml` and `whisper-coreml` packages
+
+- **OpenAI Backend** (`backends/openai/`)
+  - Cloud-based transcription via OpenAI API
+  - Models: gpt-4o-transcribe, gpt-4o-mini-transcribe
+  - Best accuracy, requires API key
 
 ### 2. Audio Processing
 
-Audio preprocessing pipeline (`utils/audio.ts`):
+Audio preprocessing pipeline (`@cuttledoc/ffmpeg`):
 
 ```
 Input File (MP3/MP4/etc.)
     ↓
-FFmpeg Demuxer (@mmomtchev/ffmpeg)
+FFmpeg (bundled binary)
     ↓
-Audio Decoder (decompress)
+Decode to PCM (16kHz mono)
     ↓
-Audio Transform (resample to 16kHz mono)
+Normalize audio levels
     ↓
 Float32Array samples → Backend
 ```
@@ -120,7 +127,7 @@ cuttledoc/
 │   │   │   ├── index.ts           # Public API
 │   │   │   ├── backend.ts         # Backend selection
 │   │   │   ├── backends/          # Backend implementations
-│   │   │   │   ├── sherpa/        # ONNX backend (Whisper/Parakeet)
+│   │   │   │   ├── coreml/        # CoreML backend (Parakeet/Whisper)
 │   │   │   │   └── openai/        # OpenAI Transcribe API
 │   │   │   ├── cli/               # CLI implementation
 │   │   │   ├── types.ts           # Type definitions
@@ -153,14 +160,14 @@ cuttledoc/
 
 1. **Input**: User provides audio/video file path
 2. **Backend Selection**: Auto-select or use specified backend
-3. **Audio Preprocessing**: Extract and resample audio to 16kHz mono
-4. **Transcription**: Backend processes audio samples
+3. **Audio Preprocessing**: Decode and resample audio to 16kHz mono via FFmpeg
+4. **Transcription**: CoreML processes samples using Neural Engine/GPU
 5. **Result**: Return structured transcription with timestamps
 
 ### Enhancement Flow (Optional)
 
 1. **Input**: Raw transcription text
-2. **LLM Processing**: Send to Gemma 3n model
+2. **LLM Processing**: Send to phi4:14b or other model
 3. **Enhancement**: Generate summary, format, correct errors
 4. **Output**: Enhanced Markdown document
 
@@ -168,8 +175,8 @@ cuttledoc/
 
 1. **Pluggable Backends**: Easy to add new speech recognition engines
 2. **Lazy Loading**: Backends loaded only when needed
-3. **Cross-Platform**: Works on Windows, macOS, and Linux
-4. **Offline-First**: All processing happens locally
+3. **macOS Optimized**: Full Apple Silicon acceleration via CoreML
+4. **Offline-First**: All local processing happens without internet
 5. **Type Safety**: Full TypeScript coverage
 6. **ESM-Only**: Modern JavaScript module system
 
@@ -177,8 +184,9 @@ cuttledoc/
 
 ### Core Runtime
 
-- `@mmomtchev/ffmpeg` - Native FFmpeg bindings for audio processing
-- `sherpa-onnx` - ONNX runtime for speech recognition
+- `@cuttledoc/ffmpeg` - Bundled FFmpeg binary for audio processing
+- `parakeet-coreml` - NVIDIA Parakeet TDT with CoreML acceleration
+- `whisper-coreml` - OpenAI Whisper with CoreML acceleration
 - `node-llama-cpp` - LLM inference (optional)
 
 ### Build Tools
@@ -189,9 +197,10 @@ cuttledoc/
 
 ## Performance Considerations
 
-- **Backend Caching**: Sherpa backend instances are reused
-- **Streaming**: Audio processing uses streams for memory efficiency
+- **Backend Caching**: CoreML backend instances are reused
+- **Hardware Acceleration**: Neural Engine (ANE) + Metal GPU via CoreML
 - **Model Management**: Models downloaded on-demand and cached
+- **Audio Streaming**: Efficient memory usage for large files
 
 ## Extension Points
 

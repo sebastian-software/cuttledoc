@@ -205,8 +205,8 @@ describe("stats utils", () => {
     it("should show confidence when available", () => {
       const stats = createMockStats({
         transcription: {
-          backend: "sherpa",
-          model: "parakeet-tdt-0.6b-v3",
+          backend: "parakeet",
+          model: "parakeet",
           processingTimeSeconds: 30,
           realtimeFactor: 0.1,
           segmentCount: 10,

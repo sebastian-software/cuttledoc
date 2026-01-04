@@ -13,7 +13,8 @@ export default defineConfig([
     target: "node22",
     treeshake: true,
     splitting: false,
-    external: ["sherpa-onnx-node"]
+    // Native addons are bundled with their packages
+    external: ["parakeet-coreml", "whisper-coreml"]
   },
   {
     entry: {
@@ -24,6 +25,6 @@ export default defineConfig([
     sourcemap: true,
     target: "node22",
     treeshake: true,
-    external: ["sherpa-onnx-node"]
+    external: ["parakeet-coreml", "whisper-coreml"]
   }
 ])

@@ -9,7 +9,6 @@ import nvidiaLogo from '../assets/logos/nvidia.svg'
 import openaiLogo from '../assets/logos/openai.svg'
 import geminiLogo from '../assets/logos/gemini.svg'
 import appleLogo from '../assets/logos/apple.svg'
-import onnxLogo from '../assets/logos/onnx.svg'
 import { baseOptions } from '../lib/layout.shared'
 
 export function meta(_args: Route.MetaArgs) {
@@ -94,7 +93,7 @@ export default function Home() {
             </div>
             <h3 className="font-bold text-lg mb-3 text-fd-foreground">Multiple Backends</h3>
             <p className="text-fd-muted-foreground">
-              Apple Speech, Parakeet, Whisper. Choose the best backend for your language and quality needs.
+              Parakeet, Whisper, or OpenAI. Choose the best backend for your language and quality needs.
             </p>
           </div>
           <div className="group p-8 rounded-2xl bg-gradient-to-br from-fd-card to-fd-card/50 border border-fd-border hover:border-orange-500/30 shadow-lg hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1">
@@ -231,10 +230,10 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Apple Speech */}
+              {/* Apple CoreML */}
               <div
                 className="flex items-center gap-3 hover:scale-110 transition-transform cursor-default"
-                title="Apple Speech"
+                title="Apple CoreML"
               >
                 <img
                   src={appleLogo}
@@ -242,18 +241,7 @@ export default function Home() {
                   className="h-6 w-6 dark:invert opacity-80 hover:opacity-100 transition-opacity"
                 />
                 <span className="text-sm font-semibold text-fd-muted-foreground hover:text-fd-foreground transition-colors">
-                  Speech
-                </span>
-              </div>
-
-              {/* ONNX Runtime */}
-              <div
-                className="flex items-center gap-3 hover:scale-110 transition-transform cursor-default"
-                title="ONNX Runtime"
-              >
-                <img src={onnxLogo} alt="ONNX" className="h-6 w-6 opacity-80 hover:opacity-100 transition-opacity" />
-                <span className="text-sm font-semibold text-fd-muted-foreground hover:text-fd-foreground transition-colors">
-                  Runtime
+                  CoreML
                 </span>
               </div>
             </div>

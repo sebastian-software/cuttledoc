@@ -70,7 +70,7 @@ describe("cli output", () => {
 
   describe("printModels", () => {
     it("should print speech and LLM models", () => {
-      const sherpaModels = {
+      const speechModels = {
         "model-1": { description: "Test model 1" },
         "model-2": { description: "Test model 2" }
       }
@@ -80,7 +80,7 @@ describe("cli output", () => {
       }
 
       printModels(
-        sherpaModels,
+        speechModels,
         llmModels,
         () => false,
         () => false
@@ -98,7 +98,7 @@ describe("cli output", () => {
     })
 
     it("should show checkmark for downloaded models", () => {
-      const sherpaModels = {
+      const speechModels = {
         downloaded: { description: "Downloaded model" },
         "not-downloaded": { description: "Not downloaded" }
       }
@@ -107,7 +107,7 @@ describe("cli output", () => {
       }
 
       printModels(
-        sherpaModels,
+        speechModels,
         llmModels,
         (id) => id === "downloaded",
         (id) => id === "llm-downloaded"
@@ -171,7 +171,7 @@ describe("cli output", () => {
         durationSeconds: 60,
         transcribeTimeSeconds: 6,
         totalTimeSeconds: 15,
-        backend: "sherpa",
+        backend: "whisper",
         wordCount: 100,
         enhanced: true
       })

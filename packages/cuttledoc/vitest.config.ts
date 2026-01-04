@@ -20,7 +20,7 @@ export default defineConfig({
         "src/index.ts",
         "src/llm/index.ts",
 
-        // Native backends - require actual native modules (sherpa-onnx, apple bindings)
+        // Native backends - require actual native modules (parakeet-coreml, whisper-coreml)
         "src/backends/**",
 
         // LLM processor - requires llama.cpp native bindings and model files

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { cleanup, transcribe, isModelDownloaded, BACKEND_TYPES } from "./index.js"
+import { cleanup, transcribe, BACKEND_TYPES } from "./index.js"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 const fixturesDir = resolve(__dirname, "../fixtures")
@@ -47,27 +47,24 @@ async function fixtureExists(name: string): Promise<boolean> {
 // Check if we're on macOS (required for CoreML)
 const isMacOS = process.platform === "darwin"
 
-// Check if Parakeet model is available
-let hasParakeetModel = false
+// Check if CoreML backend can be loaded (native modules may not work in Vitest ESM mode)
+let canRunIntegrationTests = false
 if (isMacOS) {
-  hasParakeetModel = await isModelDownloaded(BACKEND_TYPES.parakeet)
-}
-
-// Check if CoreML backend can be loaded
-let canLoadCoreML = false
-if (isMacOS && hasParakeetModel) {
   try {
+    // Try to dynamically import the CoreML backend
+    // This will fail in Vitest's ESM mode due to native module loading issues
     const { CoreMLBackend } = await import("./backends/coreml/index.js")
     const backend = new CoreMLBackend({ model: "parakeet" })
-    await backend.initialize()
-    await backend.dispose()
-    canLoadCoreML = true
+    if (backend.isAvailable()) {
+      await backend.initialize()
+      await backend.dispose()
+      canRunIntegrationTests = true
+    }
   } catch {
-    canLoadCoreML = false
+    // Native modules can't be loaded in this environment
+    canRunIntegrationTests = false
   }
 }
-
-const canRunIntegrationTests = isMacOS && hasParakeetModel && canLoadCoreML
 
 describe("integration", () => {
   // Clean up after all tests

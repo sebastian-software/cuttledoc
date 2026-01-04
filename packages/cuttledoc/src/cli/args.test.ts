@@ -73,8 +73,8 @@ describe("parseArgs", () => {
     })
 
     it("should parse --backend option", () => {
-      const args = parseArgs(["--backend", "sherpa"])
-      expect(args.backend).toBe("sherpa")
+      const args = parseArgs(["--backend", "whisper"])
+      expect(args.backend).toBe("whisper")
     })
 
     it("should parse -m option", () => {

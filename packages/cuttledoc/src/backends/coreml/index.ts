@@ -6,18 +6,18 @@
  */
 
 import type { ParakeetAsrEngine } from "parakeet-coreml"
-import { SUPPORTED_LANGUAGES as PARAKEET_LANGUAGES } from "parakeet-coreml"
 import type { WhisperAsrEngine } from "whisper-coreml"
-import { SUPPORTED_LANGUAGES as WHISPER_LANGUAGES } from "whisper-coreml"
 
 import { decodeAudio, isFFmpegAvailable } from "@cuttledoc/ffmpeg"
 
 import {
   BACKEND_TYPES,
   type Backend,
+  PARAKEET_LANGUAGES,
   type TranscribeOptions,
   type TranscriptionResult,
-  type TranscriptionSegment
+  type TranscriptionSegment,
+  WHISPER_LANGUAGES
 } from "../../types.js"
 import { normalizeAudio } from "../../utils/audio.js"
 

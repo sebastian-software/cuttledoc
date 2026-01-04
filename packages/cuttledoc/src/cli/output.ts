@@ -25,10 +25,10 @@ OPTIONS:
                           - whisper: Best quality, 99 languages (large-v3)
                           - openai: Cloud API, best quality, 50+ languages
   -m, --model <name>      Speech model:
-                          - parakeet-tdt-0.6b-v3 (default for parakeet)
-                          - whisper-large-v3 (default for whisper)
+                          - parakeet (default for parakeet backend)
+                          - whisper (default for whisper backend)
                           - gpt-4o-transcribe (default for openai)
-                          - gpt-4o-mini-transcribe (faster/cheaper for openai)
+                          - gpt-4o-mini-transcribe (faster/cheaper)
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
@@ -40,19 +40,17 @@ OPTIONS:
   -h, --help              Show this help message
   -v, --version           Show version
 
-LOCAL MODELS (offline, no API key required):
-  parakeet-tdt-0.6b-v3    160 MB, fastest, 25 languages
-  whisper-large-v3        1.6 GB, best quality, 99 languages
+LOCAL MODELS (offline, macOS Apple Silicon only):
+  parakeet                160 MB, fastest (RTF 0.03), 25 languages
+  whisper                 800 MB, best coverage (RTF 0.07), 99 languages
+
+  Local backends use CoreML for hardware acceleration (Neural Engine + GPU).
 
 CLOUD MODELS (requires OPENAI_API_KEY):
-  gpt-4o-transcribe       Best quality, improved WER over Whisper, 50+ languages
+  gpt-4o-transcribe       Best quality, 50+ languages
   gpt-4o-mini-transcribe  Faster and cheaper, good quality
 
-  OpenAI's next-gen audio models offer improved word error rates and better
-  language recognition compared to original Whisper models.
   See: https://openai.com/index/introducing-our-next-generation-audio-models/
-
-  Note: Distil-Whisper models are English-only (https://huggingface.co/distil-whisper)
 
 EXAMPLES:
   # Basic transcription with LLM correction (default)
@@ -74,8 +72,8 @@ EXAMPLES:
   cuttledoc meeting.m4a -b openai
 
   # Download speech models
-  cuttledoc models download parakeet-tdt-0.6b-v3
-  cuttledoc models download whisper-large-v3
+  cuttledoc models download parakeet
+  cuttledoc models download whisper
 
   # List available models
   cuttledoc models list
@@ -95,17 +93,17 @@ export function printVersion(): void {
  * Print available models
  */
 export function printModels(
-  sherpaModels: Record<string, { description?: string }>,
+  speechModels: Record<string, { description?: string }>,
   llmModels: Record<string, { description: string }>,
-  isSherpaDownloaded: (id: string) => boolean,
+  isSpeechDownloaded: (id: string) => boolean,
   isLLMDownloaded: (id: string) => boolean
 ): void {
-  console.log("\n📢 SPEECH MODELS (sherpa-onnx)\n")
+  console.log("\n📢 SPEECH MODELS (CoreML)\n")
   console.log("  ID                           Downloaded   Description")
   console.log(`  ${"─".repeat(70)}`)
 
-  for (const [id, info] of Object.entries(sherpaModels)) {
-    const downloaded = isSherpaDownloaded(id) ? "✅" : "  "
+  for (const [id, info] of Object.entries(speechModels)) {
+    const downloaded = isSpeechDownloaded(id) ? "✅" : "  "
     const desc = info.description ?? ""
     console.log(`  ${id.padEnd(28)} ${downloaded}           ${desc}`)
   }
