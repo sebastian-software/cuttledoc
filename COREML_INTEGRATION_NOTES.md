@@ -48,8 +48,11 @@ CoreML ist nur auf macOS verfügbar. Die Integration prüft `process.platform ==
 ## Nächste Schritte
 
 1. [ ] `whisper-coreml` neue Version veröffentlichen mit `downloadCoreMLModel` Export
-2. [ ] cuttledoc auf neue whisper-coreml Version updaten
-3. [ ] E2E Tests mit echten Models durchführen
+2. [ ] `parakeet-coreml` + `whisper-coreml`: Sprachlisten exportieren (DRY)
+   - `SUPPORTED_LANGUAGES` Konstante exportieren
+   - Aktuell dupliziert in `cuttledoc/src/backends/coreml/index.ts`
+3. [ ] cuttledoc auf neue Versionen updaten
+4. [ ] E2E Tests mit echten Models durchführen
 
 ## Betroffene Dateien
 

@@ -36,37 +36,41 @@ export interface CoreMLModelInfo {
   speed: string
 }
 
+// TODO: Import SUPPORTED_LANGUAGES from parakeet-coreml/whisper-coreml when exported
+// See: COREML_INTEGRATION_NOTES.md
+const PARAKEET_LANGUAGES = [
+  "en",
+  "de",
+  "fr",
+  "es",
+  "it",
+  "pt",
+  "nl",
+  "pl",
+  "cs",
+  "sk",
+  "hu",
+  "ro",
+  "bg",
+  "el",
+  "sv",
+  "da",
+  "fi",
+  "no",
+  "hr",
+  "sl",
+  "et",
+  "lv",
+  "lt",
+  "mt",
+  "uk"
+] as const
+
 export const COREML_MODELS: Record<CoreMLModelType, CoreMLModelInfo> = {
   parakeet: {
     id: "parakeet",
     name: "Parakeet TDT 0.6B v3",
-    languages: [
-      "en",
-      "de",
-      "fr",
-      "es",
-      "it",
-      "pt",
-      "nl",
-      "pl",
-      "cs",
-      "sk",
-      "hu",
-      "ro",
-      "bg",
-      "el",
-      "sv",
-      "da",
-      "fi",
-      "no",
-      "hr",
-      "sl",
-      "et",
-      "lv",
-      "lt",
-      "mt",
-      "uk"
-    ],
+    languages: PARAKEET_LANGUAGES,
     speed: "40x real-time"
   },
   whisper: {
