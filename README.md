@@ -136,8 +136,8 @@ Options:
 cuttledoc models list
 
 # Download speech models
-cuttledoc models download parakeet-tdt-0.6b-v3   # 160 MB, 25 languages
-cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
+cuttledoc models download parakeet    # 160 MB, 25 languages
+cuttledoc models download whisper     # 1.6 GB, 99 languages
 
 # Download LLM model (for correction/formatting)
 # For Ollama (recommended): ollama pull phi4:14b
@@ -148,10 +148,10 @@ cuttledoc models download whisper-large-v3       # 1.6 GB, 99 languages
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                   | RTF  | Avg WER | Languages | Size   |
-| ------------------------- | ---- | ------- | --------- | ------ |
-| **Parakeet v3** (default) | 0.24 | 6.4%    | 25        | 160 MB |
-| **Whisper large-v3**      | 2.2  | 5.1%    | 99        | 1.6 GB |
+| Backend                    | RTF  | Avg WER | Languages | Size   |
+| -------------------------- | ---- | ------- | --------- | ------ |
+| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB |
+| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | 800 MB |
 
 ### Cloud Backends (Requires API Key)
 
@@ -168,9 +168,9 @@ OpenAI's next-generation audio models offer improved WER (Word Error Rate) over 
 
 ### Backend Selection
 
-- **`auto`** (default): Parakeet for 25 supported languages, Whisper for all others
-- **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, excellent for English/German/European languages
-- **`whisper`**: OpenAI Whisper large-v3 – best quality, 99 languages including Asian/Arabic
+- **`auto`** (default): Parakeet for supported languages (EN, DE, FR, ES, ...), Whisper for others
+- **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, 25 languages including major European
+- **`whisper`**: OpenAI Whisper large-v3-turbo – best coverage, 99 languages including Asian/Arabic
 - **`openai`**: OpenAI cloud API – best accuracy, requires `OPENAI_API_KEY`
 
 ### Why These Models?
@@ -179,17 +179,16 @@ We chose these three backends for simplicity and reliability:
 
 **Local (Offline):**
 
-1. **Parakeet v3** – Best speed-to-quality ratio for European languages (160 MB, 4x realtime)
-2. **Whisper large-v3** – Full multilingual model, 99 languages (1.6 GB, 0.45x realtime)
+1. **Parakeet v3** – Best speed-to-quality ratio, 25 languages (160 MB, 4x realtime)
+2. **Whisper large-v3-turbo** – Full multilingual model, 99 languages (1.6 GB, ~1x realtime)
 
 **Cloud (Requires API Key):**
 
 3. **gpt-4o-mini-transcribe** – Best accuracy (4.8% WER), fastest, and cheapest cloud option
 4. **gpt-4o-transcribe** – Premium option, slightly better for German
 
-> **Note on Distil-Whisper**: The distilled Whisper models (`distil-large-v3`, `distil-large-v3.5`)
-> are [English-only](https://huggingface.co/distil-whisper) and ignore the language parameter.
-> We use the full `whisper-large-v3` for true multilingual support.
+> **Note on Whisper turbo**: We use `large-v3-turbo` which offers the best speed-to-quality ratio
+> with full multilingual support (99 languages). It's ~4x faster than `large-v3` with similar accuracy.
 
 > **Note on Python backends**: We previously supported Phi-4-multimodal and Canary-1B-v2 via Python,
 > but removed them to simplify architecture. See [ADR-001](docs/decisions/001-remove-python-asr-backends.md)
@@ -259,8 +258,8 @@ Word Error Rate (WER) on [FLEURS](https://huggingface.co/datasets/google/fleurs)
 | -------------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
 | **gpt-4o-mini-transcribe** | 5.7%  | 1.3%  | 3.4%  | 7.3%  | 6.0%  | 4.8%    | 0.10 |
 | **gpt-4o-transcribe**      | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
-| **Whisper large-v3**       | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 2.2  |
-| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.24 |
+| **Whisper large-v3-turbo** | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 0.07 |
+| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.03 |
 
 _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 
@@ -270,17 +269,17 @@ _RTF = Real-Time Factor (lower = faster). All values measured on Apple M1 Pro._
 | ---- | -------------------------- | ------- | ---------------------------------- |
 | 🥇   | **gpt-4o-mini-transcribe** | 4.8%    | Cloud, best overall + cheapest     |
 | 🥈   | **gpt-4o-transcribe**      | 5.1%    | Cloud, best for DE                 |
-| 🥈   | **Whisper large-v3**       | 5.1%    | Offline, broadest language support |
-| 4    | **Parakeet v3**            | 6.4%    | Fast + accurate, 25 European langs |
+| 🥈   | **Whisper large-v3-turbo** | 5.1%    | Offline, broadest language support |
+| 4    | **Parakeet v3**            | 6.4%    | Fast + accurate, 25 languages      |
 
 ### ⚡ Ranking by Speed
 
-| Rank | Backend                    | RTF  | Best for                    |
-| ---- | -------------------------- | ---- | --------------------------- |
-| 🥇   | **gpt-4o-mini-transcribe** | 0.10 | Cloud, fastest + cheapest   |
-| 🥈   | **gpt-4o-transcribe**      | 0.16 | Cloud, premium quality      |
-| 🥉   | **Parakeet v3**            | 0.24 | Real-time, batch processing |
-| 4    | **Whisper large-v3**       | 2.2  | Quality-focused, offline    |
+| Rank | Backend                    | RTF  | Best for                |
+| ---- | -------------------------- | ---- | ----------------------- |
+| 🥇   | **Parakeet v3**            | 0.03 | Fastest, 25 languages   |
+| 🥈   | **Whisper large-v3-turbo** | 0.07 | Fast, 99 languages      |
+| 🥉   | **gpt-4o-mini-transcribe** | 0.10 | Cloud, no local compute |
+| 4    | **gpt-4o-transcribe**      | 0.16 | Cloud, premium quality  |
 
 _RTF = Real-Time Factor. 0.10 means 10s audio transcribed in 1.0s._
 
@@ -293,13 +292,13 @@ Benchmark methodology:
 
 ## Performance
 
-Typical processing speed on M1 MacBook Pro:
+Typical processing speed on Apple Silicon (M1+):
 
-| Input        | Backend        | Transcription | LLM | Total   |
-| ------------ | -------------- | ------------- | --- | ------- |
-| 10 min audio | Parakeet       | ~2.5 min      | -   | ~2.5min |
-| 10 min audio | Whisper        | ~20 min       | -   | ~20min  |
-| 10 min audio | Parakeet + LLM | ~2.5 min      | 20s | ~3min   |
+| Input        | Backend        | Transcription | LLM | Total |
+| ------------ | -------------- | ------------- | --- | ----- |
+| 10 min audio | Parakeet       | ~18 sec       | -   | ~18s  |
+| 10 min audio | Whisper        | ~42 sec       | -   | ~42s  |
+| 10 min audio | Parakeet + LLM | ~18 sec       | 20s | ~40s  |
 
 Note: Both local backends use CoreML for hardware acceleration (Neural Engine + GPU). First invocation has ~5-15s model loading overhead.
 
