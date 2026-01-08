@@ -33,7 +33,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "prettier": "^3.7.4",
-    "react-router-devtools": "^6.0.1",
+    "react-router-devtools": "^6.1.0",
     "release-it": "^19.2.2",
     "serve": "^14.2.5",
     "tailwindcss": "^4.1.18",
