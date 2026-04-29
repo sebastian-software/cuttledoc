@@ -65,11 +65,11 @@
     "sherpa-onnx-node": "^1.12.20"
   },
   "devDependencies": {
-    "@release-it/conventional-changelog": "^10.0.4",
+    "@release-it/conventional-changelog": "^11.0.0",
     "@vitest/coverage-v8": "^4.0.16",
-    "release-it": "^19.2.2",
+    "release-it": "^20.0.1",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.0.16"
   }
 }
