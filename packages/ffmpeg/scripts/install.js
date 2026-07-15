@@ -95,7 +95,11 @@ function getNormalizedArch() {
  * Download a file while hashing it and respecting stream backpressure.
  */
 export async function downloadFile(url, destPath, expectedSha256, options = {}) {
-  const { fetchImpl = fetch, showProgress = !process.env.CI } = options
+  const {
+    fetchImpl = fetch,
+    showProgress = !process.env.CI,
+    progressWriter = (message) => process.stdout.write(message)
+  } = options
 
   console.log(`Downloading from ${url}...`)
 
@@ -113,17 +117,23 @@ export async function downloadFile(url, destPath, expectedSha256, options = {}) 
   const hash = createHash("sha256")
   let downloaded = 0
   let lastPercent = -1
+  let lastReportedBytes = 0
 
   const hashAndReportProgress = new Transform({
     transform(chunk, _encoding, callback) {
       hash.update(chunk)
       downloaded += chunk.length
 
-      if (showProgress && total > 0) {
-        const percent = Math.round((downloaded / total) * 100)
-        if (percent !== lastPercent) {
-          lastPercent = percent
-          process.stdout.write(`\rDownloading... ${percent}%`)
+      if (showProgress) {
+        if (total > 0) {
+          const percent = Math.round((downloaded / total) * 100)
+          if (percent !== lastPercent) {
+            lastPercent = percent
+            progressWriter(`\rDownloading... ${percent}%`)
+          }
+        } else if (lastReportedBytes === 0 || downloaded - lastReportedBytes >= 1024 * 1024) {
+          lastReportedBytes = downloaded
+          progressWriter(`\rDownloading... ${Math.ceil(downloaded / 1024)} KiB`)
         }
       }
 
@@ -136,8 +146,8 @@ export async function downloadFile(url, destPath, expectedSha256, options = {}) 
   try {
     await pipeline(Readable.fromWeb(response.body), hashAndReportProgress, createWriteStream(destPath, { flags: "wx" }))
 
-    if (showProgress && total > 0) {
-      process.stdout.write("\n")
+    if (showProgress && downloaded > 0) {
+      progressWriter("\n")
     }
 
     const actualSha256 = hash.digest("hex")

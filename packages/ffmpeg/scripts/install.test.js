@@ -59,6 +59,23 @@ test("downloadFile removes a download with a mismatched checksum", async (t) => 
   assert.equal(existsSync(destination), false)
 })
 
+test("downloadFile reports downloaded bytes when content length is unavailable", async (t) => {
+  const directory = withTempDirectory(t)
+  const destination = join(directory, "archive.zip")
+  const content = Buffer.from("archive without a content-length header")
+  const checksum = createHash("sha256").update(content).digest("hex")
+  const progress = []
+
+  await downloadFile("https://example.test/archive.zip", destination, checksum, {
+    fetchImpl: async () => new Response(content),
+    showProgress: true,
+    progressWriter: (message) => progress.push(message)
+  })
+
+  assert.match(progress.join(""), /Downloading\.\.\. 1 KiB/)
+  assert.equal(progress.at(-1), "\n")
+})
+
 test("findExecutableEntry ignores directories and earlier unrelated entries", () => {
   const expected = { path: "bin/ffmpeg", type: "File" }
   const files = [
