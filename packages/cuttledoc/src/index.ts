@@ -100,7 +100,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
 
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
-      const parakeetBackend = await getOrCreateCoreMLBackend("parakeet", options.language)
+      const parakeetBackend = await getOrCreateCoreMLBackend("parakeet")
       return parakeetBackend.transcribe(audioPath, options)
     }
 

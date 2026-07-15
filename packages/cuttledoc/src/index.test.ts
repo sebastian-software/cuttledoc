@@ -119,4 +119,13 @@ describe("transcribe backend resolution", () => {
     expect(mocks.constructCoreMLBackend).toHaveBeenCalledOnce()
     expect(mocks.coremlInitialize).toHaveBeenCalledOnce()
   })
+
+  it("reuses the language-independent Parakeet backend", async () => {
+    await transcribe("german.mp3", { backend: BACKEND_TYPES.parakeet, language: "de" })
+    await transcribe("english.mp3", { backend: BACKEND_TYPES.parakeet, language: "en" })
+
+    expect(mocks.constructCoreMLBackend).toHaveBeenCalledOnce()
+    expect(mocks.coremlInitialize).toHaveBeenCalledOnce()
+    expect(mocks.coremlInitialize).toHaveBeenCalledWith(undefined)
+  })
 })
