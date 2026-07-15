@@ -202,15 +202,16 @@ export class CoreMLBackend implements Backend {
    * Clean up resources
    */
   dispose(): Promise<void> {
-    if (this.parakeetEngine) {
-      this.parakeetEngine.cleanup()
-      this.parakeetEngine = null
-    }
-    if (this.whisperEngine) {
-      this.whisperEngine.cleanup()
-      this.whisperEngine = null
-    }
-    this.isInitialized = false
-    return Promise.resolve()
+    return Promise.resolve().then(() => {
+      if (this.parakeetEngine) {
+        this.parakeetEngine.cleanup()
+        this.parakeetEngine = null
+      }
+      if (this.whisperEngine) {
+        this.whisperEngine.cleanup()
+        this.whisperEngine = null
+      }
+      this.isInitialized = false
+    })
   }
 }
