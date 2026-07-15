@@ -102,7 +102,9 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
   const channels = options.channels ?? 1
 
   // Support legacy 'normalize' option, default to speech optimization
-  const speechOptimize = options.speechOptimize ?? options.normalize ?? true
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- Kept for backwards compatibility.
+  const legacyNormalize = options.normalize
+  const speechOptimize = options.speechOptimize ?? legacyNormalize ?? true
 
   // Build FFmpeg arguments
   const args = [

@@ -10,8 +10,9 @@ import { platform, arch } from "node:os"
 // Support both ESM and CJS
 const getModuleDir = (): string => {
   // Try ESM approach first
-  if (typeof import.meta !== "undefined" && import.meta.url) {
-    return dirname(fileURLToPath(import.meta.url))
+  const meta = import.meta as ImportMeta | undefined
+  if (meta?.url) {
+    return dirname(fileURLToPath(meta.url))
   }
   // Fallback for CJS
   return __dirname
