@@ -16,13 +16,14 @@
   "files": [
     "dist",
     "binary",
-    "scripts"
+    "scripts/install.js"
   ],
   "scripts": {
     "build": "tsup",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "postinstall": "node scripts/install.js",
+    "test": "node --test scripts/*.test.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
