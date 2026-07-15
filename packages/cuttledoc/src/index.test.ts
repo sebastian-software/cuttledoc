@@ -5,7 +5,7 @@ import { BACKEND_TYPES, type BackendType, type TranscribeOptions, type Transcrip
 const mocks = vi.hoisted(() => ({
   constructCoreMLBackend: vi.fn<(model: BackendType) => void>(),
   coremlDispose: vi.fn<() => Promise<void>>(),
-  coremlInitialize: vi.fn<() => Promise<void>>(),
+  coremlInitialize: vi.fn<(language?: string) => Promise<void>>(),
   coremlTranscribe: vi.fn<(audioPath: string, options: TranscribeOptions) => Promise<TranscriptionResult>>(),
   getBackend: vi.fn<() => BackendType>(),
   selectBestBackend: vi.fn<(language?: string) => BackendType>()
@@ -29,8 +29,8 @@ vi.mock("./backends/coreml/index.js", () => ({
       mocks.constructCoreMLBackend(options.model)
     }
 
-    initialize(): Promise<void> {
-      return mocks.coremlInitialize()
+    initialize(language?: string): Promise<void> {
+      return mocks.coremlInitialize(language)
     }
 
     transcribe(audioPath: string, options: TranscribeOptions): Promise<TranscriptionResult> {
@@ -95,5 +95,28 @@ describe("transcribe backend resolution", () => {
     expect(mocks.getBackend).not.toHaveBeenCalled()
     expect(mocks.selectBestBackend).not.toHaveBeenCalled()
     expect(mocks.constructCoreMLBackend).toHaveBeenCalledWith(BACKEND_TYPES.whisper)
+  })
+
+  it("initializes Whisper with the requested language", async () => {
+    await transcribe("audio.mp3", { backend: BACKEND_TYPES.whisper, language: "de" })
+
+    expect(mocks.coremlInitialize).toHaveBeenCalledWith("de")
+  })
+
+  it("caches Whisper backends separately for each language", async () => {
+    await transcribe("german.mp3", { backend: BACKEND_TYPES.whisper, language: "de" })
+    await transcribe("english.mp3", { backend: BACKEND_TYPES.whisper, language: "en" })
+
+    expect(mocks.constructCoreMLBackend).toHaveBeenCalledTimes(2)
+    expect(mocks.coremlInitialize).toHaveBeenNthCalledWith(1, "de")
+    expect(mocks.coremlInitialize).toHaveBeenNthCalledWith(2, "en")
+  })
+
+  it("reuses a cached Whisper backend for the same language", async () => {
+    await transcribe("first.mp3", { backend: BACKEND_TYPES.whisper, language: "de" })
+    await transcribe("second.mp3", { backend: BACKEND_TYPES.whisper, language: "de" })
+
+    expect(mocks.constructCoreMLBackend).toHaveBeenCalledOnce()
+    expect(mocks.coremlInitialize).toHaveBeenCalledOnce()
   })
 })
