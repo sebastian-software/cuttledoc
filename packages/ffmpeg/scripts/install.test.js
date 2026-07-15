@@ -7,6 +7,7 @@ import { Readable } from "node:stream"
 import test from "node:test"
 import {
   BINARIES,
+  commitInstall,
   downloadFile,
   extractExecutable,
   findExecutableEntry,
@@ -146,4 +147,51 @@ test("isCurrentInstall requires a matching marker and a runnable binary", (t) =>
     isCurrentInstall(executablePath, markerPath, marker, () => false),
     false
   )
+})
+
+test("commitInstall rolls back final paths when the marker rename fails", () => {
+  const renames = []
+  const removals = []
+
+  assert.throws(
+    () =>
+      commitInstall("ffmpeg.tmp", "ffmpeg", "marker.tmp", "marker", "v8.0", {
+        writeFile: () => {},
+        rename: (source, destination) => {
+          renames.push([source, destination])
+          if (destination === "marker") {
+            throw new Error("marker commit failed")
+          }
+        },
+        remove: (path, options) => removals.push([path, options])
+      }),
+    /marker commit failed/
+  )
+
+  assert.deepEqual(renames, [
+    ["ffmpeg.tmp", "ffmpeg"],
+    ["marker.tmp", "marker"]
+  ])
+  assert.deepEqual(removals, [
+    ["ffmpeg", { force: true }],
+    ["marker", { force: true }]
+  ])
+})
+
+test("commitInstall preserves final paths when marker staging fails before the binary rename", () => {
+  const removals = []
+
+  assert.throws(
+    () =>
+      commitInstall("ffmpeg.tmp", "ffmpeg", "marker.tmp", "marker", "v8.0", {
+        writeFile: () => {
+          throw new Error("marker staging failed")
+        },
+        rename: () => assert.fail("rename should not be called"),
+        remove: (path) => removals.push(path)
+      }),
+    /marker staging failed/
+  )
+
+  assert.deepEqual(removals, [])
 })

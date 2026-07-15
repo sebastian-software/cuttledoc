@@ -33,7 +33,7 @@ export const FFMPEG_VERSION = "v8.0"
 // Binary download URLs (using Jellyfin builds from node-av releases)
 const DOWNLOAD_BASE = "https://github.com/seydx/node-av/releases/download/v5.0.3"
 
-// SHA-256 digests published by GitHub for the pinned v5.0.3 release assets.
+// SHA-256 digests from GitHub's assets[].digest metadata for the pinned v5.0.3 release.
 export const BINARIES = {
   darwin: {
     x64: {
@@ -230,6 +230,29 @@ export function isCurrentInstall(executablePath, markerPath, expectedMarker, val
 }
 
 /**
+ * Commit the validated executable and its marker. If the marker cannot be
+ * committed after the executable rename, remove both final paths so the
+ * installation never appears partially committed.
+ */
+export function commitInstall(executableTempPath, executablePath, markerTempPath, markerPath, marker, operations = {}) {
+  const { writeFile = writeFileSync, rename = renameSync, remove = rmSync } = operations
+  let binaryCommitted = false
+
+  try {
+    writeFile(markerTempPath, marker, { flag: "wx" })
+    rename(executableTempPath, executablePath)
+    binaryCommitted = true
+    rename(markerTempPath, markerPath)
+  } catch (error) {
+    if (binaryCommitted) {
+      remove(executablePath, { force: true })
+      remove(markerPath, { force: true })
+    }
+    throw error
+  }
+}
+
+/**
  * Main install function
  */
 export async function install() {
@@ -280,9 +303,7 @@ export async function install() {
       throw new Error("Extracted FFmpeg binary failed the ffmpeg -version validation")
     }
 
-    renameSync(executableTempPath, executablePath)
-    writeFileSync(markerTempPath, expectedMarker, { flag: "wx" })
-    renameSync(markerTempPath, markerPath)
+    commitInstall(executableTempPath, executablePath, markerTempPath, markerPath, expectedMarker)
 
     console.log(`FFmpeg ${FFMPEG_VERSION} installed successfully!`)
   } finally {
