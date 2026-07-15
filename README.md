@@ -168,7 +168,8 @@ OpenAI's next-generation audio models offer improved WER (Word Error Rate) over 
 
 ### Backend Selection
 
-- **`auto`** (default): Parakeet for supported languages (EN, DE, FR, ES, ...), Whisper for others
+- **`auto`** (default): On macOS, Parakeet for supported languages and Whisper for others. On Linux/Windows,
+  OpenAI is selected when an API key is configured; otherwise the CLI explains how to enable it.
 - **`parakeet`**: NVIDIA Parakeet TDT v3 – fastest, 25 languages including major European
 - **`whisper`**: OpenAI Whisper large-v3-turbo – best coverage, 99 languages including Asian/Arabic
 - **`openai`**: OpenAI cloud API – best accuracy, requires `OPENAI_API_KEY`

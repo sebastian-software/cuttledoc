@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from "./backend.js"
 import { BACKEND_TYPES } from "./types.js"
@@ -7,6 +7,8 @@ describe("backend", () => {
   afterEach(() => {
     // Reset to auto after each test
     setBackend(BACKEND_TYPES.auto)
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
   describe("setBackend/getBackend", () => {
@@ -64,7 +66,12 @@ describe("backend", () => {
   })
 
   describe("selectBestBackend", () => {
+    function setPlatform(platform: NodeJS.Platform): void {
+      vi.spyOn(process, "platform", "get").mockReturnValue(platform)
+    }
+
     it("should select parakeet for supported languages", () => {
+      setPlatform("darwin")
       expect(selectBestBackend("de")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("en")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("fr")).toBe(BACKEND_TYPES.parakeet)
@@ -72,20 +79,47 @@ describe("backend", () => {
     })
 
     it("should select parakeet when no language specified", () => {
+      setPlatform("darwin")
       const backend = selectBestBackend()
       expect(backend).toBe(BACKEND_TYPES.parakeet)
     })
 
     it("should select whisper for unsupported languages", () => {
+      setPlatform("darwin")
       expect(selectBestBackend("ja")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("zh")).toBe(BACKEND_TYPES.whisper)
       expect(selectBestBackend("ar")).toBe(BACKEND_TYPES.whisper)
     })
 
     it("should handle language codes with region", () => {
+      setPlatform("darwin")
       expect(selectBestBackend("en-US")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("de-DE")).toBe(BACKEND_TYPES.parakeet)
       expect(selectBestBackend("ja-JP")).toBe(BACKEND_TYPES.whisper)
+    })
+
+    it.each(["linux", "win32"] as const)("should select OpenAI on %s when an API key is provided", (platform) => {
+      setPlatform(platform)
+
+      expect(selectBestBackend("de", "test-key")).toBe(BACKEND_TYPES.openai)
+      expect(selectBestBackend("ja", "test-key")).toBe(BACKEND_TYPES.openai)
+    })
+
+    it("should use OPENAI_API_KEY for non-macOS auto selection", () => {
+      setPlatform("linux")
+      vi.stubEnv("OPENAI_API_KEY", "environment-key")
+
+      expect(selectBestBackend("de")).toBe(BACKEND_TYPES.openai)
+      expect(selectBestBackend("de", "")).toBe(BACKEND_TYPES.openai)
+    })
+
+    it.each(["linux", "win32"] as const)("should fail actionably on %s without an API key", (platform) => {
+      setPlatform(platform)
+      vi.stubEnv("OPENAI_API_KEY", "")
+
+      expect(() => selectBestBackend("de")).toThrow(
+        'Set OPENAI_API_KEY or provide options.apiKey, then use backend "openai" (CLI: -b openai).'
+      )
     })
   })
 })
