@@ -64,9 +64,21 @@ export function getAvailableBackends(): readonly BackendInfo[] {
 }
 
 /**
- * Auto-select the best available backend based on language
+ * Auto-select the best available backend based on platform, credentials, and language
  */
-export function selectBestBackend(language?: string): BackendType {
+export function selectBestBackend(language?: string, apiKey?: string): BackendType {
+  if (process.platform !== "darwin") {
+    const resolvedApiKey = apiKey ?? process.env["OPENAI_API_KEY"]
+    if (resolvedApiKey !== undefined && resolvedApiKey.length > 0) {
+      return BACKEND_TYPES.openai
+    }
+
+    throw new Error(
+      `Automatic backend selection is unavailable on ${process.platform}: local CoreML backends require macOS. ` +
+        'Set OPENAI_API_KEY or provide options.apiKey, then use backend "openai" (CLI: -b openai).'
+    )
+  }
+
   // For Parakeet-supported languages, prefer Parakeet (fastest, good quality)
   const langCode = language?.split("-")[0]
   const isParakeetLanguage = langCode === undefined || (PARAKEET_LANGUAGES as readonly string[]).includes(langCode)

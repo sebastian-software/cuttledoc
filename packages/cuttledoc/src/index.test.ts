@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   coremlInitialize: vi.fn<(language?: string) => Promise<void>>(),
   coremlTranscribe: vi.fn<(audioPath: string, options: TranscribeOptions) => Promise<TranscriptionResult>>(),
   getBackend: vi.fn<() => BackendType>(),
-  selectBestBackend: vi.fn<(language?: string) => BackendType>()
+  selectBestBackend: vi.fn<(language?: string, apiKey?: string) => BackendType>()
 }))
 
 vi.mock("./backend.js", () => ({
@@ -77,15 +77,21 @@ describe("transcribe backend resolution", () => {
   it("resolves an explicit auto backend", async () => {
     await transcribe("audio.mp3", { backend: BACKEND_TYPES.auto, language: "en" })
 
-    expect(mocks.selectBestBackend).toHaveBeenCalledWith("en")
+    expect(mocks.selectBestBackend).toHaveBeenCalledWith("en", undefined)
     expect(mocks.constructCoreMLBackend).toHaveBeenCalledWith(BACKEND_TYPES.parakeet)
+  })
+
+  it("uses the call-level API key for automatic backend selection", async () => {
+    await transcribe("audio.mp3", { backend: BACKEND_TYPES.auto, language: "en", apiKey: "test-key" })
+
+    expect(mocks.selectBestBackend).toHaveBeenCalledWith("en", "test-key")
   })
 
   it("resolves an omitted backend when the configured backend is auto", async () => {
     await transcribe("audio.mp3", { language: "de" })
 
     expect(mocks.getBackend).toHaveBeenCalledOnce()
-    expect(mocks.selectBestBackend).toHaveBeenCalledWith("de")
+    expect(mocks.selectBestBackend).toHaveBeenCalledWith("de", undefined)
     expect(mocks.constructCoreMLBackend).toHaveBeenCalledWith(BACKEND_TYPES.parakeet)
   })
 

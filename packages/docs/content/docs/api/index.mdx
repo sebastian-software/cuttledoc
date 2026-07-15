@@ -66,12 +66,13 @@ console.log(getBackend()) // "parakeet"
 
 ### selectBestBackend()
 
-Auto-select the best available backend for a given language.
+Auto-select the best available backend for the current platform and a given language. macOS uses the local CoreML
+backends. Linux and Windows use OpenAI when an API key is configured and otherwise return an actionable error.
 
 ```typescript
 import { selectBestBackend } from 'cuttledoc'
 
-const best = selectBestBackend('de') // Returns best backend for German
+const best = selectBestBackend('de', process.env.OPENAI_API_KEY)
 ```
 
 ---
