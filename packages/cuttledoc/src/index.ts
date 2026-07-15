@@ -93,9 +93,9 @@ async function getOrCreateOpenAIBackend(apiKey: string | undefined): Promise<Ope
  * @returns Promise resolving to the transcription result
  */
 export async function transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
-  const currentBackend = getBackend()
+  const requestedBackend = options.backend ?? getBackend()
   const backend: BackendType =
-    options.backend ?? (currentBackend === BACKEND_TYPES.auto ? selectBestBackend(options.language) : currentBackend)
+    requestedBackend === BACKEND_TYPES.auto ? selectBestBackend(options.language) : requestedBackend
 
   switch (backend) {
     case BACKEND_TYPES.parakeet: {
