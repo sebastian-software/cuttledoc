@@ -56,19 +56,20 @@ export {
 } from "@cuttledoc/llm"
 
 // Cached backend instances
-const coremlBackendCache = new Map<CoreMLModelType, CoreMLBackend>()
+const coremlBackendCache = new Map<string, CoreMLBackend>()
 let openaiBackendInstance: OpenAIBackend | null = null
 
 /**
  * Get or create a cached CoreML backend instance
  */
-async function getOrCreateCoreMLBackend(model: CoreMLModelType): Promise<CoreMLBackend> {
-  let backend = coremlBackendCache.get(model)
+async function getOrCreateCoreMLBackend(model: CoreMLModelType, language?: string): Promise<CoreMLBackend> {
+  const cacheKey = model === BACKEND_TYPES.whisper ? `${model}:${language ?? "auto"}` : model
+  let backend = coremlBackendCache.get(cacheKey)
   if (backend === undefined) {
     const { CoreMLBackend } = await import("./backends/coreml/index.js")
     backend = new CoreMLBackend({ model })
-    await backend.initialize()
-    coremlBackendCache.set(model, backend)
+    await backend.initialize(language)
+    coremlBackendCache.set(cacheKey, backend)
   }
   return backend
 }
@@ -104,7 +105,7 @@ export async function transcribe(audioPath: string, options: TranscribeOptions =
     }
 
     case BACKEND_TYPES.whisper: {
-      const whisperBackend = await getOrCreateCoreMLBackend("whisper")
+      const whisperBackend = await getOrCreateCoreMLBackend("whisper", options.language)
       return whisperBackend.transcribe(audioPath, options)
     }
 
