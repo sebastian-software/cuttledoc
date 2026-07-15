@@ -19,6 +19,7 @@ import {
   type TranscribeOptions,
   type TranscriptionResult
 } from "../../types.js"
+import { resolveApiKey } from "../../utils/api-key.js"
 
 const OPENAI_API_URL = "https://api.openai.com/v1/audio/transcriptions"
 
@@ -37,7 +38,7 @@ export class OpenAIBackend implements Backend {
   private model: OpenAITranscribeModel = DEFAULT_OPENAI_MODEL
 
   constructor(options?: { apiKey?: string | undefined; model?: OpenAITranscribeModel }) {
-    this.apiKey = options?.apiKey ?? process.env["OPENAI_API_KEY"] ?? null
+    this.apiKey = resolveApiKey(options?.apiKey, process.env["OPENAI_API_KEY"]) ?? null
     this.model = options?.model ?? DEFAULT_OPENAI_MODEL
   }
 
@@ -50,7 +51,7 @@ export class OpenAIBackend implements Backend {
   }
 
   async transcribe(audioPath: string, options: TranscribeOptions = {}): Promise<TranscriptionResult> {
-    const apiKey = options.apiKey ?? this.apiKey ?? process.env["OPENAI_API_KEY"]
+    const apiKey = resolveApiKey(options.apiKey, this.apiKey, process.env["OPENAI_API_KEY"])
     if (!apiKey) {
       throw new Error(
         "OpenAI API key required. Provide via options.apiKey, constructor, or OPENAI_API_KEY environment variable."

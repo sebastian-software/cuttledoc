@@ -110,6 +110,7 @@ describe("backend", () => {
       vi.stubEnv("OPENAI_API_KEY", "environment-key")
 
       expect(selectBestBackend("de")).toBe(BACKEND_TYPES.openai)
+      expect(selectBestBackend("de", "")).toBe(BACKEND_TYPES.openai)
     })
 
     it.each(["linux", "win32"] as const)("should fail actionably on %s without an API key", (platform) => {

@@ -7,6 +7,7 @@ import {
   WHISPER_LANGUAGES,
   WHISPER_MODELS
 } from "./types.js"
+import { resolveApiKey } from "./utils/api-key.js"
 
 let currentBackend: BackendType = BACKEND_TYPES.auto
 
@@ -68,8 +69,8 @@ export function getAvailableBackends(): readonly BackendInfo[] {
  */
 export function selectBestBackend(language?: string, apiKey?: string): BackendType {
   if (process.platform !== "darwin") {
-    const resolvedApiKey = apiKey ?? process.env["OPENAI_API_KEY"]
-    if (resolvedApiKey !== undefined && resolvedApiKey.length > 0) {
+    const resolvedApiKey = resolveApiKey(apiKey, process.env["OPENAI_API_KEY"])
+    if (resolvedApiKey !== undefined) {
       return BACKEND_TYPES.openai
     }
 
