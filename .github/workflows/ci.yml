@@ -80,7 +80,4 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - name: Build native module (macOS only)
-        if: matrix.os == 'macos-latest'
-        run: pnpm --filter cuttledoc run build:native
       - run: pnpm build

@@ -32,19 +32,19 @@ describe("backend", () => {
       expect(backends.length).toBeGreaterThan(0)
     })
 
-    it("should always include parakeet backend", () => {
+    it("should include parakeet with platform availability", () => {
       const backends = getAvailableBackends()
       const parakeetBackend = backends.find((b) => b.name === BACKEND_TYPES.parakeet)
       expect(parakeetBackend).toBeDefined()
-      expect(parakeetBackend?.isAvailable).toBe(true)
+      expect(parakeetBackend?.isAvailable).toBe(process.platform === "darwin")
       expect(parakeetBackend?.requiresDownload).toBe(true)
     })
 
-    it("should always include whisper backend", () => {
+    it("should include whisper with platform availability", () => {
       const backends = getAvailableBackends()
       const whisperBackend = backends.find((b) => b.name === BACKEND_TYPES.whisper)
       expect(whisperBackend).toBeDefined()
-      expect(whisperBackend?.isAvailable).toBe(true)
+      expect(whisperBackend?.isAvailable).toBe(process.platform === "darwin")
       expect(whisperBackend?.requiresDownload).toBe(true)
     })
 

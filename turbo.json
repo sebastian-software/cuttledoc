@@ -19,7 +19,7 @@
     },
     "lint": {
       "outputs": [],
-      "dependsOn": []
+      "dependsOn": ["^build"]
     },
     "lint:fix": {
       "outputs": [],

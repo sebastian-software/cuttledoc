@@ -26,8 +26,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
@@ -37,7 +37,8 @@
     "benchmark:cloud": "npx tsx scripts/benchmark.ts --cloud",
     "fixtures:download": "python fixtures/download-samples.py",
     "release": "release-it --npm.otp=$(op item get 'npmjs' --otp)",
-    "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)"
+    "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)",
+    "release:dry": "release-it --dry-run"
   },
   "keywords": [
     "speech-recognition",
