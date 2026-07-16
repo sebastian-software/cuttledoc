@@ -2,7 +2,6 @@
  * Benchmark CLI module for comparing speech recognition models
  */
 
-import { execSync } from "node:child_process"
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
@@ -127,25 +126,64 @@ function findFixtures(fixturesDir: string, language?: string): { audio: string; 
 }
 
 /**
- * Get audio duration using ffprobe
+ * Validate the duration reported by the backend's decoded sample count.
  */
-function getAudioDuration(audioPath: string): number {
-  try {
-    const result = execSync(
-      `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-      { encoding: "utf-8" }
-    )
-    return parseFloat(result.trim())
-  } catch {
-    // Fallback: estimate from file size (rough)
-    return 60 // Default to 1 minute
+export function validateAudioDuration(audioPath: string, durationSeconds: number): number {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    throw new Error(`Failed to determine audio duration for ${audioPath}: received ${String(durationSeconds)}`)
+  }
+
+  return durationSeconds
+}
+
+interface BenchmarkOptions {
+  subcommand: string
+  fixturesDir: string
+  outputFile: string
+  language: string | undefined
+  specifiedModels: string[]
+}
+
+/**
+ * Parse benchmark arguments and derive defaults after all options are known.
+ */
+export function parseBenchmarkOptions(args: string[], cwd = process.cwd()): BenchmarkOptions {
+  const subcommand = args[0] ?? "run"
+  let fixturesDir = join(cwd, "fixtures")
+  let outputFile: string | undefined
+  let language: string | undefined
+  const specifiedModels: string[] = []
+
+  for (let i = 1; i < args.length; i++) {
+    const arg = args[i]
+    if (arg === undefined) {
+      continue
+    }
+
+    if (arg === "--fixtures" && args[i + 1] !== undefined) {
+      fixturesDir = args[++i] ?? fixturesDir
+    } else if (arg === "--output" && args[i + 1] !== undefined) {
+      outputFile = args[++i]
+    } else if (arg === "--language" && args[i + 1] !== undefined) {
+      language = args[++i]
+    } else if (!arg.startsWith("-")) {
+      specifiedModels.push(arg)
+    }
+  }
+
+  return {
+    subcommand,
+    fixturesDir,
+    outputFile: outputFile ?? join(fixturesDir, "benchmark.json"),
+    language,
+    specifiedModels
   }
 }
 
 /**
  * Run benchmark for a single model
  */
-async function benchmarkModel(
+export async function benchmarkModel(
   model: CoreMLModelType,
   fixtures: { audio: string; reference: string }[],
   onProgress?: (current: number, total: number, file: string) => void
@@ -158,47 +196,48 @@ async function benchmarkModel(
   let totalAudioSeconds = 0
   let totalProcessingSeconds = 0
 
-  for (let i = 0; i < fixtures.length; i++) {
-    const fixture = fixtures[i]
-    if (fixture === undefined) {
-      continue
+  try {
+    for (let i = 0; i < fixtures.length; i++) {
+      const fixture = fixtures[i]
+      if (fixture === undefined) {
+        continue
+      }
+
+      const { audio, reference } = fixture
+
+      onProgress?.(i + 1, fixtures.length, basename(audio))
+
+      // Read reference text
+      const referenceText = readFileSync(reference, "utf-8")
+
+      // Transcribe and measure time. The backend derives duration from the
+      // decoded sample count, so no separate shell or system ffprobe is needed.
+      const startTime = process.hrtime.bigint()
+      const result = await backend.transcribe(audio)
+      const endTime = process.hrtime.bigint()
+
+      const durationSeconds = validateAudioDuration(audio, result.durationSeconds)
+      const processingTimeSeconds = Number(endTime - startTime) / 1_000_000_000
+      totalAudioSeconds += durationSeconds
+      totalProcessingSeconds += processingTimeSeconds
+
+      // Calculate WER
+      const wer = calculateWER(referenceText, result.text)
+
+      samples.push({
+        audioFile: audio,
+        referenceFile: reference,
+        referenceText,
+        transcribedText: result.text,
+        durationSeconds,
+        processingTimeSeconds,
+        rtf: processingTimeSeconds / durationSeconds,
+        wer
+      })
     }
-
-    const { audio, reference } = fixture
-
-    onProgress?.(i + 1, fixtures.length, basename(audio))
-
-    // Read reference text
-    const referenceText = readFileSync(reference, "utf-8")
-
-    // Get audio duration
-    const durationSeconds = getAudioDuration(audio)
-    totalAudioSeconds += durationSeconds
-
-    // Transcribe and measure time
-    const startTime = process.hrtime.bigint()
-    const result = await backend.transcribe(audio)
-    const endTime = process.hrtime.bigint()
-
-    const processingTimeSeconds = Number(endTime - startTime) / 1_000_000_000
-    totalProcessingSeconds += processingTimeSeconds
-
-    // Calculate WER
-    const wer = calculateWER(referenceText, result.text)
-
-    samples.push({
-      audioFile: audio,
-      referenceFile: reference,
-      referenceText,
-      transcribedText: result.text,
-      durationSeconds,
-      processingTimeSeconds,
-      rtf: processingTimeSeconds / durationSeconds,
-      wer
-    })
+  } finally {
+    await backend.dispose()
   }
-
-  await backend.dispose()
 
   // Calculate averages
   const werResults = samples.map((s) => s.wer)
@@ -252,34 +291,11 @@ function printBenchmarkResults(report: BenchmarkReport): void {
  * Run the benchmark command
  */
 export async function runBenchmark(args: string[]): Promise<void> {
-  const subcommand = args[0] ?? "run"
+  const { subcommand, fixturesDir, outputFile, language, specifiedModels } = parseBenchmarkOptions(args)
 
   if (subcommand === "help" || args.includes("-h") || args.includes("--help")) {
     printBenchmarkHelp()
     return
-  }
-
-  // Parse options
-  let fixturesDir = join(process.cwd(), "fixtures")
-  let outputFile = join(fixturesDir, "benchmark.json")
-  let language: string | undefined
-  const specifiedModels: string[] = []
-
-  for (let i = 1; i < args.length; i++) {
-    const arg = args[i]
-    if (arg === undefined) {
-      continue
-    }
-
-    if (arg === "--fixtures" && args[i + 1] !== undefined) {
-      fixturesDir = args[++i] ?? fixturesDir
-    } else if (arg === "--output" && args[i + 1] !== undefined) {
-      outputFile = args[++i] ?? outputFile
-    } else if (arg === "--language" && args[i + 1] !== undefined) {
-      language = args[++i]
-    } else if (!arg.startsWith("-")) {
-      specifiedModels.push(arg)
-    }
   }
 
   if (subcommand === "report") {
