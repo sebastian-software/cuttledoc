@@ -23,7 +23,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "postinstall": "node scripts/install.js",
-    "test": "node --test scripts/*.test.js",
+    "test": "node --test scripts/*.test.js && vitest run src",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +31,8 @@
   },
   "devDependencies": {
     "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -264,7 +264,7 @@ export async function install() {
   const asset = BINARIES[platform]?.[arch]
   if (!asset) {
     console.warn(`No FFmpeg binary available for ${platform}/${arch}`)
-    console.warn("You can install FFmpeg manually and set FFMPEG_PATH")
+    console.warn("You can install FFmpeg manually and set FFMPEG_PATH to its executable")
     return
   }
 
@@ -324,7 +324,7 @@ if (isDirectExecution()) {
     install().catch((error) => {
       console.warn("Warning: Failed to install FFmpeg binary:", error.message)
       console.warn("You can install FFmpeg manually: brew install ffmpeg (macOS)")
-      console.warn("Or set FFMPEG_PATH environment variable")
+      console.warn("Or set FFMPEG_PATH to an FFmpeg executable")
       // Don't fail the install
       process.exitCode = 0
     })
