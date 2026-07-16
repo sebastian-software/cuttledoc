@@ -20,14 +20,15 @@
   },
   "files": [
     "dist",
-    "binary",
     "scripts/install.js",
+    "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "prepack": "pnpm run build",
     "postinstall": "node scripts/install.js",
     "test": "node --test scripts/*.test.js && vitest run --coverage",
     "typecheck": "tsc --noEmit"
@@ -51,6 +52,9 @@
     "preprocessing"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "author": {
     "name": "Sebastian Werner",
     "email": "s.werner@sebastian-software.de"

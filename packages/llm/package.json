@@ -23,6 +23,7 @@
   },
   "files": [
     "dist",
+    "README.md",
     "LICENSE"
   ],
   "scripts": {
@@ -30,6 +31,7 @@
     "dev": "tsup --watch",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "prepack": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
@@ -56,6 +58,14 @@
     "gemma"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "Sebastian Werner",
+    "email": "s.werner@sebastian-software.de",
+    "url": "https://sebastian-software.de"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sebastian-software/cuttledoc.git",

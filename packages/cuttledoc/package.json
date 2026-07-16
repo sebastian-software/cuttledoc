@@ -41,10 +41,7 @@
     "benchmark": "npx tsx scripts/benchmark.ts",
     "benchmark:local": "npx tsx scripts/benchmark.ts --local",
     "benchmark:cloud": "npx tsx scripts/benchmark.ts --cloud",
-    "fixtures:download": "python fixtures/download-samples.py",
-    "release": "release-it",
-    "release:auto": "release-it --ci",
-    "release:dry": "release-it --dry-run"
+    "fixtures:download": "python fixtures/download-samples.py"
   },
   "keywords": [
     "speech-recognition",
@@ -74,9 +71,7 @@
     "whisper-coreml": "^1.1.0"
   },
   "devDependencies": {
-    "@release-it/conventional-changelog": "^11.0.1",
     "@vitest/coverage-v8": "^4.1.10",
-    "release-it": "^20.2.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"

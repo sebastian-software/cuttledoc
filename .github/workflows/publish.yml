@@ -1,0 +1,83 @@
+name: Release & Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: Publish the current release version even without a new GitHub release
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+
+  publish:
+    name: Publish to npm
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_publish) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install an OIDC-capable npm CLI
+        run: npm install --global npm@11.14.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check types
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Publish @cuttledoc/ffmpeg
+        run: node scripts/publish-package-if-needed.mjs @cuttledoc/ffmpeg
+
+      - name: Publish @cuttledoc/llm
+        run: node scripts/publish-package-if-needed.mjs @cuttledoc/llm
+
+      - name: Publish cuttledoc
+        run: node scripts/publish-package-if-needed.mjs cuttledoc

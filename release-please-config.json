@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "last-release-sha": "f1faf4056df248ac58d952edd9883b1c9043b8e4",
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "style", "section": "Styles", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build System", "hidden": true },
+    { "type": "ci", "section": "CI", "hidden": true }
+  ],
+  "packages": {
+    ".": {
+      "component": "cuttledoc",
+      "changelog-path": "packages/cuttledoc/CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "packages/cuttledoc/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/ffmpeg/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/llm/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}
