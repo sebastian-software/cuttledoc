@@ -7,6 +7,7 @@ import defaultMdxComponents from 'fumadocs-ui/mdx'
 import type { Route } from './+types/page'
 
 import { baseOptions } from '../lib/layout.shared'
+import { createSeoMeta, siteConfig } from '../lib/seo'
 import { source } from '../lib/source'
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -20,16 +21,26 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   return {
     path: page.path,
+    title: page.data.title,
+    description: page.data.description,
     pageTree: await source.serializePageTree(source.pageTree)
   }
+}
+
+export function meta({ data, location }: Route.MetaArgs) {
+  if (!data) return createSeoMeta({ pathname: location.pathname })
+
+  return createSeoMeta({
+    title: `${data.title} | ${siteConfig.siteName}`,
+    description: data.description,
+    pathname: location.pathname
+  })
 }
 
 const clientLoader = browserCollections.docs.createClientLoader({
   component({ toc, default: Mdx, frontmatter }) {
     return (
       <DocsPage toc={toc}>
-        <title>{frontmatter.title}</title>
-        <meta name="description" content={frontmatter.description} />
         <DocsTitle>{frontmatter.title}</DocsTitle>
         <DocsDescription>{frontmatter.description}</DocsDescription>
         <DocsBody>

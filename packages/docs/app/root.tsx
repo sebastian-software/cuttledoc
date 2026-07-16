@@ -5,6 +5,26 @@ import type { Route } from './+types/root'
 
 import './app.css'
 import SearchDialog from './components/search'
+import { createSeoMeta, siteConfig } from './lib/seo'
+
+export function meta({ location, error }: Route.MetaArgs) {
+  if (error) {
+    const notFound = isRouteErrorResponse(error) && error.status === 404
+
+    return [
+      ...createSeoMeta({
+        title: `${notFound ? 'Page Not Found' : 'Error'} | ${siteConfig.siteName}`,
+        description: notFound
+          ? 'The requested cuttledoc documentation page could not be found.'
+          : 'An unexpected error occurred while loading the cuttledoc documentation.',
+        pathname: location.pathname
+      }),
+      { name: 'robots', content: 'noindex' }
+    ]
+  }
+
+  return []
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: 'icon', href: `${import.meta.env.BASE_URL}favicon.ico` },
