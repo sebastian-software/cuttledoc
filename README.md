@@ -306,7 +306,7 @@ Note: Both local backends use CoreML for hardware acceleration (Neural Engine + 
 
 ## Documentation
 
-For detailed API reference, see the [documentation](https://cuttledoc.dev).
+For detailed API reference, see the [documentation](https://sebastian-software.github.io/cuttledoc/).
 
 ## Development
 
