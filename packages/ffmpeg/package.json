@@ -1,6 +1,6 @@
 {
   "name": "@cuttledoc/ffmpeg",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Lightweight FFmpeg wrapper for audio processing",
   "type": "module",
   "main": "./dist/index.cjs",
