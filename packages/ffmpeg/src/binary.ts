@@ -82,18 +82,25 @@ function getBundledPath(): string | undefined {
 /**
  * Resolve an available FFmpeg executable in priority order.
  */
-function resolveFFmpegPath(): string | undefined {
+function resolveFFmpegPath(): { path?: string; checkedPaths: string[] } {
+  const checkedPaths: string[] = []
   const configuredPath = getConfiguredPath()
-  if (configuredPath !== undefined && existsSync(configuredPath)) {
-    return configuredPath
+  if (configuredPath !== undefined) {
+    checkedPaths.push(configuredPath)
+    if (existsSync(configuredPath)) {
+      return { path: configuredPath, checkedPaths }
+    }
   }
 
   const bundledPath = getBundledPath()
-  if (bundledPath !== undefined && existsSync(bundledPath)) {
-    return bundledPath
+  if (bundledPath !== undefined) {
+    checkedPaths.push(bundledPath)
+    if (existsSync(bundledPath)) {
+      return { path: bundledPath, checkedPaths }
+    }
   }
 
-  return undefined
+  return { checkedPaths }
 }
 
 /**
@@ -116,14 +123,11 @@ function resolveFFmpegPath(): string | undefined {
  * ```
  */
 export function ffmpegPath(): string {
-  const path = resolveFFmpegPath()
+  const { path, checkedPaths } = resolveFFmpegPath()
   if (path !== undefined) {
     return path
   }
 
-  const configuredPath = getConfiguredPath()
-  const bundledPath = getBundledPath()
-  const checkedPaths = [configuredPath, bundledPath].filter((candidate): candidate is string => candidate !== undefined)
   const checkedMessage = checkedPaths.length > 0 ? ` Checked: ${checkedPaths.join(", ")}.` : ""
 
   throw new Error(
@@ -138,7 +142,7 @@ export function ffmpegPath(): string {
  * @returns true if FFmpeg is available, false otherwise
  */
 export function isFFmpegAvailable(): boolean {
-  return resolveFFmpegPath() !== undefined
+  return resolveFFmpegPath().path !== undefined
 }
 
 /**

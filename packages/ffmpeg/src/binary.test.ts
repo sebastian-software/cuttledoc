@@ -21,7 +21,7 @@ vi.mock("node:os", () => ({
 import { ffmpegPath, isFFmpegAvailable } from "./binary.js"
 
 const originalFFmpegPath = process.env.FFMPEG_PATH
-const moduleDirectory = dirname(fileURLToPath(import.meta.url))
+const moduleDirectory = dirname(fileURLToPath(import.meta.resolve("./binary.js")))
 const bundledPath = resolve(moduleDirectory, "..", "binary", "ffmpeg")
 
 describe("FFmpeg path resolution", () => {
@@ -69,7 +69,7 @@ describe("FFmpeg path resolution", () => {
     expect(mocks.existsSync).toHaveBeenNthCalledWith(2, bundledPath)
   })
 
-  it("uses a valid FFMPEG_PATH on otherwise unsupported platforms", () => {
+  it("uses a valid FFMPEG_PATH without consulting platform support", () => {
     process.env.FFMPEG_PATH = "/opt/ffmpeg"
     mocks.existsSync.mockReturnValue(true)
     mocks.platform.mockReturnValue("freebsd")
@@ -77,6 +77,21 @@ describe("FFmpeg path resolution", () => {
     expect(ffmpegPath()).toBe(resolve("/opt/ffmpeg"))
     expect(isFFmpegAvailable()).toBe(true)
     expect(mocks.platform).not.toHaveBeenCalled()
+  })
+
+  it("reports only the configured path when the platform is unsupported", () => {
+    process.env.FFMPEG_PATH = "./missing/ffmpeg"
+    const configuredPath = resolve("./missing/ffmpeg")
+    mocks.existsSync.mockReturnValue(false)
+    mocks.platform.mockReturnValue("freebsd")
+
+    expect(() => ffmpegPath()).toThrow(
+      `FFmpeg binary not found. Checked: ${configuredPath}. ` +
+        "Set FFMPEG_PATH to an FFmpeg executable or reinstall @cuttledoc/ffmpeg."
+    )
+    expect(mocks.platform).toHaveBeenCalledOnce()
+    expect(mocks.existsSync).toHaveBeenCalledOnce()
+    expect(mocks.existsSync).toHaveBeenCalledWith(configuredPath)
   })
 
   it("reports every attempted path when no binary is available", () => {
@@ -89,5 +104,22 @@ describe("FFmpeg path resolution", () => {
         "Set FFMPEG_PATH to an FFmpeg executable or reinstall @cuttledoc/ffmpeg."
     )
     expect(isFFmpegAvailable()).toBe(false)
+  })
+
+  it("reports the paths captured during resolution when the environment changes", () => {
+    process.env.FFMPEG_PATH = "./first/ffmpeg"
+    const configuredPath = resolve("./first/ffmpeg")
+    const changedPath = resolve("./changed/ffmpeg")
+    mocks.existsSync.mockImplementationOnce(() => {
+      process.env.FFMPEG_PATH = "./changed/ffmpeg"
+      return false
+    })
+    mocks.existsSync.mockReturnValueOnce(false)
+
+    expect(() => ffmpegPath()).toThrow(
+      `FFmpeg binary not found. Checked: ${configuredPath}, ${bundledPath}. ` +
+        "Set FFMPEG_PATH to an FFmpeg executable or reinstall @cuttledoc/ffmpeg."
+    )
+    expect(() => ffmpegPath()).toThrow(`Checked: ${changedPath}, ${bundledPath}.`)
   })
 })
