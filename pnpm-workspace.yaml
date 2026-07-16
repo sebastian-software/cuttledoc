@@ -1,2 +1,27 @@
 packages:
   - "packages/*"
+
+allowBuilds:
+  esbuild: true
+  node-llama-cpp: true
+
+# These exact versions were audited and merged immediately before the pnpm 11
+# migration. Keep the default 24-hour maturity policy for every future release.
+minimumReleaseAgeExclude:
+  - "@yuku-analyzer/binding-darwin-arm64@0.6.4"
+  - "@yuku-analyzer/binding-darwin-x64@0.6.4"
+  - "@yuku-analyzer/binding-freebsd-x64@0.6.4"
+  - "@yuku-analyzer/binding-linux-arm-gnu@0.6.4"
+  - "@yuku-analyzer/binding-linux-arm-musl@0.6.4"
+  - "@yuku-analyzer/binding-linux-arm64-gnu@0.6.4"
+  - "@yuku-analyzer/binding-linux-arm64-musl@0.6.4"
+  - "@yuku-analyzer/binding-linux-x64-gnu@0.6.4"
+  - "@yuku-analyzer/binding-linux-x64-musl@0.6.4"
+  - "@yuku-analyzer/binding-win32-arm64@0.6.4"
+  - "@yuku-analyzer/binding-win32-x64@0.6.4"
+  - "caniuse-lite@1.0.30001806"
+  - "fumadocs-core@16.11.5"
+  - "fumadocs-mdx@15.2.0"
+  - "fumadocs-ui@16.11.5"
+  - "vite@8.1.5"
+  - "yuku-analyzer@0.6.4"
