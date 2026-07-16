@@ -166,6 +166,7 @@ export async function isModelDownloaded(backend: BackendType): Promise<boolean> 
 
     case BACKEND_TYPES.whisper: {
       const { isModelDownloaded: isWhisperModelDownloaded } = await import("whisper-coreml")
+      // The upstream aggregate check requires both the GGML binary and CoreML encoder.
       return isWhisperModelDownloaded()
     }
 
