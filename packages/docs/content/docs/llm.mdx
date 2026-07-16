@@ -207,7 +207,7 @@ await enhanceTranscript(text, { model: 'gemma3n:e2b' })
 
 ### Handling Long Transcripts
 
-The library automatically chunks long transcripts to fit context windows:
+The library automatically processes long transcripts in bounded chunks for Ollama, OpenAI, and local GGUF models. It prefers sentence boundaries and hard-splits unusually long sentences when needed:
 
 ```typescript
 const result = await enhanceTranscript(longText, {

@@ -14,6 +14,7 @@ import {
   type EnhanceResult,
   type ProcessMode
 } from "../types.js"
+import { enhanceTranscriptInChunks, type ChunkedEnhanceOptions } from "../chunking.js"
 
 /** Ollama API base URL */
 const OLLAMA_BASE_URL = process.env["OLLAMA_HOST"] ?? "http://localhost:11434"
@@ -158,6 +159,14 @@ export class OllamaProcessor {
     }
   }
 
+  /** Process long transcripts in bounded chunks. */
+  async enhanceChunked(
+    rawTranscript: string,
+    options: ChunkedEnhanceOptions = {}
+  ): Promise<EnhanceResult> {
+    return enhanceTranscriptInChunks(rawTranscript, this.enhance.bind(this), options)
+  }
+
   /**
    * No cleanup needed for Ollama (stateless HTTP)
    */
@@ -174,5 +183,5 @@ export async function enhanceWithOllama(
   options: { model?: string; mode?: ProcessMode } = {}
 ): Promise<EnhanceResult> {
   const processor = new OllamaProcessor(options.model !== undefined ? { model: options.model } : {})
-  return processor.enhance(transcript, options.mode !== undefined ? { mode: options.mode } : {})
+  return processor.enhanceChunked(transcript, options.mode !== undefined ? { mode: options.mode } : {})
 }

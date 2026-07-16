@@ -40,6 +40,12 @@ export {
   type ProcessMode
 } from "./types.js"
 
+export {
+  DEFAULT_CHUNK_SIZE,
+  splitTranscriptIntoChunks,
+  type ChunkedEnhanceOptions
+} from "./chunking.js"
+
 // Ollama Provider
 export {
   enhanceWithOllama,
@@ -137,7 +143,7 @@ export async function enhanceTranscript(transcript: string, options: EnhanceOpti
       const processorOpts: { model?: string } = {}
       if (options.model !== undefined) processorOpts.model = options.model
       const processor = new OllamaProcessor(processorOpts)
-      return processor.enhance(transcript, enhanceOpts)
+      return processor.enhanceChunked(transcript, enhanceOpts)
     }
 
     case "openai": {
@@ -145,7 +151,7 @@ export async function enhanceTranscript(transcript: string, options: EnhanceOpti
       if (options.model !== undefined) processorOpts.model = options.model
       if (options.apiKey !== undefined) processorOpts.apiKey = options.apiKey
       const processor = new OpenAIProcessor(processorOpts)
-      return processor.enhance(transcript, enhanceOpts)
+      return processor.enhanceChunked(transcript, enhanceOpts)
     }
 
     case "local": {

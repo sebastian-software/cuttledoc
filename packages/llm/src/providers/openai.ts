@@ -14,6 +14,7 @@ import {
   type EnhanceResult,
   type ProcessMode
 } from "../types.js"
+import { enhanceTranscriptInChunks, type ChunkedEnhanceOptions } from "../chunking.js"
 
 /** OpenAI API base URL */
 const OPENAI_BASE_URL = process.env["OPENAI_BASE_URL"] ?? "https://api.openai.com/v1"
@@ -134,6 +135,14 @@ export class OpenAIProcessor {
     }
   }
 
+  /** Process long transcripts in bounded chunks. */
+  async enhanceChunked(
+    rawTranscript: string,
+    options: ChunkedEnhanceOptions = {}
+  ): Promise<EnhanceResult> {
+    return enhanceTranscriptInChunks(rawTranscript, this.enhance.bind(this), options)
+  }
+
   /**
    * No cleanup needed for OpenAI (stateless HTTP)
    */
@@ -160,5 +169,5 @@ export async function enhanceWithOpenAI(
   const enhanceOpts: { mode?: ProcessMode } = {}
   if (options.mode !== undefined) enhanceOpts.mode = options.mode
 
-  return processor.enhance(transcript, enhanceOpts)
+  return processor.enhanceChunked(transcript, enhanceOpts)
 }
