@@ -27,12 +27,12 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 }
 
-export function meta({ data, location }: Route.MetaArgs) {
-  if (!data) return createSeoMeta({ pathname: location.pathname })
+export function meta({ loaderData, location }: Route.MetaArgs) {
+  if (!loaderData) return createSeoMeta({ pathname: location.pathname })
 
   return createSeoMeta({
-    title: `${data.title} | ${siteConfig.siteName}`,
-    description: data.description,
+    title: `${loaderData.title} | ${siteConfig.siteName}`,
+    description: loaderData.description,
     pathname: location.pathname
   })
 }
@@ -52,12 +52,12 @@ const clientLoader = browserCollections.docs.createClientLoader({
 })
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const Content = clientLoader.getComponent(loaderData.path)
+  const content = clientLoader.useContent(loaderData.path)
   const { pageTree } = useFumadocsLoader(loaderData)
 
   return (
     <DocsLayout {...baseOptions()} tree={pageTree}>
-      <Content />
+      {content}
     </DocsLayout>
   )
 }
