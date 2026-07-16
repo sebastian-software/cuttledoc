@@ -28,13 +28,14 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "postinstall": "node scripts/install.js",
-    "test": "node --test scripts/*.test.js && vitest run",
+    "test": "node --test scripts/*.test.js && vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.16",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"

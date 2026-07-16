@@ -27,7 +27,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "clean": "rm -rf dist",
     "benchmark": "npx tsx scripts/benchmark.ts"
@@ -36,6 +36,7 @@
     "node-llama-cpp": "^3.14.5"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.16",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"

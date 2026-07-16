@@ -60,7 +60,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
         with:
-          files: ./packages/cuttledoc/coverage/coverage-final.json
+          files: ./packages/cuttledoc/coverage/coverage-final.json,./packages/ffmpeg/coverage/coverage-final.json,./packages/llm/coverage/coverage-final.json
           flags: ${{ matrix.os }}-node${{ matrix.node-version }}
           name: codecov-${{ matrix.os }}-node${{ matrix.node-version }}
           fail_ci_if_error: false
