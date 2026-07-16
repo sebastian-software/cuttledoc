@@ -165,11 +165,10 @@ export type WhisperLanguage = (typeof WHISPER_LANGUAGES)[number]
 /**
  * Whisper model variants
  *
- * Note: We use large-v3 (full model) instead of distil-large-v3 because
- * Distil-Whisper is English-only: https://huggingface.co/distil-whisper
+ * whisper-coreml currently supports large-v3-turbo exclusively.
  */
 export const WHISPER_MODELS = {
-  "large-v3": "large-v3"
+  "large-v3-turbo": "large-v3-turbo"
 } as const
 
 export type WhisperModel = (typeof WHISPER_MODELS)[keyof typeof WHISPER_MODELS]

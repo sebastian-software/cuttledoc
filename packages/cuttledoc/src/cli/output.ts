@@ -24,7 +24,7 @@ ARGUMENTS:
 OPTIONS:
   -b, --backend <name>    Backend to use: auto, parakeet, whisper, openai (default: auto)
                           - parakeet: Fastest, 25 languages (en, de, fr, es, ...)
-                          - whisper: Best quality, 99 languages (large-v3)
+                          - whisper: Best quality, 99 languages (large-v3-turbo)
                           - openai: Cloud API, best quality, 50+ languages
   -m, --model <name>      OpenAI speech model (requires --backend openai):
                           - gpt-4o-transcribe (default)
@@ -43,7 +43,7 @@ OPTIONS:
 
 LOCAL MODELS (offline, macOS Apple Silicon only):
   parakeet                160 MB, fastest (RTF 0.03), 25 languages
-  whisper                 800 MB, best coverage (RTF 0.07), 99 languages
+  whisper                 ~2.9 GB, best coverage (RTF 0.07), 99 languages
 
   Local backends use CoreML for hardware acceleration (Neural Engine + GPU).
 

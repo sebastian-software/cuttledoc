@@ -138,7 +138,7 @@ cuttledoc models list
 
 # Download speech models
 cuttledoc models download parakeet    # 160 MB, 25 languages
-cuttledoc models download whisper     # 1.6 GB, 99 languages
+cuttledoc models download whisper     # ~2.9 GB, 99 languages
 
 # Download LLM model (for correction/formatting)
 # For Ollama (recommended): ollama pull phi4:14b
@@ -149,10 +149,10 @@ cuttledoc models download whisper     # 1.6 GB, 99 languages
 
 ### Local Backends (Offline, No API Key)
 
-| Backend                    | RTF  | Avg WER | Languages | Size   |
-| -------------------------- | ---- | ------- | --------- | ------ |
-| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB |
-| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | 800 MB |
+| Backend                    | RTF  | Avg WER | Languages | Size    |
+| -------------------------- | ---- | ------- | --------- | ------- |
+| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB  |
+| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | ~2.9 GB |
 
 ### Cloud Backends (Requires API Key)
 
@@ -182,7 +182,7 @@ We chose these three backends for simplicity and reliability:
 **Local (Offline):**
 
 1. **Parakeet v3** – Best speed-to-quality ratio, 25 languages (160 MB, 4x realtime)
-2. **Whisper large-v3-turbo** – Full multilingual model, 99 languages (1.6 GB, ~1x realtime)
+2. **Whisper large-v3-turbo** – Full multilingual model, 99 languages (~2.9 GB, ~1x realtime)
 
 **Cloud (Requires API Key):**
 

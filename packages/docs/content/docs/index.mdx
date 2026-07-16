@@ -120,10 +120,10 @@ _RTF = Real-Time Factor. 0.03 means 10s audio transcribed in 0.3s._
 
 ### Local Backends (macOS Apple Silicon, Offline)
 
-| Backend                    | RTF  | Avg WER | Languages | Size   |
-| -------------------------- | ---- | ------- | --------- | ------ |
-| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB |
-| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | 800 MB |
+| Backend                    | RTF  | Avg WER | Languages | Size    |
+| -------------------------- | ---- | ------- | --------- | ------- |
+| **Parakeet v3** (default)  | 0.03 | 6.4%    | 25        | 160 MB  |
+| **Whisper large-v3-turbo** | 0.07 | 5.1%    | 99        | ~2.9 GB |
 
 ### Cloud Backends (Requires API Key)
 
@@ -140,7 +140,7 @@ cuttledoc models list
 
 # Download speech models
 cuttledoc models download parakeet    # 160 MB, 25 languages
-cuttledoc models download whisper     # 800 MB, 99 languages
+cuttledoc models download whisper     # ~2.9 GB, 99 languages
 
 # LLM models (for correction/formatting)
 # Option 1: Ollama (recommended)

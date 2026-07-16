@@ -137,9 +137,9 @@ export async function downloadModel(backend: BackendType): Promise<void> {
     }
 
     case BACKEND_TYPES.whisper: {
-      const { downloadModel: downloadWhisperModel } = await import("whisper-coreml")
-      // Downloads both bin and CoreML model if available
+      const { downloadCoreMLModel, downloadModel: downloadWhisperModel } = await import("whisper-coreml")
       await downloadWhisperModel()
+      await downloadCoreMLModel()
       return
     }
 

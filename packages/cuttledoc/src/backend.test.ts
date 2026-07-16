@@ -48,6 +48,7 @@ describe("backend", () => {
       expect(whisperBackend).toBeDefined()
       expect(whisperBackend?.isAvailable).toBe(process.platform === "darwin")
       expect(whisperBackend?.requiresDownload).toBe(true)
+      expect(whisperBackend?.models).toEqual(["large-v3-turbo"])
     })
 
     it("should have languages for each backend", () => {
