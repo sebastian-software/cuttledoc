@@ -33,12 +33,12 @@
     "benchmark": "npx tsx scripts/benchmark.ts"
   },
   "dependencies": {
-    "node-llama-cpp": "^3.14.5"
+    "node-llama-cpp": "^3.19.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
-    "typescript": "^5.8.3",
-    "vitest": "^4.0.16"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "keywords": [
     "llm",
