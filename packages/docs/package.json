@@ -7,22 +7,18 @@
     "node": ">=22.22.0"
   },
   "scripts": {
-    "build": "pnpm run generate:seo && react-router build",
-    "dev": "pnpm run generate:seo && react-router dev",
-    "generate:seo": "node scripts/generate-seo-files.js",
+    "build": "react-router build && node scripts/create-pages-fallback.js",
+    "dev": "react-router dev",
+    "preview": "vite preview",
     "start": "serve ./build/client",
-    "test": "node --test scripts/*.test.js",
-    "types:check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
-    "postinstall": "fumadocs-mdx",
+    "test": "pnpm run build && node --test scripts/*.test.js",
+    "types:check": "react-router typegen && tsc --noEmit",
+    "typecheck": "pnpm run types:check",
     "lint": "prettier --check .",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@orama/orama": "^3.1.18",
-    "@react-router/node": "^8.2.0",
-    "fumadocs-core": "16.11.5",
-    "fumadocs-mdx": "15.2.0",
-    "fumadocs-ui": "16.11.5",
+    "ardo": "4.2.0",
     "isbot": "^5.2.1",
     "lucide-react": "^1.24.0",
     "react": "^19.2.7",
@@ -31,13 +27,10 @@
   },
   "devDependencies": {
     "@react-router/dev": "^8.2.0",
-    "@tailwindcss/vite": "^4.3.2",
-    "@types/mdx": "^2.0.14",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "prettier": "^3.9.5",
     "serve": "^14.2.6",
-    "tailwindcss": "^4.3.2",
     "typescript": "^5.9.3",
     "vite": "^8.1.5"
   }

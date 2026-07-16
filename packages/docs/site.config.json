@@ -1,7 +1,0 @@
-{
-  "siteName": "cuttledoc",
-  "siteUrl": "https://sebastian-software.github.io/cuttledoc",
-  "defaultTitle": "cuttledoc - Fast Offline Speech-to-Text for Node.js",
-  "defaultDescription": "Fast, offline speech-to-text transcription library for Node.js with multiple backends and LLM enhancement.",
-  "socialImageAlt": "cuttledoc - Fast offline speech-to-text for Node.js"
-}

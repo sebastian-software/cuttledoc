@@ -1,16 +1,70 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
-
-/* Orange theme for cuttledoc - iPhone 15 Pro style */
-@theme {
-  --color-fd-primary: hsl(24, 95%, 53%);
-  --color-fd-primary-foreground: hsl(0, 0%, 100%);
-  --color-fd-ring: hsl(24, 95%, 53%);
+.cuttledoc-home {
+  width: 100%;
 }
 
-.dark {
-  --color-fd-primary: hsl(24, 95%, 53%);
-  --color-fd-primary-foreground: hsl(0, 0%, 100%);
-  --color-fd-ring: hsl(24, 90%, 45%);
+.cuttledoc-home-section {
+  width: min(72rem, calc(100% - 2rem));
+  margin: 4rem auto;
+}
+
+.cuttledoc-home-section h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.cuttledoc-code-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1.5rem;
+}
+
+.cuttledoc-code-grid pre {
+  min-height: 12rem;
+  margin: 0;
+  padding: 1.5rem;
+  overflow-x: auto;
+  color: #f4f4f5;
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 0.75rem;
+}
+
+.cuttledoc-code-grid p {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.cuttledoc-backends {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cuttledoc-backends li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.cuttledoc-backends img {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.cuttledoc-install {
+  margin: 4rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.cuttledoc-install code {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
 }

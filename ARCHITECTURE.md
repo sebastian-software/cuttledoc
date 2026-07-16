@@ -150,8 +150,8 @@ cuttledoc/
 │   │   └── src/
 │   │       └── index.ts           # Audio decode/preprocess
 │   │
-│   └── docs/               # Documentation website
-│       └── content/docs/          # MDX documentation pages
+│   └── docs/               # ARDO documentation website
+│       └── app/routes/docs/       # Route-native MDX documentation pages
 ```
 
 ## Data Flow

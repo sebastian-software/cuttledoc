@@ -31,8 +31,9 @@ coverage/
 .env.local
 .env.*.local
 
-# TypeDoc generated
-packages/docs/src/content/api/
+# ARDO and React Router generated files
+packages/docs/app/routes.ts
+packages/docs/.react-router/
 tsconfig.tsbuildinfo
 
 # Turbo

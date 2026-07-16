@@ -37,5 +37,5 @@ pnpm --filter @cuttledoc/llm benchmark:tts
 The benchmark uses Parakeet for most fixture languages and Whisper for French,
 then evaluates correction quality and processing speed for every configured
 model. Current published results and model recommendations live in the
-[benchmark documentation](../../docs/content/docs/benchmarks.mdx); do not infer
+[benchmark documentation](../../docs/app/routes/docs/benchmarks.mdx); do not infer
 recommendations from a single local run.
