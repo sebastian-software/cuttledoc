@@ -1,6 +1,10 @@
 packages:
   - "packages/*"
 
+# Keep optional tooling peers on the same Node API surface as the workspace.
+overrides:
+  "@types/node": 22.20.1
+
 allowBuilds:
   esbuild: true
   node-llama-cpp: true
