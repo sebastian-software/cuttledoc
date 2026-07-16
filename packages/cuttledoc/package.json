@@ -36,8 +36,8 @@
     "benchmark:local": "npx tsx scripts/benchmark.ts --local",
     "benchmark:cloud": "npx tsx scripts/benchmark.ts --cloud",
     "fixtures:download": "python fixtures/download-samples.py",
-    "release": "release-it --npm.otp=$(op item get 'npmjs' --otp)",
-    "release:auto": "release-it --ci --npm.otp=$(op item get 'npmjs' --otp)",
+    "release": "release-it",
+    "release:auto": "release-it --ci",
     "release:dry": "release-it --dry-run"
   },
   "keywords": [
@@ -54,6 +54,11 @@
     "name": "Sebastian Werner",
     "email": "s.werner@sebastian-software.de",
     "url": "https://sebastian-software.de"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebastian-software/cuttledoc.git",
+    "directory": "packages/cuttledoc"
   },
   "license": "MIT",
   "dependencies": {
