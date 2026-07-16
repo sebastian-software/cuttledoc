@@ -1,15 +1,48 @@
-import { reactRouter } from '@react-router/dev/vite'
-import tailwindcss from '@tailwindcss/vite'
+import { ardo } from 'ardo/vite'
 import { defineConfig } from 'vite'
-import mdx from 'fumadocs-mdx/vite'
-import * as MdxConfig from './source.config'
-
-const basePath = process.env.BASE_PATH?.replace(/\/?$/, '/') || '/'
 
 export default defineConfig({
-  base: basePath,
-  resolve: {
-    tsconfigPaths: true
-  },
-  plugins: [mdx(MdxConfig), tailwindcss(), reactRouter()]
+  plugins: [
+    ardo({
+      title: 'cuttledoc',
+      description:
+        'Fast, offline speech-to-text transcription library for Node.js with multiple backends and LLM enhancement.',
+      siteUrl: 'https://sebastian-software.github.io',
+      brand: {
+        color: 'orange',
+        accent: 'amber',
+        neutral: 'slate',
+        logo: './app/assets/logo.svg'
+      },
+      metadata: {
+        image: 'https://sebastian-software.github.io/cuttledoc/og-image.png',
+        ogType: 'website',
+        twitterCard: 'summary_large_image'
+      },
+      sidebar: {
+        sectionOrder: ['docs']
+      },
+      seo: {
+        sitemap: { changefreq: 'weekly', priority: 0.7 },
+        robots: { allow: ['/'] },
+        llms: {
+          title: 'cuttledoc documentation',
+          description: 'Guides and API reference for cuttledoc.',
+          includeFull: true
+        }
+      },
+      linkCheck: { level: 'error' },
+      validation: {
+        frontmatter: { invalid: 'error', unknown: 'error' }
+      },
+      icons: { source: './app/assets/logo.svg' },
+      githubPages: true,
+      project: {
+        name: 'cuttledoc',
+        homepage: 'https://sebastian-software.github.io/cuttledoc/',
+        repository: 'https://github.com/sebastian-software/cuttledoc',
+        license: 'MIT'
+      }
+    })
+  ]
 })

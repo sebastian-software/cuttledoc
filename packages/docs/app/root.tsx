@@ -1,89 +1,75 @@
-import { RootProvider } from 'fumadocs-ui/provider/react-router'
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
-
-import type { Route } from './+types/root'
-
+import {
+  ArdoErrorBoundary,
+  ArdoFooter,
+  ArdoGeneratedSidebar,
+  ArdoHeader,
+  ArdoHeaderActions,
+  ArdoNav,
+  ArdoNavLink,
+  ArdoRoot,
+  ArdoRootLayout,
+  ArdoSidebar,
+  ArdoSidebarSection,
+  ArdoSocialLink
+} from 'ardo/ui'
+import config from 'virtual:ardo/config'
+import type { MetaFunction } from 'react-router'
+import 'ardo/ui/styles.css'
 import './app.css'
-import SearchDialog from './components/search'
-import { createSeoMeta, siteConfig } from './lib/seo'
+import { createSeoMetaForPath } from './seo'
 
-export function meta({ location, error }: Route.MetaArgs) {
-  if (error) {
-    const notFound = isRouteErrorResponse(error) && error.status === 404
-
-    return [
-      ...createSeoMeta({
-        title: `${notFound ? 'Page Not Found' : 'Error'} | ${siteConfig.siteName}`,
-        description: notFound
-          ? 'The requested cuttledoc documentation page could not be found.'
-          : 'An unexpected error occurred while loading the cuttledoc documentation.',
-        pathname: location.pathname
-      }),
-      { name: 'robots', content: 'noindex' }
-    ]
-  }
-
-  return []
-}
-
-export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: `${import.meta.env.BASE_URL}favicon.ico` },
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-  {
-    rel: 'preconnect',
-    href: 'https://fonts.gstatic.com',
-    crossOrigin: 'anonymous'
-  },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'
-  }
-]
+export const meta: MetaFunction = ({ location }) => createSeoMetaForPath(location.pathname)
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  return <ArdoRootLayout>{children}</ArdoRootLayout>
+}
+
+export function ErrorBoundary() {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
-      </head>
-      <body className="flex flex-col min-h-screen">
-        <RootProvider search={{ SearchDialog }}>{children}</RootProvider>
-        <ScrollRestoration />
-        <Scripts />
-      </body>
-    </html>
+    <ArdoErrorBoundary
+      notFound={{
+        title: 'Page Not Found',
+        description: 'The requested cuttledoc documentation page could not be found.'
+      }}
+      error={{
+        title: 'Something went wrong',
+        description: 'An unexpected error occurred while loading the cuttledoc documentation.'
+      }}
+    />
   )
 }
 
-export default function App() {
-  return <Outlet />
-}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = 'Oops!'
-  let details = 'An unexpected error occurred.'
-  let stack: string | undefined
-
-  if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? '404' : 'Error'
-    details = error.status === 404 ? 'The requested page could not be found.' : error.statusText || details
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message
-    stack = error.stack
-  }
-
+export default function Root() {
   return (
-    <main className="pt-16 p-4 w-full max-w-[1400px] mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
+    <ArdoRoot
+      config={config}
+      editLink={{
+        pattern: 'https://github.com/sebastian-software/cuttledoc/edit/main/packages/docs/app/routes/:path',
+        text: 'Edit this page on GitHub'
+      }}
+      lastUpdated={{ enabled: true, text: 'Last updated' }}
+    >
+      <ArdoHeader searchPlaceholder="Search cuttledoc documentation...">
+        <ArdoNav>
+          <ArdoNavLink to="/docs">Documentation</ArdoNavLink>
+          <ArdoNavLink to="/docs/api">API</ArdoNavLink>
+        </ArdoNav>
+        <ArdoHeaderActions>
+          <ArdoSocialLink href="https://github.com/sebastian-software/cuttledoc" icon="github" />
+        </ArdoHeaderActions>
+      </ArdoHeader>
+
+      <ArdoSidebar>
+        <ArdoSidebarSection id="docs" label="Documentation" to="/docs">
+          <ArdoGeneratedSidebar section="docs" />
+        </ArdoSidebarSection>
+      </ArdoSidebar>
+
+      <ArdoFooter
+        sponsor={{ text: 'Sebastian Software', link: 'https://oss.sebastian-software.com' }}
+        message="Released under the MIT License."
+        copyright="Copyright 2026 Sebastian Software GmbH"
+      />
+    </ArdoRoot>
   )
 }

@@ -1,4 +1,0 @@
-{
-  "title": "Documentation",
-  "pages": ["index", "cli", "backends", "models", "llm", "benchmarks", "troubleshooting", "api"]
-}

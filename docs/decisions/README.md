@@ -19,6 +19,7 @@ ADRs preserve the context, reasoning, and trade-offs behind major decisions. The
 | ----------------------------------------------------- | ---------------------------------------------------- | ---------- | -------- |
 | [001](./001-remove-python-asr-backends.md)            | Removal of Python-based ASR Backends (Phi-4, Canary) | 2025-01-01 | Accepted |
 | [002](./002-evaluate-next-generation-asr-backends.md) | Evaluate next-generation open-weight ASR backends    | 2026-07-16 | Accepted |
+| [003](./003-migrate-documentation-to-ardo.md)         | Migrate documentation from Fumadocs to ARDO          | 2026-07-16 | Accepted |
 
 ## Template
 

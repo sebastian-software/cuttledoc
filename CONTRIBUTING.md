@@ -100,6 +100,11 @@ pnpm lint:fix
 
 # Type check
 pnpm typecheck
+
+# Develop and verify the ARDO documentation site
+pnpm docs:dev
+pnpm docs:build
+pnpm --filter @cuttledoc/docs test
 ```
 
 ### Coding Standards

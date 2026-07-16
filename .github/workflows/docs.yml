@@ -25,23 +25,13 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build docs
         run: pnpm --filter @cuttledoc/docs build
-        env:
-          BASE_PATH: /cuttledoc/
-
-      - name: Prepare deployment
-        run: |
-          # React Router 8 writes the SPA fallback to the client root; preserve it before moving prerendered pages
-          cp packages/docs/build/client/index.html packages/docs/build/client/404.html
-          # React Router prerenders to basename subfolder, move to root for GitHub Pages
-          cp -r packages/docs/build/client/cuttledoc/. packages/docs/build/client/
-          rm -rf packages/docs/build/client/cuttledoc
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
