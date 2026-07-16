@@ -69,8 +69,10 @@ jobs:
           files: ./packages/cuttledoc/coverage/coverage-final.json,./packages/ffmpeg/coverage/coverage-final.json,./packages/llm/coverage/coverage-final.json
           flags: ${{ matrix.os }}-node${{ matrix.node-version }}
           name: codecov-${{ matrix.os }}-node${{ matrix.node-version }}
-          fail_ci_if_error: true
-          use_oidc: true
+          # Fork PRs cannot receive an OIDC token, but Codecov supports
+          # best-effort tokenless uploads for public-repository forks.
+          fail_ci_if_error: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+          use_oidc: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
 
   build:
     name: Build (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
