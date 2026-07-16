@@ -34,11 +34,11 @@ jobs:
 
       - name: Prepare deployment
         run: |
+          # React Router 8 writes the SPA fallback to the client root; preserve it before moving prerendered pages
+          cp packages/docs/build/client/index.html packages/docs/build/client/404.html
           # React Router prerenders to basename subfolder, move to root for GitHub Pages
           cp -r packages/docs/build/client/cuttledoc/. packages/docs/build/client/
           rm -rf packages/docs/build/client/cuttledoc
-          # GitHub Pages serves this shell for unknown paths so React Router can render its 404 boundary
-          cp packages/docs/build/client/__spa-fallback.html packages/docs/build/client/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
