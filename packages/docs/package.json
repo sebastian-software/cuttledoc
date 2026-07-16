@@ -38,7 +38,7 @@
     "prettier": "^3.9.5",
     "serve": "^14.2.6",
     "tailwindcss": "^4.3.2",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vite": "^8.1.5"
   }
 }
