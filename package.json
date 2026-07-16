@@ -8,7 +8,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "node scripts/check-pnpm-maturity-exclusions.mjs && turbo run lint",
+    "lint": "node scripts/check-pnpm-maturity-exclusions.mjs && node scripts/check-package-licenses.mjs && turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

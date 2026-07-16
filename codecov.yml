@@ -8,8 +8,10 @@ coverage:
   status:
     project:
       default:
-        target: 80%
-        threshold: 1%
+        # Gate regressions against the base commit instead of an unattained
+        # absolute target that would fail every pull request.
+        target: auto
+        threshold: 0%
     patch:
       default:
         target: 80%

@@ -21,7 +21,8 @@
   "files": [
     "dist",
     "binary",
-    "scripts/install.js"
+    "scripts/install.js",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
