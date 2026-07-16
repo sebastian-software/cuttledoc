@@ -7,7 +7,7 @@ We're here to help! Here are the best ways to get support for cuttledoc.
 - **[Full Documentation](https://sebastian-software.github.io/cuttledoc/)** - Complete API reference and guides
 - **[README.md](../README.md)** - Quick start and overview
 - **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Development setup and guidelines
-- **[DECISIONS.md](../DECISIONS.md)** - Architecture decision records
+- **[Architecture Decision Records](../docs/decisions/)** - Significant technical decisions
 
 ## 🐛 Bug Reports
 
