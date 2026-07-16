@@ -48,7 +48,7 @@ interface BackendConfig {
 
 const BACKENDS: BackendConfig[] = [
   { name: "Parakeet v3", type: "local", backendId: "parakeet" },
-  { name: "Whisper large-v3", type: "local", backendId: "whisper" },
+  { name: "Whisper large-v3-turbo", type: "local", backendId: "whisper" },
   { name: "gpt-4o-transcribe", type: "cloud", backendId: "openai", model: "gpt-4o-transcribe" },
   { name: "gpt-4o-mini-transcribe", type: "cloud", backendId: "openai", model: "gpt-4o-mini-transcribe" }
 ]
