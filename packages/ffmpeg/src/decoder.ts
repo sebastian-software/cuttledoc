@@ -133,20 +133,37 @@ async function decodeToFile(executable: string, args: string[], outputPath: stri
   }
 }
 
-function toFloat32Samples(pcm: Buffer): Float32Array {
+/** @internal Convert PCM bytes without exposing unrelated Buffer pool storage. */
+export function toFloat32Samples(pcm: Buffer): Float32Array {
   if (pcm.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
     throw new Error(`FFmpeg returned ${String(pcm.byteLength)} bytes of incomplete f32le audio`)
   }
 
-  if (pcm.byteOffset % Float32Array.BYTES_PER_ELEMENT === 0) {
+  const hasExactBackingBuffer = pcm.byteOffset === 0 && pcm.byteLength === pcm.buffer.byteLength
+  if (hasExactBackingBuffer) {
     return new Float32Array(pcm.buffer, pcm.byteOffset, pcm.byteLength / Float32Array.BYTES_PER_ELEMENT)
   }
 
-  // readFile buffers are normally aligned. Preserve correctness without an
-  // unconditional full-size copy if a custom Buffer implementation is not.
+  // Small Buffers can be views into Node's shared allocation pool. Copy those
+  // views so samples.buffer contains exactly the decoded audio bytes.
   const alignedBytes = new Uint8Array(pcm.byteLength)
   alignedBytes.set(pcm)
   return new Float32Array(alignedBytes.buffer)
+}
+
+type DirectoryRemover = (directory: string, options: { recursive: true; force: true }) => Promise<void>
+
+/** @internal Remove temporary data without replacing the decode outcome. */
+export async function cleanupTemporaryDirectory(
+  directory: string,
+  removeDirectory: DirectoryRemover = rm
+): Promise<void> {
+  try {
+    await removeDirectory(directory, { recursive: true, force: true })
+  } catch {
+    // Cleanup is best-effort. It must not replace a useful FFmpeg error or
+    // discard successfully decoded audio.
+  }
 }
 
 /**
@@ -204,7 +221,7 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
         durationSeconds
       }
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true })
+      await cleanupTemporaryDirectory(temporaryDirectory)
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
