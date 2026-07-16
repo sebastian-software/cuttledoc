@@ -1,319 +1,241 @@
 ---
 title: API Reference
-description: Complete API documentation for cuttledoc
+description: Public APIs for transcription and LLM enhancement
 ---
 
-The cuttledoc API provides functions for speech-to-text transcription with multiple backends and optional LLM enhancement.
+cuttledoc exposes two packages:
 
-## Core Functions
+- `cuttledoc` transcribes audio and video files.
+- `@cuttledoc/llm` corrects or formats transcript text.
 
-### transcribe()
+The CLI combines both packages, but the library APIs remain independent.
 
-The main transcription function. Transcribes audio files to text.
+## Transcription
+
+### `transcribe()`
 
 ```typescript
 import { transcribe } from 'cuttledoc'
 
-const result = await transcribe('audio.mp3', {
-  language: 'en',
-  backend: 'auto'
+const result = await transcribe('meeting.m4a', {
+  backend: 'auto',
+  language: 'de'
 })
 
 console.log(result.text)
-console.log(`Duration: ${result.durationSeconds}s`)
+console.log(result.segments)
 ```
-
-#### Parameters
-
-| Parameter   | Type                | Description                     |
-| ----------- | ------------------- | ------------------------------- |
-| `audioPath` | `string`            | Path to the audio file          |
-| `options?`  | `TranscribeOptions` | Optional transcription settings |
-
-#### Returns
-
-`Promise<TranscriptionResult>` - The transcription result with text, segments, and metadata.
-
----
-
-### getAvailableBackends()
-
-Returns information about all available backends on the current system.
 
 ```typescript
-import { getAvailableBackends } from 'cuttledoc'
-
-const backends = getAvailableBackends()
-for (const backend of backends) {
-  console.log(`${backend.name}: ${backend.isAvailable ? '✓' : '✗'}`)
-}
+function transcribe(audioPath: string, options?: TranscribeOptions): Promise<TranscriptionResult>
 ```
 
----
+Automatic backend selection uses Parakeet or Whisper on macOS. On Linux and Windows it selects OpenAI when an API key is available and otherwise throws an actionable error.
 
-### setBackend() / getBackend()
+#### `TranscribeOptions`
 
-Set or get the default transcription backend.
+| Option       | Type                               | Default       | Description                                      |
+| ------------ | ---------------------------------- | ------------- | ------------------------------------------------ |
+| `backend`    | `BackendType`                      | `'auto'`      | Transcription backend                            |
+| `language`   | `string`                           | auto-detected | Language code such as `de` or `en-US`            |
+| `onProgress` | `(partial: PartialResult) => void` | —             | Receives partial transcription results           |
+| `apiKey`     | `string`                           | environment   | OpenAI key; `OPENAI_API_KEY` is also supported   |
+| `model`      | `string`                           | backend       | Backend-specific model; currently used by OpenAI |
 
-```typescript
-import { setBackend, getBackend } from 'cuttledoc'
+For OpenAI, `model` accepts `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`.
 
-setBackend('parakeet') // Use Parakeet (fastest)
-console.log(getBackend()) // "parakeet"
-```
-
----
-
-### selectBestBackend()
-
-Auto-select the best available backend for the current platform and a given language. macOS uses the local CoreML
-backends. Linux and Windows use OpenAI when an API key is configured and otherwise return an actionable error.
-
-```typescript
-import { selectBestBackend } from 'cuttledoc'
-
-const best = selectBestBackend('de')
-```
-
----
-
-### downloadModel()
-
-Download models for a specific backend.
-
-```typescript
-import { downloadModel } from 'cuttledoc'
-
-await downloadModel('parakeet') // Downloads Parakeet CoreML models
-await downloadModel('whisper') // Downloads Whisper CoreML models
-```
-
----
-
-### cleanup()
-
-Clean up all cached backend instances and free resources.
-
-```typescript
-import { cleanup } from 'cuttledoc'
-
-await cleanup()
-```
-
-## LLM Enhancement
-
-### enhanceTranscript()
-
-Enhance raw transcripts with formatting, corrections, and structure.
-
-```typescript
-import { enhanceTranscript } from '@cuttledoc/llm'
-
-const result = await transcribe('podcast.mp3')
-const enhanced = await enhanceTranscript(result.text)
-
-console.log(enhanced.markdown)
-console.log(`Corrections: ${enhanced.stats.correctionsCount}`)
-```
-
-#### Options
-
-| Option        | Type                     | Default         | Description            |
-| ------------- | ------------------------ | --------------- | ---------------------- |
-| `model`       | `LLMModelId`             | `"gemma3n:e4b"` | Model to use           |
-| `mode`        | `"enhance" \| "correct"` | `"enhance"`     | Processing mode        |
-| `temperature` | `number`                 | `0.3`           | Generation temperature |
-| `gpuLayers`   | `number`                 | `-1`            | GPU layers (-1 = all)  |
-
----
-
-### LLMProcessor
-
-Class for more control over LLM processing.
-
-```typescript
-import { LLMProcessor } from '@cuttledoc/llm'
-
-const processor = new LLMProcessor({
-  model: 'gemma3n:e4b',
-  gpuLayers: -1
-})
-
-await processor.initialize()
-const result = await processor.enhance(rawText)
-await processor.dispose()
-```
-
----
-
-### downloadModel()
-
-Download an LLM model.
-
-```typescript
-import { downloadModel } from '@cuttledoc/llm'
-
-await downloadModel('gemma3n:e4b', {
-  onProgress: (progress) => console.log(`${progress}%`)
-})
-```
-
----
-
-### isModelDownloaded()
-
-Check if an LLM model is already downloaded.
-
-```typescript
-import { isModelDownloaded } from '@cuttledoc/llm'
-
-if (!isModelDownloaded('gemma3n:e4b')) {
-  await downloadModel('gemma3n:e4b')
-}
-```
-
-## Types
-
-### TranscribeOptions
-
-```typescript
-interface TranscribeOptions {
-  language?: string // Language code (e.g., 'de', 'en-US')
-  backend?: BackendType // Override default backend
-  onProgress?: (partial: PartialResult) => void
-}
-```
-
-### TranscriptionResult
+#### `TranscriptionResult`
 
 ```typescript
 interface TranscriptionResult {
-  text: string // Full transcribed text
+  text: string
   segments: readonly TranscriptionSegment[]
-  words?: readonly WordTimestamp[] // Parakeet/Canary only
+  words?: readonly WordTimestamp[] // Parakeet only
   durationSeconds: number
   processingTimeSeconds: number
   language: string
   backend: BackendType
 }
-```
 
-### TranscriptionSegment
-
-```typescript
 interface TranscriptionSegment {
   text: string
   startSeconds: number
   endSeconds: number
   confidence?: number
 }
-```
 
-### BackendType
+interface WordTimestamp {
+  word: string
+  startSeconds: number
+  endSeconds: number
+  confidence?: number
+}
 
-```typescript
-type BackendType = 'auto' | 'parakeet' | 'whisper' | 'openai'
-```
-
-### LLMProcessResult
-
-```typescript
-interface LLMProcessResult {
-  markdown: string // Formatted markdown
-  plainText: string // Plain text version
-  corrections: Array<{
-    original: string
-    corrected: string
-  }>
-  stats: {
-    inputTokens: number
-    outputTokens: number
-    tokensPerSecond: number
-    processingTimeSeconds: number
-    paragraphCount: number
-    correctionsCount: number
-  }
+interface PartialResult {
+  text: string
+  isFinal: boolean
 }
 ```
 
-## Constants
-
-### BACKEND_TYPES
-
-Available backend types.
+### Backend selection
 
 ```typescript
-const BACKEND_TYPES = {
-  auto: 'auto',
-  parakeet: 'parakeet',
-  whisper: 'whisper',
-  openai: 'openai'
-} as const
+import { getAvailableBackends, getBackend, selectBestBackend, setBackend } from 'cuttledoc'
+
+setBackend('whisper')
+console.log(getBackend()) // 'whisper'
+
+const selected = selectBestBackend('de')
+const available = getAvailableBackends()
 ```
 
-### PARAKEET_LANGUAGES
+| Function                                | Returns                  | Purpose                                      |
+| --------------------------------------- | ------------------------ | -------------------------------------------- |
+| `setBackend(backend)`                   | `void`                   | Sets the process-wide default backend        |
+| `getBackend()`                          | `BackendType`            | Gets the current process-wide default        |
+| `selectBestBackend(language?, apiKey?)` | `BackendType`            | Selects a backend for the platform and input |
+| `getAvailableBackends()`                | `readonly BackendInfo[]` | Describes all supported backends             |
 
-25 supported languages for Parakeet.
+`BackendInfo.isAvailable` reports platform availability. OpenAI still requires a valid API key when used.
+
+### Model management
 
 ```typescript
-const PARAKEET_LANGUAGES = [
-  'en',
-  'de',
-  'es',
-  'fr',
-  'it',
-  'pl',
-  'pt',
-  'nl',
-  'uk',
-  'el',
-  'ro',
-  'ru',
-  'hu',
-  'cs',
-  'sv',
-  'fi',
-  'da',
-  'no',
-  'bg',
-  'hr',
-  'sk',
-  'sl',
-  'lt',
-  'lv',
-  'et'
-] as const
+import { cleanup, downloadModel, isModelDownloaded } from 'cuttledoc'
+
+await downloadModel('parakeet')
+const ready = await isModelDownloaded('parakeet')
+
+// Dispose cached backend instances before process shutdown when needed.
+await cleanup()
 ```
 
-### WHISPER_LANGUAGES
+`downloadModel()` and `isModelDownloaded()` accept a `BackendType`. Pass a concrete local backend; `'auto'` cannot identify a downloadable model. OpenAI requires no local download.
 
-99 supported languages for Whisper (subset shown).
+### Core exports
+
+| Export                                                                 | Kind           |
+| ---------------------------------------------------------------------- | -------------- |
+| `BACKEND_TYPES`                                                        | Constant       |
+| `PARAKEET_MODELS`, `WHISPER_MODELS`, `OPENAI_TRANSCRIBE_MODELS`        | Constants      |
+| `COREML_MODELS`, `COREML_MODEL_TYPES`                                  | Constants      |
+| `Backend`, `BackendInfo`, `BackendOptions`, `BackendType`              | Types          |
+| `ParakeetModel`, `WhisperModel`, `OpenAITranscribeModel`               | Types          |
+| `TranscribeOptions`, `TranscriptionResult`, `TranscriptionSegment`     | Types          |
+| `PartialResult`, `WordTimestamp`, `CoreMLModelInfo`, `CoreMLModelType` | Types          |
+| `LOCAL_MODELS`, `LocalModelId`                                         | LLM re-exports |
+| `downloadLLMModel`, `isLLMModelDownloaded`                             | LLM aliases    |
+
+The LLM aliases avoid collisions with the transcription package's own model-management functions.
+
+## LLM enhancement
+
+### `enhanceTranscript()`
 
 ```typescript
-const WHISPER_LANGUAGES = [
-  'en',
-  'zh',
-  'de',
-  'es',
-  'ru',
-  'ko',
-  'fr',
-  'ja',
-  'pt',
-  'tr'
-  // ... 89 more languages
-] as const
+import { enhanceTranscript } from '@cuttledoc/llm'
+
+const result = await enhanceTranscript(rawTranscript, {
+  provider: 'ollama',
+  model: 'phi4:14b',
+  mode: 'correct'
+})
+
+console.log(result.markdown)
+console.log(result.stats.model)
 ```
 
-### LLM_MODELS
+```typescript
+function enhanceTranscript(transcript: string, options?: EnhanceOptions): Promise<EnhanceResult>
+```
 
-Available LLM models for transcript enhancement.
+When `provider` is omitted, detection tries Ollama, then OpenAI, then the embedded local provider. Model defaults are provider-specific: Ollama uses `phi4:14b`, local GGUF uses `gemma3n:e4b`, and OpenAI uses its own default.
 
-| Model              | RAM  | Description             |
-| ------------------ | ---- | ----------------------- |
-| `gemma3n:e4b`      | 3GB  | Best quality/size ratio |
-| `gemma3n:e2b`      | 2GB  | Ultra-efficient         |
-| `gemma3:4b`        | 4GB  | Stable, 140 languages   |
-| `gemma3:12b`       | 8GB+ | Higher quality          |
-| `qwen2.5:3b`       | 3GB  | Excellent for German    |
-| `deepseek-r1:1.5b` | 2GB  | Fast reasoning          |
+#### `EnhanceOptions`
+
+| Option        | Type          | Default       | Description                             |
+| ------------- | ------------- | ------------- | --------------------------------------- |
+| `provider`    | `LLMProvider` | auto-detected | LLM provider                            |
+| `model`       | `string`      | provider      | Provider-specific model                 |
+| `mode`        | `ProcessMode` | `'correct'`   | Correct text or add Markdown structure  |
+| `temperature` | `number`      | `0.3`         | Generation temperature                  |
+| `apiKey`      | `string`      | environment   | OpenAI key                              |
+| `modelPath`   | `string`      | cache         | Custom GGUF path for the local provider |
+| `gpuLayers`   | `number`      | `-1`          | GGUF layers offloaded to the GPU        |
+| `contextSize` | `number`      | model         | GGUF context-size override              |
+
+#### `EnhanceResult`
+
+```typescript
+interface EnhanceResult {
+  markdown: string
+  plainText: string
+  stats: {
+    processingTimeSeconds: number
+    inputTokens: number
+    outputTokens: number
+    tokensPerSecond: number
+    correctionsCount: number
+    paragraphCount: number
+    provider: LLMProvider
+    model: string
+  }
+  corrections: Correction[]
+}
+
+interface Correction {
+  original: string
+  corrected: string
+}
+```
+
+### Provider detection
+
+```typescript
+import { detectProvider, isLLMAvailable } from '@cuttledoc/llm'
+
+const provider = await detectProvider()
+const available = await isLLMAvailable()
+```
+
+| Function           | Returns                          | Purpose                                |
+| ------------------ | -------------------------------- | -------------------------------------- |
+| `detectProvider()` | `Promise<LLMProvider>` or `null` | Finds the first available provider     |
+| `isLLMAvailable()` | `Promise<boolean>`               | Reports whether any provider is usable |
+
+### Provider-specific APIs
+
+| Provider | Processor         | Convenience function | Availability helpers                                    |
+| -------- | ----------------- | -------------------- | ------------------------------------------------------- |
+| Ollama   | `OllamaProcessor` | `enhanceWithOllama`  | `isOllamaRunning`, `hasOllamaModel`, `listOllamaModels` |
+| OpenAI   | `OpenAIProcessor` | `enhanceWithOpenAI`  | `hasOpenAIKey`                                          |
+| Local    | `LocalProcessor`  | `enhanceWithLocal`   | `hasModelsDirectory`, `isModelDownloaded`               |
+
+Use `LocalProcessor.initialize()` before processing and `dispose()` afterward. `enhanceTranscript()` manages that lifecycle automatically.
+
+### Local model management
+
+```typescript
+import { downloadModel, isModelDownloaded, LOCAL_MODELS } from '@cuttledoc/llm'
+
+if (!isModelDownloaded('gemma3n:e4b')) {
+  await downloadModel('gemma3n:e4b', {
+    onProgress: (progress) => console.log(Math.round(progress * 100))
+  })
+}
+
+console.log(LOCAL_MODELS['gemma3n:e4b'])
+```
+
+The LLM `downloadModel()` function downloads GGUF models to the stable per-user cache documented in the [LLM guide](/docs/llm).
+
+### LLM exports
+
+| Export                                                                         | Kind      |
+| ------------------------------------------------------------------------------ | --------- |
+| `LOCAL_MODELS`, `OLLAMA_MODELS`, `OPENAI_MODELS`, `PROCESS_MODES`              | Constants |
+| `LLMProvider`, `LocalModelId`, `OllamaModelId`, `OpenAIModelId`, `ProcessMode` | Types     |
+| `EnhanceOptions`, `EnhanceResult`, `Correction`, `ChunkedEnhanceOptions`       | Types     |
+| `DEFAULT_CHUNK_SIZE`, `splitTranscriptIntoChunks`                              | Chunking  |
+| `TRANSCRIPT_CORRECTION_PROMPT`, `TRANSCRIPT_FORMAT_PROMPT`                     | Prompts   |
+| `countParagraphs`, `findCorrections`, `stripMarkdown`                          | Utilities |
