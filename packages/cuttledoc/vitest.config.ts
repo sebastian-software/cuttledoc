@@ -25,9 +25,6 @@ export default defineConfig({
         // CLI entry point - integration test territory (process.exit, console I/O)
         "src/cli/index.ts",
 
-        // Entry point - mostly re-exports and backend orchestration
-        "src/index.ts",
-
         // Native backends - require actual native modules (parakeet-coreml, whisper-coreml)
         "src/backends/**"
       ]
