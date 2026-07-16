@@ -5,270 +5,232 @@
 <h1 align="center">cuttledoc</h1>
 
 <p align="center">
-  <strong>Fast speech-to-text transcription for Node.js with multiple backend support (local + cloud).</strong>
+  <strong>Turn audio and video into accurate, ready-to-use text.</strong>
 </p>
 
-[![CI](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/sebastian-software/cuttledoc/branch/main/graph/badge.svg)](https://codecov.io/gh/sebastian-software/cuttledoc)
-[![npm version](https://badge.fury.io/js/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
-[![npm downloads](https://img.shields.io/npm/dm/cuttledoc.svg)](https://www.npmjs.com/package/cuttledoc)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-22%2B-green.svg)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-10%2B-orange.svg)](https://pnpm.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Platform](<https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon)-lightgrey.svg>)](https://github.com/sebastian-software/cuttledoc)
+<p align="center">
+  A Node.js CLI and TypeScript library for private local transcription on Apple Silicon<br>
+  or cloud transcription with OpenAI — with optional AI correction and Markdown formatting.
+</p>
 
-## Features
+<p align="center">
+  <a href="https://sebastian-software.github.io/cuttledoc/">Documentation</a> ·
+  <a href="https://sebastian-software.github.io/cuttledoc/docs/cli">CLI reference</a> ·
+  <a href="https://sebastian-software.github.io/cuttledoc/docs/backends">Choose a backend</a> ·
+  <a href="https://sebastian-software.github.io/cuttledoc/docs/benchmarks">Benchmarks</a>
+</p>
 
-- 🎤 **Multiple Backends**: Local (Whisper, Parakeet) and Cloud (OpenAI gpt-4o-transcribe)
-- 🚀 **Native Performance**: Pure Node.js, no Python required
-- 📱 **Offline & Online**: Choose between local processing or cloud API
-- 🎬 **Video Support**: Extract audio from MP4, WebM, MKV
-- 🤖 **LLM Correction**: Auto-correct transcripts with gemma3n:e4b by default (+41% WER improvement)
-- 📊 **Detailed Stats**: Processing time, word count, confidence scores
+<p align="center">
+  <a href="https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml"><img src="https://github.com/sebastian-software/cuttledoc/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://www.npmjs.com/package/cuttledoc"><img src="https://img.shields.io/npm/v/cuttledoc.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/cuttledoc"><img src="https://img.shields.io/npm/dm/cuttledoc.svg" alt="npm downloads"></a>
+  <a href="https://codecov.io/gh/sebastian-software/cuttledoc"><img src="https://codecov.io/gh/sebastian-software/cuttledoc/branch/main/graph/badge.svg" alt="code coverage"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+</p>
 
-## Installation
+```bash
+npx cuttledoc meeting.m4a --language de --format --output meeting-notes.md
+```
+
+The result is a complete transcript with corrected punctuation and readable Markdown structure — not a summary. Use `--no-correct` when you want the raw speech-to-text output instead.
+
+## Why cuttledoc?
+
+- **From recording to document in one workflow.** Read common audio and video formats, extract and resample audio automatically, then write plain text or Markdown.
+- **Keep sensitive recordings private.** Parakeet and Whisper run fully offline through CoreML on Apple Silicon.
+- **Stay in the Node.js ecosystem.** Use the CLI or a typed API with no Python runtime or sidecar service.
+- **Choose speed, language coverage, or convenience.** Switch between local Parakeet, local Whisper, and OpenAI without changing your application flow.
+- **Clean up more than punctuation.** Optional LLM post-processing corrects common recognition errors and can add paragraphs, headings, and lists while preserving the original language and content.
+- **Make evidence-based tradeoffs.** Reproducible benchmarks compare accuracy and speed, and the CLI can evaluate models against your own recordings.
+
+cuttledoc is a good fit for meeting notes, interviews, podcasts, research recordings, video archives, support calls, and Node.js products that need transcription as a feature.
+
+## Quick start
+
+### Private local transcription on Apple Silicon
+
+Requires Node.js 22+ and macOS on Apple Silicon.
 
 ```bash
 npm add cuttledoc
-# or
-pnpm add cuttledoc
+
+# Download the compact, fast local speech model once
+npx cuttledoc models download parakeet
+
+# Create a polished Markdown transcript
+npx cuttledoc interview.mp4 --language en --format --output interview.md
 ```
 
-### Requirements
+LLM correction is enabled by default. Without Ollama or an OpenAI API key, the embedded correction model downloads automatically on first use. If you only need raw transcription, add `--no-correct` to skip that download and processing step.
 
-- macOS with Apple Silicon (M1/M2/M3/M4)
-- Node.js 22+
-- ~2GB disk space for models
+### Cloud transcription on macOS, Linux, or Windows
 
-## Quick Start
-
-### CLI
+OpenAI needs no local speech model. Audio is uploaded to the OpenAI transcription API.
 
 ```bash
-# Basic transcription with LLM correction (default)
-npx cuttledoc video.mp4
-
-# Raw STT output without LLM correction
-npx cuttledoc video.mp4 --no-correct
-
-# With formatting (paragraphs, headings, markdown)
-npx cuttledoc podcast.mp3 -f -o transcript.md
-
-# Use specific backend and language
-npx cuttledoc meeting.m4a -b parakeet -l de
-
-# Use OpenAI cloud API (best quality)
+npm add cuttledoc
 export OPENAI_API_KEY=sk-...
-npx cuttledoc meeting.m4a -b openai
 
-# Show processing statistics
-npx cuttledoc audio.wav --stats
+npx cuttledoc call.wav \
+  --backend openai \
+  --llm-model gpt-5-mini \
+  --format \
+  --output call.md
 ```
 
-### API
+For raw cloud speech-to-text without LLM post-processing, replace `--llm-model gpt-5-mini --format` with `--no-correct`.
+
+## Choose the right transcription backend
+
+| Backend      | Runs on                | Best for                              | Languages | Local model |
+| ------------ | ---------------------- | ------------------------------------- | --------: | ----------- |
+| **Parakeet** | macOS on Apple Silicon | Fast, compact, private transcription  |        25 | Required    |
+| **Whisper**  | macOS on Apple Silicon | Broad local language coverage         |        99 | Required    |
+| **OpenAI**   | macOS, Linux, Windows  | Cloud convenience and strong accuracy |       50+ | None        |
+
+The default `auto` mode chooses Parakeet for its supported languages on macOS and Whisper for other languages. On Linux and Windows, it uses OpenAI when an API key is available. See the [backend guide](https://sebastian-software.github.io/cuttledoc/docs/backends) for model details, privacy considerations, and platform constraints.
+
+## Use it from Node.js
+
+The core API returns raw speech-to-text output so your application controls any post-processing.
 
 ```typescript
 import { transcribe } from "cuttledoc"
 
-// Local transcription (offline)
-const result = await transcribe("audio.mp3", {
-  language: "en",
-  backend: "auto" // auto, whisper, parakeet, openai
+const result = await transcribe("meeting.m4a", {
+  backend: "auto", // auto, parakeet, whisper, or openai
+  language: "de"
 })
 
 console.log(result.text)
-console.log(`Duration: ${result.durationSeconds}s`)
+console.log(result.durationSeconds)
+console.log(result.segments)
+```
 
-// Cloud transcription (OpenAI)
-const cloudResult = await transcribe("audio.mp3", {
+Use OpenAI from the same API:
+
+```typescript
+const result = await transcribe("call.wav", {
   backend: "openai",
-  apiKey: process.env.OPENAI_API_KEY, // or pass directly
-  model: "gpt-4o-transcribe" // or "gpt-4o-mini-transcribe"
+  model: "gpt-4o-transcribe",
+  apiKey: process.env.OPENAI_API_KEY
 })
 ```
 
-### With LLM Enhancement
+See the [API reference](https://sebastian-software.github.io/cuttledoc/docs/api) for result types, timestamps, backend helpers, and model management.
+
+## Correct or format transcripts with an LLM
+
+Application code can use the separate `@cuttledoc/llm` package with embedded GGUF models, Ollama, or OpenAI.
+
+```bash
+npm add @cuttledoc/llm
+```
 
 ```typescript
 import { transcribe } from "cuttledoc"
 import { enhanceTranscript } from "@cuttledoc/llm"
 
-const result = await transcribe("podcast.mp3")
-
-// Correction is enabled by default, but you can customize:
-const enhanced = await enhanceTranscript(result.text, {
+const transcript = await transcribe("podcast.mp3")
+const enhanced = await enhanceTranscript(transcript.text, {
   provider: "ollama",
-  model: "phi4:14b", // best benchmarked quality with Ollama
-  mode: "correct" // or "format" for full Markdown formatting
+  model: "phi4:14b",
+  mode: "format" // "correct" keeps the original structure
 })
 
-console.log(enhanced.plainText) // Corrected text
-console.log(enhanced.markdown) // With formatting (if mode="format")
+console.log(enhanced.markdown)
 ```
 
-## CLI Reference
+- **`correct`** fixes punctuation, capitalization, word boundaries, and obvious recognition errors.
+- **`format`** also adds Markdown paragraphs, headings, emphasis, and lists.
 
-```
-cuttledoc <audio-file> [options]
-cuttledoc models list
-cuttledoc models download <model>
-cuttledoc models download all|asr
+Both modes are designed to preserve the original language, meaning, wording, and complete content. See the [LLM guide](https://sebastian-software.github.io/cuttledoc/docs/llm) for provider setup, model selection, memory requirements, and long-transcript behavior.
+
+## CLI essentials
+
+```text
+cuttledoc <audio-or-video-file> [options]
+cuttledoc models [list|download <model>]
 cuttledoc benchmark [run|report]
-
-Options:
-  -b, --backend <name>    Backend: auto, whisper, parakeet, openai (default: auto)
-  -m, --model <name>      OpenAI speech model (requires -b openai)
-  --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
-  -l, --language <code>   Language code: en, de, fr, es, etc.
-  -o, --output <file>     Write output to file
-  -f, --format            Add formatting (paragraphs, headings, markdown)
-  --no-correct            Disable LLM correction (raw STT output)
-  --llm-model <name>      LLM model (default: gemma3n:e4b)
-  -s, --stats             Show processing statistics
-  -q, --quiet             Minimal output
-  -h, --help              Show help
-  -v, --version           Show version
 ```
 
-> **Note:** LLM correction is enabled by default. Use `--no-correct` for raw STT output.
+| Option                  | Purpose                                                |
+| ----------------------- | ------------------------------------------------------ |
+| `-b, --backend <name>`  | Select `auto`, `parakeet`, `whisper`, or `openai`      |
+| `-m, --model <name>`    | Select an OpenAI speech model                          |
+| `-l, --language <code>` | Set a language such as `en`, `de`, or `fr`             |
+| `-o, --output <file>`   | Write the transcript to a file                         |
+| `-f, --format`          | Correct the transcript and add Markdown structure      |
+| `--no-correct`          | Return raw speech-to-text output                       |
+| `--llm-model <name>`    | Select the correction model                            |
+| `-s, --stats`           | Show timing, backend, word count, and processing speed |
+| `-q, --quiet`           | Print only the transcript                              |
 
-### Model Management
+The complete command documentation is in the [CLI reference](https://sebastian-software.github.io/cuttledoc/docs/cli).
+
+## Local model management
 
 ```bash
-# List available models
 cuttledoc models list
-
-# Download speech models
-cuttledoc models download parakeet    # 160 MB, 25 languages
-cuttledoc models download whisper     # ~2.9 GB, 99 languages
-cuttledoc models download all         # Download all speech models
-cuttledoc models download asr         # Alias for "all"
-
-# Download LLM model (for correction/formatting)
-# For Ollama (recommended): ollama pull phi4:14b
-# For GGUF: cuttledoc models download gemma3n:e4b
+cuttledoc models download parakeet      # compact, 25 languages
+cuttledoc models download whisper       # broad coverage, 99 languages
+cuttledoc models download all           # both speech models
+cuttledoc models download gemma3n:e4b   # embedded correction model
 ```
 
-### Benchmarking
+Ollama manages its own models, for example `ollama pull phi4:14b`. See [Model Management](https://sebastian-software.github.io/cuttledoc/docs/models) for all model IDs and cache locations.
 
-```
-cuttledoc benchmark run [models...] [options]
-cuttledoc benchmark report [options]
+## Supported media
 
-Options:
-  --fixtures <dir>    Directory with audio and reference files (default: ./fixtures)
-  --output <file>     Benchmark report file (default: <fixtures>/benchmark.json)
-  --language <code>   Only benchmark fixtures for one language
-```
+| Audio                               | Video                    |
+| ----------------------------------- | ------------------------ |
+| WAV, MP3, M4A, AAC, FLAC, OGG, OPUS | MP4, WebM, MKV, MOV, AVI |
 
-```bash
-# Benchmark all downloaded speech models
-cuttledoc benchmark run
-
-# Benchmark one speech model
-cuttledoc benchmark run whisper
-
-# Show the latest benchmark report
-cuttledoc benchmark report
-```
-
-## Backends
-
-- **`auto`** (default): On macOS, Parakeet is selected for its supported languages and Whisper for others. On Linux and Windows, OpenAI is selected when an API key is configured.
-- **`parakeet`**: Local CoreML transcription for 25 languages on macOS with Apple Silicon.
-- **`whisper`**: Local Whisper large-v3-turbo transcription with 99-language coverage.
-- **`openai`**: Cloud transcription with `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`; requires `OPENAI_API_KEY`.
-
-See the [Backends guide](https://sebastian-software.github.io/cuttledoc/docs/backends) for setup, model selection, platform constraints, and privacy considerations.
-
-> **Historical note:** We previously supported Phi-4-multimodal and Canary-1B-v2 via Python,
-> but removed them to simplify architecture. See [ADR-001](docs/decisions/001-remove-python-asr-backends.md)
-> for the full analysis. The code is preserved in branch `archive/python-asr-backends-2025-01`.
-
-## Supported Formats
-
-**Audio**: WAV, MP3, M4A, AAC, FLAC, OGG, OPUS
-**Video**: MP4, WebM, MKV, MOV, AVI
-
-Audio is automatically extracted and resampled to 16kHz mono.
-
-## LLM Enhancement
-
-LLM-based post-processing is enabled by default to improve transcription quality.
-
-**Correction Mode** (default):
-
-- Fix punctuation and capitalization
-- Correct word boundaries and contractions
-- Remove filler words and repetitions
-- Fix obvious STT errors
-
-**Format Mode** (`--format` / `mode: "format"`):
-
-- Everything from correction mode, plus:
-- Structure into logical paragraphs
-- Add Markdown headings and emphasis
-- Bullet lists where appropriate
-
-Enhancement can run locally with [Ollama](https://ollama.com) or [node-llama-cpp](https://github.com/withcatai/node-llama-cpp), or through OpenAI. See the [LLM guide](https://sebastian-software.github.io/cuttledoc/docs/llm) for provider setup, model selection, cache locations, and long-transcript behavior.
+Audio is extracted when needed and resampled to 16 kHz mono automatically.
 
 ## Benchmarks
 
-Speech-recognition and LLM-correction results, rankings, and methodology now have one canonical source: the [benchmark documentation](https://sebastian-software.github.io/cuttledoc/docs/benchmarks). The CLI can also benchmark downloaded local speech models against your own paired audio and reference fixtures.
+The [benchmark documentation](https://sebastian-software.github.io/cuttledoc/docs/benchmarks) publishes accuracy, speed, rankings, fixtures, and methodology for the supported speech and correction models.
+
+You can also compare downloaded speech models against your own paired audio and reference transcripts:
+
+```bash
+cuttledoc benchmark run
+cuttledoc benchmark run whisper --fixtures ./evaluation
+cuttledoc benchmark report
+```
 
 ## Documentation
 
-Start with the [documentation](https://sebastian-software.github.io/cuttledoc/) or jump to the [CLI reference](https://sebastian-software.github.io/cuttledoc/docs/cli), [backend guide](https://sebastian-software.github.io/cuttledoc/docs/backends), or [API reference](https://sebastian-software.github.io/cuttledoc/docs/api).
+- [Getting started](https://sebastian-software.github.io/cuttledoc/)
+- [CLI reference](https://sebastian-software.github.io/cuttledoc/docs/cli)
+- [Backends and privacy](https://sebastian-software.github.io/cuttledoc/docs/backends)
+- [Model management](https://sebastian-software.github.io/cuttledoc/docs/models)
+- [LLM enhancement](https://sebastian-software.github.io/cuttledoc/docs/llm)
+- [Benchmarks](https://sebastian-software.github.io/cuttledoc/docs/benchmarks)
+- [Troubleshooting](https://sebastian-software.github.io/cuttledoc/docs/troubleshooting)
+- [API reference](https://sebastian-software.github.io/cuttledoc/docs/api)
 
 ## Development
 
-This is a pnpm monorepo with the following packages:
+This repository is a pnpm monorepo:
 
-```
-cuttledoc/
-├── packages/
-│   ├── cuttledoc/     # Core transcription library + CLI
-│   ├── llm/           # LLM transcript enhancement (@cuttledoc/llm)
-│   ├── ffmpeg/        # FFmpeg audio processing (@cuttledoc/ffmpeg)
-│   └── docs/          # Documentation site
-├── pnpm-workspace.yaml
-└── tsconfig.base.json
-```
-
-### Setup
+| Package             | Purpose                              |
+| ------------------- | ------------------------------------ |
+| `cuttledoc`         | Core transcription library and CLI   |
+| `@cuttledoc/llm`    | Transcript correction and formatting |
+| `@cuttledoc/ffmpeg` | Audio extraction and conversion      |
+| `@cuttledoc/docs`   | Documentation website                |
 
 ```bash
-# Clone
-git clone https://github.com/sebastian-software/cuttledoc
+git clone https://github.com/sebastian-software/cuttledoc.git
 cd cuttledoc
-
-# Install (uses pnpm)
 pnpm install
-
-# Build all packages
 pnpm build
-
-# Run tests
 pnpm test
-
-# Start docs dev server
-pnpm docs:dev
 ```
 
-### Package Scripts
-
-```bash
-# Build specific package
-pnpm --filter cuttledoc build
-pnpm --filter @cuttledoc/docs build
-
-# Run tests in specific package
-pnpm --filter cuttledoc test
-
-# Lint
-pnpm lint
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 ## License
 
@@ -276,11 +238,5 @@ MIT © [Sebastian Software GmbH](https://sebastian-software.de)
 
 ## Acknowledgments
 
-- [parakeet-coreml](https://github.com/sebastian-software/parakeet-node) - NVIDIA Parakeet TDT for CoreML
-- [whisper-coreml](https://github.com/sebastian-software/whisper-node) - OpenAI Whisper for CoreML
-- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) - High-performance Whisper inference
-- [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) - LLM inference
-- [Ollama](https://ollama.com) - Local LLM server
-- [OpenAI GPT-4o Transcribe](https://openai.com/index/introducing-our-next-generation-audio-models/) - Next-gen cloud ASR
-- [Microsoft Phi-4](https://huggingface.co/microsoft/phi-4) - Best LLM for transcript correction
-- [Google Gemma](https://ai.google.dev/gemma) - Reliable open-weight LLM
+- [parakeet-coreml](https://github.com/sebastian-software/parakeet-node) — NVIDIA Parakeet TDT for CoreML
+- [whisper-coreml](https://github.com/sebastian-software/whisper-node) — OpenAI Whisper for CoreML
