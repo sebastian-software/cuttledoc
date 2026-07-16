@@ -159,19 +159,34 @@ Main function to correct/enhance transcripts.
 ```typescript
 interface EnhanceOptions {
   provider?: "ollama" | "local" | "openai" // default: auto-detect
-  model?: string // default: phi4:14b (Ollama) or gemma3n:e4b (GGUF)
+  model?: string // provider default: phi4:14b, gemma3n:e4b, or gpt-4o-mini
   mode?: "correct" | "format" // default: "correct"
-  temperature?: number // default: 0.2
+  temperature?: number // default: 0.3
+  apiKey?: string // OpenAI API key
+  modelPath?: string // Custom GGUF path for the local provider
+  gpuLayers?: number // default: -1 (all layers)
+  contextSize?: number // Model-specific default
 }
 
 interface EnhanceResult {
-  plainText: string // Corrected text
   markdown: string // Formatted with Markdown (if mode="format")
+  plainText: string // Corrected text with Markdown stripped
   stats: {
-    correctionsCount: number
-    processingTimeMs: number
+    processingTimeSeconds: number
+    inputTokens: number
+    outputTokens: number
     tokensPerSecond: number
+    correctionsCount: number
+    paragraphCount: number
+    provider: "ollama" | "local" | "openai"
+    model: string
   }
+  corrections: Correction[]
+}
+
+interface Correction {
+  original: string
+  corrected: string
 }
 ```
 
