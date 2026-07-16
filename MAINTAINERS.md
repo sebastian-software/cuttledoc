@@ -26,14 +26,14 @@ All contributions are reviewed by maintainers before merging. We aim to respond 
 
 ## Decision Making
 
-Significant architectural decisions are documented in [DECISIONS.md](DECISIONS.md) as Architecture Decision Records (ADRs).
+Significant architectural decisions are documented as [Architecture Decision Records](docs/decisions/) (ADRs).
 
 For major changes:
 
 1. Open an issue for discussion
 2. Propose the change with rationale
 3. Gather community feedback
-4. Document the decision in DECISIONS.md if accepted
+4. Document the accepted decision in the [ADR collection](docs/decisions/)
 
 ## Release Process
 
