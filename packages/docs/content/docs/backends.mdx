@@ -1,0 +1,94 @@
+---
+title: Backends
+description: Choose and configure local CoreML or OpenAI speech-to-text backends
+---
+
+cuttledoc provides two local CoreML backends and one cloud backend. Choose based on platform, language coverage, privacy, and whether sending audio to a cloud service is acceptable.
+
+## Comparison
+
+| Backend    | Runs on                   | Languages | Speech model                                | Download |
+| ---------- | ------------------------- | --------- | ------------------------------------------- | -------- |
+| `parakeet` | macOS on Apple Silicon    | 25        | Parakeet TDT 0.6B v3                        | Required |
+| `whisper`  | macOS on Apple Silicon    | 99        | Whisper large-v3-turbo                      | Required |
+| `openai`   | macOS, Linux, and Windows | 50+       | gpt-4o-transcribe or gpt-4o-mini-transcribe | None     |
+
+Current accuracy and speed measurements live on the [Benchmarks](/docs/benchmarks) page.
+
+## Automatic selection
+
+`auto` is the default backend.
+
+- On macOS, cuttledoc selects Parakeet when the requested language is one of its 25 supported languages. It falls back to Whisper for other languages.
+- On Linux and Windows, local CoreML backends are unavailable. Automatic selection uses OpenAI when an API key is configured; otherwise it stops with instructions for enabling the cloud backend.
+
+Select a backend explicitly when reproducibility matters:
+
+```bash
+cuttledoc meeting.m4a --backend parakeet --language de
+cuttledoc meeting.m4a --backend whisper --language ja
+cuttledoc meeting.m4a --backend openai
+```
+
+The Node.js API uses the same names:
+
+```typescript
+import { transcribe } from 'cuttledoc'
+
+const result = await transcribe('meeting.m4a', {
+  backend: 'whisper',
+  language: 'ja'
+})
+```
+
+## Parakeet
+
+Parakeet is the default local backend for supported languages. It runs offline through CoreML and is the smaller of the two local speech models.
+
+```bash
+cuttledoc models download parakeet
+cuttledoc meeting.m4a --backend parakeet --language de
+```
+
+Its language set covers English and 24 European languages: German, Spanish, French, Italian, Polish, Portuguese, Dutch, Ukrainian, Greek, Romanian, Russian, Hungarian, Czech, Swedish, Finnish, Danish, Norwegian, Bulgarian, Croatian, Slovak, Slovenian, Lithuanian, Latvian, and Estonian.
+
+## Whisper
+
+Whisper uses `large-v3-turbo` for broad multilingual coverage. It also runs locally through CoreML and is the fallback for languages outside Parakeet's set.
+
+```bash
+cuttledoc models download whisper
+cuttledoc interview.m4a --backend whisper --language ja
+```
+
+Use Whisper when you need its 99-language coverage or want to compare both local engines on your own recordings.
+
+## OpenAI
+
+The OpenAI backend sends the source audio to the OpenAI transcription API. It requires network access and an API key, but no local speech-model download.
+
+```bash
+export OPENAI_API_KEY=sk-...
+cuttledoc call.wav --backend openai
+```
+
+You can pass a key directly with `--api-key`, although an environment variable avoids putting credentials into shell history.
+
+Choose the cloud speech model with `--model`:
+
+```bash
+cuttledoc call.wav --backend openai --model gpt-4o-transcribe
+cuttledoc call.wav --backend openai --model gpt-4o-mini-transcribe
+```
+
+`gpt-4o-transcribe` is the default. The `--model` option is not valid for Parakeet or Whisper because their local model is fixed.
+
+## Audio processing
+
+Audio and video inputs are decoded to 16 kHz mono before local transcription. The bundled FFmpeg package supports common formats including WAV, MP3, M4A, AAC, FLAC, OGG, OPUS, MP4, WebM, MKV, MOV, and AVI.
+
+The OpenAI backend uploads the source file directly rather than passing it through the local decoder. Use MP3, MP4/M4A, WAV, WebM, OGG, or FLAC input with that backend.
+
+Both local engines process long recordings without an application-level duration limit. Actual resource use depends on the input and selected model.
+
+If setup fails, see [Troubleshooting](/docs/troubleshooting). For programmatic backend selection and result types, see the [API Reference](/docs/api).

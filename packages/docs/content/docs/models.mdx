@@ -1,0 +1,88 @@
+---
+title: Model Management
+description: List and download speech and embedded LLM models used by cuttledoc
+---
+
+The model commands manage local speech models and embedded GGUF models. Cloud models and Ollama models use their provider's own infrastructure instead.
+
+## List models
+
+```bash
+cuttledoc models list
+```
+
+The command shows the available local speech and embedded LLM model IDs and marks models that are already downloaded.
+
+## Speech models
+
+| CLI ID     | Model                  | Purpose                                |
+| ---------- | ---------------------- | -------------------------------------- |
+| `parakeet` | Parakeet TDT 0.6B v3   | Fast local transcription, 25 languages |
+| `whisper`  | Whisper large-v3-turbo | Broad local coverage, 99 languages     |
+
+Download one model:
+
+```bash
+cuttledoc models download parakeet
+cuttledoc models download whisper
+```
+
+Download both speech models:
+
+```bash
+cuttledoc models download all
+# Equivalent alias:
+cuttledoc models download asr
+```
+
+`all` and `asr` download speech models only; they do not download an LLM.
+
+Local speech models require macOS on Apple Silicon at runtime. See [Backends](/docs/backends) before downloading them for a deployment target.
+
+## Embedded GGUF models
+
+These models run through `node-llama-cpp` and can be downloaded by the cuttledoc CLI:
+
+| CLI ID             | Model            |
+| ------------------ | ---------------- |
+| `gemma3n:e4b`      | Gemma 3n E4B     |
+| `gemma3n:e2b`      | Gemma 3n E2B     |
+| `mistral-nemo:12b` | Mistral Nemo 12B |
+| `phi4-mini`        | Phi-4 Mini       |
+
+```bash
+cuttledoc models download gemma3n:e4b
+```
+
+The CLI uses `gemma3n:e4b` for correction by default. Downloaded GGUF files are stored in a per-user cache; see [LLM Enhancement](/docs/llm#gguf-models-embedded) for platform-specific paths and the `CUTTLEDOC_LLM_MODELS_DIR` override.
+
+## Ollama models
+
+Ollama owns its model store, so use the Ollama CLI rather than `cuttledoc models download`:
+
+```bash
+ollama pull phi4:14b
+ollama list
+```
+
+Then select the model during transcription:
+
+```bash
+cuttledoc podcast.mp3 --llm-model phi4:14b
+```
+
+## Cloud models
+
+OpenAI speech and LLM models are hosted and require no local download. Configure `OPENAI_API_KEY`, then select the speech model with `--model` or an enhancement model through the `@cuttledoc/llm` API.
+
+```bash
+OPENAI_API_KEY=sk-... cuttledoc call.wav \
+  --backend openai \
+  --model gpt-4o-mini-transcribe
+```
+
+See [LLM Enhancement](/docs/llm) for provider detection, correction models, and cache details.
+
+## Verify or retry a download
+
+Run `cuttledoc models list` after a download to verify its status. If a download was interrupted, run the same download command again. For FFmpeg installation failures or model-loading errors, see [Troubleshooting](/docs/troubleshooting).

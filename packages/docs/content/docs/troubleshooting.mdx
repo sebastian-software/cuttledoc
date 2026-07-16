@@ -1,0 +1,123 @@
+---
+title: Troubleshooting
+description: Solutions for platform, model, FFmpeg, OpenAI, LLM, and benchmark problems
+---
+
+Start by checking the installed version and available models:
+
+```bash
+cuttledoc --version
+cuttledoc models list
+```
+
+## Local backend is unavailable
+
+Parakeet and Whisper use CoreML and are supported on macOS with Apple Silicon. On Linux or Windows, configure the OpenAI backend instead:
+
+```bash
+export OPENAI_API_KEY=sk-...
+cuttledoc recording.wav --backend openai
+```
+
+With an API key present, `--backend auto` also selects OpenAI on Linux and Windows. See [Backends](/docs/backends) for the complete selection rules.
+
+## A model is missing or unknown
+
+List the IDs accepted by the download command, then download the model by its exact ID:
+
+```bash
+cuttledoc models list
+cuttledoc models download parakeet
+cuttledoc models download gemma3n:e4b
+```
+
+`all` and `asr` are aliases that download both speech models. They do not include LLM models. Ollama models must be installed with `ollama pull`.
+
+See [Model Management](/docs/models) for all model categories.
+
+## OpenAI API key errors
+
+The OpenAI transcription backend and OpenAI LLM provider accept a key through `OPENAI_API_KEY` or an explicit API option.
+
+```bash
+export OPENAI_API_KEY=sk-...
+cuttledoc recording.wav --backend openai
+```
+
+Prefer the environment variable over `--api-key` so the credential is not stored in shell history. If the API returns an error, verify that the key is active and that the account can use the selected model.
+
+## FFmpeg binary not found
+
+`@cuttledoc/ffmpeg` downloads a pinned binary during package installation. If lifecycle scripts were disabled or the download failed, reinstall or rebuild that package:
+
+```bash
+npm rebuild @cuttledoc/ffmpeg
+```
+
+Alternatively, point cuttledoc at an existing executable:
+
+```bash
+export FFMPEG_PATH=/absolute/path/to/ffmpeg
+```
+
+The path must identify a working executable. Reinstalling is preferable when you want the bundled, checksum-verified binary.
+
+## Ollama is not running
+
+Start the service and confirm the selected model is available:
+
+```bash
+ollama serve
+ollama list
+ollama pull phi4:14b
+```
+
+For Homebrew-managed installations, `brew services start ollama` can keep the service running in the background. See [LLM Enhancement](/docs/llm#troubleshooting) for additional correction-model guidance.
+
+## Input file or option errors
+
+- Confirm that the input path exists and points to a supported audio or video file.
+- Put `--` before a file name that starts with a dash: `cuttledoc -- -recording.wav`.
+- `--model` is only valid with `--backend openai`.
+- `--llm-model` cannot be combined with `--no-correct`.
+- Supply exactly one input file per transcription command.
+
+Run `cuttledoc --help` or see the [CLI Reference](/docs/cli) for the accepted options.
+
+## Benchmark reports are empty or missing
+
+Each fixture audio file needs a matching `.md` or `.txt` reference transcript with the same base name. The default fixture directory is `./fixtures`.
+
+```text
+fixtures/
+├── interview-en.wav
+└── interview-en.md
+```
+
+Download at least one local speech model before running a benchmark:
+
+```bash
+cuttledoc models download parakeet
+cuttledoc benchmark run
+cuttledoc benchmark report
+```
+
+Use `--fixtures`, `--output`, and `--language` when the defaults do not match your data. The [Benchmarks](/docs/benchmarks) page documents the current methodology.
+
+## Frequently asked questions
+
+### Does the Node.js API correct transcripts automatically?
+
+No. The CLI enables LLM correction by default, but `transcribe()` returns speech-to-text output. Call `enhanceTranscript()` from `@cuttledoc/llm` explicitly in API code.
+
+### Does cuttledoc send audio to a cloud service?
+
+Parakeet and Whisper process audio locally. The OpenAI backend uploads audio to the OpenAI transcription API. LLM enhancement may also use a cloud service when the OpenAI provider is selected.
+
+### Can I transcribe without an LLM?
+
+Yes. Pass `--no-correct` in the CLI, or use `transcribe()` without calling `enhanceTranscript()` in API code.
+
+### Where should I report a problem?
+
+Use [GitHub Issues](https://github.com/sebastian-software/cuttledoc/issues) for reproducible bugs. Do not disclose vulnerabilities publicly; follow the repository's [Security Policy](https://github.com/sebastian-software/cuttledoc/security/policy).

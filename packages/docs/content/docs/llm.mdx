@@ -134,47 +134,11 @@ const result = await enhanceTranscript(text, {
 })
 ```
 
-## Benchmark Results
+## Benchmark results
 
-Tested on TTS-generated audio (5-7 min per language, 2 speakers each).
+On the documented correction test set, `phi4:14b` produced the strongest accuracy improvement, while `mistral-nemo` processed the samples fastest. Results varied by language, so validate a model against representative transcripts before deploying it.
 
-### Overall Performance
-
-| Model                         | WER Before | WER After | Improvement | Speed  |
-| ----------------------------- | ---------- | --------- | ----------- | ------ |
-| **phi4:14b** (best quality)   | 5.6%       | **2.8%**  | **+52.0%**  | 36 t/s |
-| mistral-nemo                  | 5.6%       | 3.2%      | +42.7%      | 60 t/s |
-| **gemma3n:e4b** (CLI default) | 5.6%       | 3.3%      | +41.2%      | 35 t/s |
-| gemma3n:e2b                   | 5.6%       | 3.6%      | +36.9%      | 44 t/s |
-
-### Per-Language (phi4:14b)
-
-| Language      | Before | After | Improvement |
-| ------------- | ------ | ----- | ----------- |
-| 🇩🇪 German     | 6.7%   | 1.6%  | +76%        |
-| 🇬🇧 English    | 5.5%   | 2.8%  | +49%        |
-| 🇪🇸 Spanish    | 3.5%   | 1.3%  | +63%        |
-| 🇫🇷 French     | 6.5%   | 5.7%  | +12%        |
-| 🇧🇷 Portuguese | 6.0%   | 3.3%  | +45%        |
-
-### Key Findings
-
-1. **Model choice matters significantly**
-   - phi4:14b achieves 52% WER improvement vs 37% for gemma3n:e2b
-   - 15 percentage points difference in correction quality
-
-2. **Language-specific performance**
-   - German and Spanish benefit most (+63-77%)
-   - French improvement is limited (+12%)
-   - All languages improve with phi4:14b
-
-3. **Some models are dangerous**
-   - qwen3 produced **-75% WER** (worse than input) for German/Portuguese
-   - Always use tested, recommended models
-
-4. **Speed vs quality tradeoff**
-   - mistral-nemo: 67% faster, 9pp less improvement
-   - Worth considering for real-time applications
+See [Benchmarks](/docs/benchmarks#llm-correction) for the complete tables, per-language results, and methodology.
 
 ## Best Practices
 
@@ -245,4 +209,4 @@ ollama pull phi4:14b
 
 ## API Reference
 
-See [@cuttledoc/llm documentation](https://github.com/sebastian-software/cuttledoc/tree/main/packages/llm) for full API details.
+See the [API Reference](/docs/api#llm-enhancement) for the public `@cuttledoc/llm` functions, options, result types, and exports.
