@@ -85,7 +85,7 @@ describe("parseBenchmarkOptions", () => {
   it("derives the default output from a custom fixtures directory", () => {
     expect(parseBenchmarkOptions(["run", "--fixtures", "/tmp/custom-fixtures"], "/workspace")).toMatchObject({
       fixturesDir: "/tmp/custom-fixtures",
-      outputFile: "/tmp/custom-fixtures/benchmark.json"
+      outputFile: join("/tmp/custom-fixtures", "benchmark.json")
     })
   })
 
