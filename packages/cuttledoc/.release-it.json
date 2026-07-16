@@ -11,7 +11,10 @@
     "releaseName": "v${version}"
   },
   "npm": {
-    "publish": true
+    "publish": true,
+    "publishArgs": ["--no-git-checks"],
+    "publishPackageManager": "pnpm",
+    "skipChecks": true
   },
   "plugins": {
     "@release-it/conventional-changelog": {
@@ -35,6 +38,7 @@
     }
   },
   "hooks": {
-    "before:init": ["pnpm run lint", "pnpm run test", "pnpm run build:all"]
+    "before:init": ["pnpm --workspace-root lint", "pnpm --workspace-root typecheck", "pnpm --workspace-root test"],
+    "after:bump": "pnpm --workspace-root build"
   }
 }
