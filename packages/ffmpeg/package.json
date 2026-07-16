@@ -32,13 +32,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.5"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.1.10",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.0.0"
