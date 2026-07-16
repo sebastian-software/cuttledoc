@@ -6,12 +6,14 @@
  * - EBU R128 loudness normalization for consistent levels
  */
 
-import { execFile } from "node:child_process"
+import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
-import { promisify } from "node:util"
+import { mkdtemp, open, readFile, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { ffmpegPath } from "./binary.js"
 
-const execFileAsync = promisify(execFile)
+const STDERR_TAIL_LENGTH = 64 * 1024
 
 /**
  * Options for audio decoding
@@ -41,7 +43,7 @@ export interface DecodeOptions {
  * Decoded audio data
  */
 export interface AudioData {
-  /** Audio samples as Float32Array in range [-1, 1] */
+  /** Audio samples in range [-1, 1], interleaved by channel for multi-channel audio */
   samples: Float32Array
   /** Sample rate in Hz */
   sampleRate: number
@@ -67,6 +69,84 @@ function buildSpeechFilters(): string {
   const loudnorm = "loudnorm=I=-16:LRA=11:TP=-1.5"
 
   return `${bandpass},${loudnorm}`
+}
+
+/** @internal Build the FFmpeg arguments used for PCM decoding. */
+export function buildDecodeArgs(
+  inputPath: string,
+  sampleRate: number,
+  channels: number,
+  speechOptimize: boolean
+): string[] {
+  const args = ["-hide_banner", "-nostdin", "-i", inputPath]
+
+  if (speechOptimize) {
+    args.push("-af", buildSpeechFilters())
+  }
+
+  args.push("-ar", String(sampleRate), "-ac", String(channels), "-f", "f32le", "-acodec", "pcm_f32le", "-")
+
+  return args
+}
+
+/** @internal Calculate duration from interleaved PCM sample values. */
+export function calculateDurationSeconds(sampleCount: number, sampleRate: number, channels: number): number {
+  return sampleCount / (sampleRate * channels)
+}
+
+/**
+ * Stream FFmpeg stdout directly to a file descriptor while retaining only a
+ * bounded stderr tail for useful failure messages.
+ */
+function runFFmpeg(executable: string, args: string[], outputFileDescriptor: number): Promise<void> {
+  return new Promise((resolvePromise, rejectPromise) => {
+    let stderrTail = ""
+    const child = spawn(executable, args, {
+      stdio: ["ignore", outputFileDescriptor, "pipe"]
+    })
+
+    child.stderr?.setEncoding("utf8")
+    child.stderr?.on("data", (chunk: string) => {
+      stderrTail = `${stderrTail}${chunk}`.slice(-STDERR_TAIL_LENGTH)
+    })
+
+    child.once("error", rejectPromise)
+    child.once("close", (code, signal) => {
+      if (code === 0) {
+        resolvePromise()
+        return
+      }
+
+      const reason = signal === null ? `exit code ${String(code)}` : `signal ${signal}`
+      const details = stderrTail.trim()
+      rejectPromise(new Error(`FFmpeg exited with ${reason}${details ? `: ${details}` : ""}`))
+    })
+  })
+}
+
+async function decodeToFile(executable: string, args: string[], outputPath: string): Promise<void> {
+  const outputFile = await open(outputPath, "w")
+  try {
+    await runFFmpeg(executable, args, outputFile.fd)
+  } finally {
+    await outputFile.close()
+  }
+}
+
+function toFloat32Samples(pcm: Buffer): Float32Array {
+  if (pcm.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
+    throw new Error(`FFmpeg returned ${String(pcm.byteLength)} bytes of incomplete f32le audio`)
+  }
+
+  if (pcm.byteOffset % Float32Array.BYTES_PER_ELEMENT === 0) {
+    return new Float32Array(pcm.buffer, pcm.byteOffset, pcm.byteLength / Float32Array.BYTES_PER_ELEMENT)
+  }
+
+  // readFile buffers are normally aligned. Preserve correctness without an
+  // unconditional full-size copy if a custom Buffer implementation is not.
+  const alignedBytes = new Uint8Array(pcm.byteLength)
+  alignedBytes.set(pcm)
+  return new Float32Array(alignedBytes.buffer)
 }
 
 /**
@@ -106,51 +186,25 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
   const legacyNormalize = options.normalize
   const speechOptimize = options.speechOptimize ?? legacyNormalize ?? true
 
-  // Build FFmpeg arguments
-  const args = [
-    "-hide_banner", // Suppress FFmpeg banner
-    "-i",
-    inputPath
-  ]
-
-  // Add speech preprocessing filters if enabled
-  if (speechOptimize) {
-    args.push("-af", buildSpeechFilters())
-  }
-
-  // Output format
-  args.push(
-    "-ar",
-    String(sampleRate),
-    "-ac",
-    String(channels),
-    "-f",
-    "f32le", // 32-bit float, little-endian
-    "-acodec",
-    "pcm_f32le",
-    "-" // Output to stdout
-  )
+  const args = buildDecodeArgs(inputPath, sampleRate, channels, speechOptimize)
 
   try {
-    const { stdout } = await execFileAsync(ffmpegPath(), args, {
-      encoding: "buffer",
-      maxBuffer: 500 * 1024 * 1024 // 500MB max
-    })
+    const temporaryDirectory = await mkdtemp(join(tmpdir(), "cuttledoc-ffmpeg-"))
+    try {
+      const outputPath = join(temporaryDirectory, "decoded.f32le")
+      await decodeToFile(ffmpegPath(), args, outputPath)
 
-    // Convert Buffer to Float32Array
-    // Create a copy to ensure we have a proper ArrayBuffer
-    const arrayBuffer = new ArrayBuffer(stdout.byteLength)
-    const view = new Uint8Array(arrayBuffer)
-    view.set(stdout)
-    const samples = new Float32Array(arrayBuffer)
+      const samples = toFloat32Samples(await readFile(outputPath))
+      const durationSeconds = calculateDurationSeconds(samples.length, sampleRate, channels)
 
-    const durationSeconds = samples.length / sampleRate
-
-    return {
-      samples,
-      sampleRate,
-      channels,
-      durationSeconds
+      return {
+        samples,
+        sampleRate,
+        channels,
+        durationSeconds
+      }
+    } finally {
+      await rm(temporaryDirectory, { recursive: true, force: true })
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
