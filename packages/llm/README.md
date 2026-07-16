@@ -92,7 +92,7 @@ Tested on TTS-generated audio (5-7 min per language, 2 speakers each) across DE,
 | ----------------------------- | -------------- | ------------- | ----------- | ------ |
 | **phi4:14b** (Ollama default) | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
 | **mistral-nemo**              | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
-| gemma3n:e4b                   | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
+| **gemma3n:e4b** (CLI default) | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
 | gemma3n:e2b                   | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
 
 ### Per-Language Results (phi4:14b)
@@ -117,6 +117,7 @@ Tested on TTS-generated audio (5-7 min per language, 2 speakers each) across DE,
 
 ### Recommendations
 
+- **CLI default**: Use `gemma3n:e4b` for reliable results across all languages
 - **Ollama default**: Use `phi4:14b` for best results
 - **Speed-critical**: Use `mistral-nemo` (60 t/s vs 36 t/s)
 - **Low-memory**: Use `gemma3n:e2b` (2GB RAM)
