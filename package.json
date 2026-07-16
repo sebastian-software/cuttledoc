@@ -1,6 +1,6 @@
 {
   "name": "@cuttledoc/monorepo",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Fast offline video-to-document transcription with AI enhancement",
   "type": "module",

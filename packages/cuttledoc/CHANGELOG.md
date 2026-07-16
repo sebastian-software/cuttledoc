@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/sebastian-software/cuttledoc/compare/v2.0.0...v2.0.1) (2026-07-16)
+
+
+### Documentation
+
+* migrate site to ARDO ([#145](https://github.com/sebastian-software/cuttledoc/issues/145)) ([e0c5878](https://github.com/sebastian-software/cuttledoc/commit/e0c587883f1fdf67d521f8e0b3c216b22d91fda6))
+
 ## [2.0.0](https://github.com/sebastian-software/cuttledoc/compare/v1.0.0...v2.0.0) (2026-07-16)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@cuttledoc/llm",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "LLM-based transcript enhancement for cuttledoc",
   "type": "module",
   "engines": {
