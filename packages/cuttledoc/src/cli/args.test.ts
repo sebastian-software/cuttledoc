@@ -160,6 +160,15 @@ describe("parseArgs", () => {
       expect(args.language).toBe("de")
       expect(args.output).toBe("out.txt")
     })
+
+    it("should treat arguments after -- as positional", () => {
+      const args = parseArgs(["--", "-recording.mp3"])
+      expect(args.positional).toEqual(["-recording.mp3"])
+    })
+
+    it("should not accept -- as a missing option value", () => {
+      expect(() => parseArgs(["--backend", "--", "openai"])).toThrow("Option --backend requires a value")
+    })
   })
 
   describe("complex argument combinations", () => {

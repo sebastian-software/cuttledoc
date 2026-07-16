@@ -63,6 +63,12 @@ export function parseArgs(argv: string[]): CLIArgs {
       continue
     }
 
+    // End of options: everything after -- is positional, including dash-prefixed paths.
+    if (arg === "--") {
+      args.positional.push(...argv.slice(i + 1))
+      break
+    }
+
     // Flags
     if (arg === "-h" || arg === "--help") {
       args.help = true
