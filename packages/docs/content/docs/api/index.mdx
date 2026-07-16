@@ -198,10 +198,10 @@ const provider = await detectProvider()
 const available = await isLLMAvailable()
 ```
 
-| Function           | Returns                          | Purpose                                |
-| ------------------ | -------------------------------- | -------------------------------------- |
-| `detectProvider()` | `Promise<LLMProvider>` or `null` | Finds the first available provider     |
-| `isLLMAvailable()` | `Promise<boolean>`               | Reports whether any provider is usable |
+| Function           | Returns                        | Purpose                                |
+| ------------------ | ------------------------------ | -------------------------------------- |
+| `detectProvider()` | `Promise<LLMProvider \| null>` | Finds the first available provider     |
+| `isLLMAvailable()` | `Promise<boolean>`             | Reports whether any provider is usable |
 
 ### Provider-specific APIs
 
