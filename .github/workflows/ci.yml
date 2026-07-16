@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
@@ -44,6 +47,9 @@ jobs:
   test:
     name: Test (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -63,7 +69,8 @@ jobs:
           files: ./packages/cuttledoc/coverage/coverage-final.json,./packages/ffmpeg/coverage/coverage-final.json,./packages/llm/coverage/coverage-final.json
           flags: ${{ matrix.os }}-node${{ matrix.node-version }}
           name: codecov-${{ matrix.os }}-node${{ matrix.node-version }}
-          fail_ci_if_error: false
+          fail_ci_if_error: true
+          use_oidc: true
 
   build:
     name: Build (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
