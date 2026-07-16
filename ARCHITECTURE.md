@@ -95,11 +95,11 @@ Dedicated package for transcript post-processing. See [packages/llm/README.md](p
 
 **Benchmark Results (January 2025):**
 
-| Model        | WER Improvement | Speed  | Recommendation         |
-| ------------ | --------------- | ------ | ---------------------- |
-| phi4:14b     | +52%            | 36 t/s | Best quality (default) |
-| mistral-nemo | +43%            | 60 t/s | Best speed             |
-| gemma3n:e4b  | +41%            | 35 t/s | Most reliable for GGUF |
+| Model        | WER Improvement | Speed  | Recommendation             |
+| ------------ | --------------- | ------ | -------------------------- |
+| phi4:14b     | +52%            | 36 t/s | Best quality with Ollama   |
+| mistral-nemo | +43%            | 60 t/s | Best speed                 |
+| gemma3n:e4b  | +41%            | 35 t/s | CLI default; reliable GGUF |
 
 **Key Learnings:**
 
@@ -167,7 +167,7 @@ cuttledoc/
 ### Enhancement Flow (Optional)
 
 1. **Input**: Raw transcription text
-2. **LLM Processing**: Send to phi4:14b or other model
+2. **LLM Processing**: Send to the CLI default gemma3n:e4b or an explicitly selected provider model
 3. **Enhancement**: Generate summary, format, correct errors
 4. **Output**: Enhanced Markdown document
 
