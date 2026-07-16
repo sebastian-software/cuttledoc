@@ -10,6 +10,11 @@ import { homedir } from "node:os"
 import { join, posix, win32 } from "node:path"
 
 import {
+  enhanceTranscriptInChunks,
+  type ChunkedEnhanceOptions
+} from "../chunking.js"
+
+import {
   countParagraphs,
   findCorrections,
   LOCAL_MODELS,
@@ -325,86 +330,9 @@ export class LocalProcessor {
    */
   async enhanceChunked(
     rawTranscript: string,
-    options: {
-      mode?: ProcessMode
-      temperature?: number
-      chunkSize?: number
-      onChunk?: (chunk: string, index: number, total: number) => void
-    } = {}
+    options: ChunkedEnhanceOptions = {}
   ): Promise<EnhanceResult> {
-    const chunkSize = options.chunkSize ?? 2000 // Words per chunk
-    const words = rawTranscript.split(/\s+/)
-
-    // Build enhance options (filter undefined)
-    const enhanceOpts: { mode?: ProcessMode; temperature?: number } = {}
-    if (options.mode !== undefined) enhanceOpts.mode = options.mode
-    if (options.temperature !== undefined) enhanceOpts.temperature = options.temperature
-
-    // If small enough, process directly
-    if (words.length <= chunkSize) {
-      return await this.enhance(rawTranscript, enhanceOpts)
-    }
-
-    // Split into chunks at sentence boundaries
-    const chunks: string[] = []
-    let currentChunk: string[] = []
-
-    for (const word of words) {
-      currentChunk.push(word)
-
-      if (currentChunk.length >= chunkSize && /[.!?]$/.test(word)) {
-        chunks.push(currentChunk.join(" "))
-        currentChunk = []
-      }
-    }
-
-    if (currentChunk.length > 0) {
-      chunks.push(currentChunk.join(" "))
-    }
-
-    // Process each chunk
-    const enhancedChunks: string[] = []
-    const allCorrections: { original: string; corrected: string }[] = []
-    let totalInputTokens = 0
-    let totalOutputTokens = 0
-    const startTime = performance.now()
-
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]
-      if (chunk === undefined) {
-        continue
-      }
-
-      if (options.onChunk !== undefined) {
-        options.onChunk(chunk, i, chunks.length)
-      }
-
-      const result = await this.enhance(chunk, enhanceOpts)
-
-      enhancedChunks.push(result.markdown)
-      allCorrections.push(...result.corrections)
-      totalInputTokens += result.stats.inputTokens
-      totalOutputTokens += result.stats.outputTokens
-    }
-
-    const totalTime = (performance.now() - startTime) / 1000
-    const markdown = enhancedChunks.join("\n\n")
-
-    return {
-      markdown,
-      plainText: stripMarkdown(markdown),
-      stats: {
-        processingTimeSeconds: totalTime,
-        inputTokens: totalInputTokens,
-        outputTokens: totalOutputTokens,
-        tokensPerSecond: totalOutputTokens / totalTime,
-        correctionsCount: allCorrections.length,
-        paragraphCount: countParagraphs(markdown),
-        provider: "local",
-        model: this.modelId
-      },
-      corrections: allCorrections
-    }
+    return enhanceTranscriptInChunks(rawTranscript, this.enhance.bind(this), options)
   }
 
   /**
