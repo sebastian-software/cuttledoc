@@ -156,7 +156,7 @@ export default function Home() {
                 <code className="text-zinc-100 font-mono leading-relaxed">
                   <span className="text-pink-400">import</span>
                   {' { enhanceTranscript } '}
-                  <span className="text-pink-400">from</span> <span className="text-emerald-400">"cuttledoc/llm"</span>
+                  <span className="text-pink-400">from</span> <span className="text-emerald-400">"@cuttledoc/llm"</span>
                   {`;\n\n`}
                   <span className="text-pink-400">const</span>
                   {' enhanced = '}
