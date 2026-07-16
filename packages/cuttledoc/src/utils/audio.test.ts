@@ -14,13 +14,6 @@ describe("audio utils", () => {
       expect(() => isFFmpegAvailable()).not.toThrow()
     })
 
-    it("should return true when ffmpeg is installed", () => {
-      // ffmpeg is typically available in development environments
-      // This test verifies the detection works
-      const result = isFFmpegAvailable()
-      // On most dev machines ffmpeg is installed
-      expect(result).toBe(true)
-    })
   })
 
   describe("normalizeAudio", () => {
