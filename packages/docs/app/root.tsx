@@ -8,12 +8,19 @@ import SearchDialog from './components/search'
 import { createSeoMeta, siteConfig } from './lib/seo'
 
 export function meta({ location, error }: Route.MetaArgs) {
-  if (isRouteErrorResponse(error) && error.status === 404) {
-    return createSeoMeta({
-      title: `Page Not Found | ${siteConfig.siteName}`,
-      description: 'The requested cuttledoc documentation page could not be found.',
-      pathname: location.pathname
-    })
+  if (error) {
+    const notFound = isRouteErrorResponse(error) && error.status === 404
+
+    return [
+      ...createSeoMeta({
+        title: `${notFound ? 'Page Not Found' : 'Error'} | ${siteConfig.siteName}`,
+        description: notFound
+          ? 'The requested cuttledoc documentation page could not be found.'
+          : 'An unexpected error occurred while loading the cuttledoc documentation.',
+        pathname: location.pathname
+      }),
+      { name: 'robots', content: 'noindex' }
+    ]
   }
 
   return createSeoMeta({ pathname: location.pathname })
