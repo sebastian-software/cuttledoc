@@ -23,11 +23,11 @@ source of truth.
 
 ## Evaluation
 
-| Candidate                                                                                               | Verified license | Apple-native path                                                                                              | Published footprint                                       | Fit for cuttledoc today                                                                                      |
-| ------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [Cohere Transcribe 03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026)                | Apache-2.0       | [FluidAudio CoreML](https://huggingface.co/FluidInference/cohere-transcribe-03-2026-coreml)                    | 1.8 GB INT8 encoder + 291 MB FP16 decoder                 | Batch-only accuracy candidate, but no Node API and the CoreML pipeline has a 35-second per-call cap          |
-| [NVIDIA Nemotron 3.5 ASR Streaming 0.6B](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) | OpenMDW-1.1      | [FluidAudio CoreML](https://huggingface.co/FluidInference/Nemotron-3.5-ASR-Streaming-Multilingual-0.6b-CoreML) | Eight language/tier bundles rather than one drop-in model | Strong streaming complement, but no Node API and the CoreML weights currently require manual access approval |
-| [Qwen3-ASR 0.6B](https://github.com/QwenLM/Qwen3-ASR)                                                   | Apache-2.0       | [FluidAudio CoreML](https://huggingface.co/FluidInference/qwen3-asr-0.6b-coreml) and community MLX             | approximately 0.7 GB INT8 or 2.5 GB FP32                  | Compact multilingual accuracy candidate, but no Node API and no comparable FLEURS result yet                 |
+| Candidate                                                                                               | Verified license | Apple-native path                                                                                              | Published footprint                                               | Fit for cuttledoc today                                                                                           |
+| ------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [Cohere Transcribe 03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026)                | Apache-2.0       | [FluidAudio CoreML](https://huggingface.co/FluidInference/cohere-transcribe-03-2026-coreml)                    | 1.8 GB INT8 encoder + 291 MB FP16 decoder                         | Batch-only accuracy candidate, but no Node API and the CoreML pipeline has a 35-second per-call cap               |
+| [NVIDIA Nemotron 3.5 ASR Streaming 0.6B](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) | OpenMDW-1.1      | [FluidAudio CoreML](https://huggingface.co/FluidInference/Nemotron-3.5-ASR-Streaming-Multilingual-0.6b-CoreML) | about 612 MB Latin or 665 MB multilingual at the recommended tier | Strong streaming complement, but no Node API and two vocabularies × four latency tiers require explicit selection |
+| [Qwen3-ASR 0.6B](https://github.com/QwenLM/Qwen3-ASR)                                                   | Apache-2.0       | [FluidAudio CoreML](https://huggingface.co/FluidInference/qwen3-asr-0.6b-coreml) and community MLX             | approximately 0.7 GB INT8 or 2.5 GB FP32                          | Compact multilingual accuracy candidate, but no Node API and no comparable FLEURS result yet                      |
 
 ### Cohere Transcribe
 
@@ -59,8 +59,10 @@ for triage but must not be inserted into cuttledoc's comparison table.
 This model is a streaming complement, not a demonstrated replacement for
 Parakeet. Integrating it also requires a streaming public API, partial-result
 semantics, reset/cancellation behavior, language-locale mapping, attribution,
-and a Node-native bridge. The CoreML repository currently directs users to a
-Discord approval flow, which prevents a reproducible unattended download path.
+and a Node-native bridge. Although the model card still contains a stale manual
+access instruction, Hugging Face currently marks the repository as ungated and
+its artifacts resolve without authentication. The sizes above are the summed
+file metadata for the recommended 2.24-second bundles as of the decision date.
 
 ### Qwen3-ASR
 
@@ -115,9 +117,9 @@ operational shape was removed.
 
 Prioritize future work in this order:
 
-1. **Nemotron as a separate streaming backend**, once its CoreML artifacts have
-   a reproducible download path and a Node bridge exists. It addresses a new
-   capability instead of duplicating the current batch backends.
+1. **Nemotron as a separate streaming backend**, once a Node bridge and a
+   checksummed artifact downloader exist. It addresses a new capability instead
+   of duplicating the current batch backends.
 2. **Qwen3-ASR 0.6B CoreML as a compact accuracy candidate**, once it can run
    through Node and publish comparable five-language results.
 3. **Cohere Transcribe as a batch accuracy candidate** only if its CoreML
@@ -141,7 +143,6 @@ Re-run this evaluation when any of these conditions is met:
 
 - FluidAudio or another maintained package publishes a Node-compatible API for
   Cohere, multilingual Nemotron, or Qwen3-ASR.
-- Nemotron's CoreML artifacts become publicly and non-interactively available.
 - A candidate publishes reproducible EN/DE/FR/ES/PT FLEURS results for its
   Apple-native port.
 - cuttledoc commits to a streaming transcription API.
