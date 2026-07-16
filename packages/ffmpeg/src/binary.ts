@@ -64,7 +64,7 @@ function getExecutableName(): string {
  * Get the configured FFmpeg executable path, if one was provided.
  */
 function getConfiguredPath(): string | undefined {
-  const configuredPath = process.env.FFMPEG_PATH?.trim()
+  const configuredPath = process.env["FFMPEG_PATH"]?.trim()
   return configuredPath ? resolve(configuredPath) : undefined
 }
 
