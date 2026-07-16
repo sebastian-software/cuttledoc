@@ -3,12 +3,12 @@
   "description": "Fast offline video-to-document transcription with AI enhancement",
   "type": "module",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.22.1"
   },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "node scripts/check-pnpm-maturity-exclusions.mjs && turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
@@ -28,23 +28,17 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.5",
-    "eslint": "^9.39.5",
+    "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^16.5.0",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.8",
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.64.0"
   },
-  "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "node-llama-cpp"
-    ]
-  }
+  "packageManager": "pnpm@11.13.1+sha512.b2fc7683b8a6525414e7d13e1ba28caaddde96bf66ec540bfaeb7e702b81f3e0be4d1f295edf7f9fe0396740a8dce4509c582ddf79891f4543fea32d37645f25"
 }

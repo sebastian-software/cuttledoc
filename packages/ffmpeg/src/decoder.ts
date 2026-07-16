@@ -225,6 +225,6 @@ export async function decodeAudio(inputPath: string, options: DecodeOptions = {}
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`Failed to decode audio: ${message}`)
+    throw new Error(`Failed to decode audio: ${message}`, { cause: error })
   }
 }
