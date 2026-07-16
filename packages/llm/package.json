@@ -34,7 +34,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "clean": "rm -rf dist",
-    "benchmark": "npx tsx scripts/benchmark.ts"
+    "benchmark": "tsx scripts/benchmark.ts",
+    "benchmark:tts": "tsx scripts/benchmark-tts.ts"
   },
   "dependencies": {
     "node-llama-cpp": "^3.19.0"
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.10",
     "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   },

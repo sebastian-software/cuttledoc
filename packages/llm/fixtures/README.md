@@ -1,69 +1,41 @@
-# LLM Benchmark Fixtures
+# LLM benchmark fixtures
 
-This directory contains audio samples and reference transcripts for benchmarking LLM text correction capabilities.
+These fixtures power the TTS-based transcript-correction benchmark. Each
+reference text is rendered with multiple speakers, transcribed by cuttledoc,
+and corrected by local Ollama models. The benchmark compares both the raw and
+corrected transcripts with the reference text using word error rate (WER).
 
-## Dataset: VoxPopuli
+## Layout
 
-We use [VoxPopuli](https://huggingface.co/datasets/facebook/voxpopuli) - European Parliament recordings with professional transcripts. Perfect for testing LLM correction because:
+- `texts/<language>-sample.txt` contains the reference transcripts.
+- `audio/<language>-sample - <speaker>.<ext>` contains the matching TTS audio.
+- Generated STT caches, comparisons, and summaries are written to
+  `packages/llm/results/` and are not source fixtures.
 
-- **Long samples** (1-3 minutes each) - enough text to evaluate correction quality
-- **Multiple languages** (DE, FR, ES, PT, EN) - tests multilingual understanding
-- **Formal speech** - clear pronunciation, good reference transcripts
-- **Real-world content** - political speeches, not scripted readings
+The committed audio was generated from the reference texts with multilingual
+TTS voices. Regenerate it only when a reference text changes, keeping at least
+two speakers per language so results are not tied to one voice.
 
-## Download Samples
+## Run the benchmark
 
-```bash
-# Install dependencies
-pip install 'datasets<3' librosa soundfile
-
-# Download samples (3 per language, ~15 total)
-python download-voxpopuli.py
-
-# Or for a specific language
-python download-voxpopuli.py --lang de --samples 5
-```
-
-## Run Benchmark
+Install [Ollama](https://ollama.com) and start it with the desktop app or
+`ollama serve`. In another terminal, pull the current comparison set:
 
 ```bash
-# Prerequisites
-ollama serve
-ollama pull gemma3n:e4b qwen2.5:7b mistral:7b
-
-# Run benchmark
-pnpm --filter @cuttledoc/llm benchmark
+ollama pull phi4:14b
+ollama pull mistral-nemo
+ollama pull gemma3n:e4b
+ollama pull gemma3n:e2b
 ```
 
-## What the Benchmark Tests
+From the repository root, run:
 
-1. **Transcribe** each audio sample with Parakeet (raw STT output)
-2. **Correct** the raw transcript with each LLM model
-3. **Compare** WER (Word Error Rate) before/after correction
-4. **Measure** processing speed (tokens/second)
-
-## Expected Output
-
-```
-📊 BENCHMARK SUMMARY
-================================================================================
-
-### Overall Performance
-
-| Model         | Avg WER Before | Avg WER After | Improvement | Speed (tok/s) |
-|---------------|----------------|---------------|-------------|---------------|
-| gemma3n:e4b   |         15.2%  |        12.1%  |      +20.4% |           245 |
-| qwen2.5:7b    |         15.2%  |        10.8%  |      +29.0% |           180 |
-| mistral:7b    |         15.2%  |        11.5%  |      +24.3% |           195 |
-
-### Recommendation
-
-🏆 **Best Quality**: qwen2.5:7b (+29.0% WER improvement)
-⚡ **Best Speed**: gemma3n:e4b (245 tokens/sec)
+```bash
+pnpm --filter @cuttledoc/llm benchmark:tts
 ```
 
-## Files
-
-- `download-voxpopuli.py` - Download script
-- `voxpopuli-{lang}-{id}.ogg` - Audio samples (not committed)
-- `voxpopuli-{lang}-{id}.txt` - Reference transcripts
+The benchmark uses Parakeet for most fixture languages and Whisper for French,
+then evaluates correction quality and processing speed for every configured
+model. Current published results and model recommendations live in the
+[benchmark documentation](../../docs/content/docs/benchmarks.mdx); do not infer
+recommendations from a single local run.

@@ -1,5 +1,4 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-This project adheres to [Semantic Versioning](https://semver.org/).
+The release history for the published `cuttledoc` package is maintained in
+[packages/cuttledoc/CHANGELOG.md](packages/cuttledoc/CHANGELOG.md).

@@ -6,7 +6,7 @@
  * Compares STT output against the original reference text.
  *
  * Usage:
- *   cd packages/llm && npx tsx scripts/benchmark-tts.ts
+ *   pnpm --filter @cuttledoc/llm benchmark:tts
  */
 
 import { execSync } from "node:child_process"
@@ -26,7 +26,7 @@ const STT_CACHE_DIR = join(RESULTS_DIR, "tts-stt-cache")
 const COMPARISON_DIR = join(RESULTS_DIR, "comparisons")
 
 // LLM models to benchmark (Ollama models)
-const LLM_MODELS = ["gemma3n:e4b", "gemma3n:e2b", "qwen3:8b", "phi4:14b", "mistral-nemo"]
+const LLM_MODELS = ["phi4:14b", "mistral-nemo", "gemma3n:e4b", "gemma3n:e2b"]
 
 interface Sample {
   language: string
