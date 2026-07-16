@@ -20,13 +20,13 @@ vi.mock("node:os", () => ({
 
 import { ffmpegPath, isFFmpegAvailable } from "./binary.js"
 
-const originalFFmpegPath = process.env.FFMPEG_PATH
+const originalFFmpegPath = process.env["FFMPEG_PATH"]
 const moduleDirectory = dirname(fileURLToPath(import.meta.resolve("./binary.js")))
 const bundledPath = resolve(moduleDirectory, "..", "binary", "ffmpeg")
 
 describe("FFmpeg path resolution", () => {
   beforeEach(() => {
-    delete process.env.FFMPEG_PATH
+    delete process.env["FFMPEG_PATH"]
     mocks.existsSync.mockReset()
     mocks.platform.mockReset().mockReturnValue("linux")
     mocks.arch.mockReset().mockReturnValue("x64")
@@ -34,14 +34,14 @@ describe("FFmpeg path resolution", () => {
 
   afterEach(() => {
     if (originalFFmpegPath === undefined) {
-      delete process.env.FFMPEG_PATH
+      delete process.env["FFMPEG_PATH"]
     } else {
-      process.env.FFMPEG_PATH = originalFFmpegPath
+      process.env["FFMPEG_PATH"] = originalFFmpegPath
     }
   })
 
   it("prefers a valid FFMPEG_PATH over the bundled binary", () => {
-    process.env.FFMPEG_PATH = "./custom/ffmpeg"
+    process.env["FFMPEG_PATH"] = "./custom/ffmpeg"
     const configuredPath = resolve("./custom/ffmpeg")
     mocks.existsSync.mockReturnValue(true)
 
@@ -60,7 +60,7 @@ describe("FFmpeg path resolution", () => {
   })
 
   it("falls back to the bundled binary when FFMPEG_PATH does not exist", () => {
-    process.env.FFMPEG_PATH = "./missing/ffmpeg"
+    process.env["FFMPEG_PATH"] = "./missing/ffmpeg"
     const configuredPath = resolve("./missing/ffmpeg")
     mocks.existsSync.mockImplementation((path) => path === bundledPath)
 
@@ -70,7 +70,7 @@ describe("FFmpeg path resolution", () => {
   })
 
   it("uses a valid FFMPEG_PATH without consulting platform support", () => {
-    process.env.FFMPEG_PATH = "/opt/ffmpeg"
+    process.env["FFMPEG_PATH"] = "/opt/ffmpeg"
     mocks.existsSync.mockReturnValue(true)
     mocks.platform.mockReturnValue("freebsd")
 
@@ -80,7 +80,7 @@ describe("FFmpeg path resolution", () => {
   })
 
   it("reports only the configured path when the platform is unsupported", () => {
-    process.env.FFMPEG_PATH = "./missing/ffmpeg"
+    process.env["FFMPEG_PATH"] = "./missing/ffmpeg"
     const configuredPath = resolve("./missing/ffmpeg")
     mocks.existsSync.mockReturnValue(false)
     mocks.platform.mockReturnValue("freebsd")
@@ -95,7 +95,7 @@ describe("FFmpeg path resolution", () => {
   })
 
   it("reports every attempted path when no binary is available", () => {
-    process.env.FFMPEG_PATH = "./missing/ffmpeg"
+    process.env["FFMPEG_PATH"] = "./missing/ffmpeg"
     const configuredPath = resolve("./missing/ffmpeg")
     mocks.existsSync.mockReturnValue(false)
 
@@ -107,11 +107,11 @@ describe("FFmpeg path resolution", () => {
   })
 
   it("reports the paths captured during resolution when the environment changes", () => {
-    process.env.FFMPEG_PATH = "./first/ffmpeg"
+    process.env["FFMPEG_PATH"] = "./first/ffmpeg"
     const configuredPath = resolve("./first/ffmpeg")
     const changedPath = resolve("./changed/ffmpeg")
     mocks.existsSync.mockImplementationOnce(() => {
-      process.env.FFMPEG_PATH = "./changed/ffmpeg"
+      process.env["FFMPEG_PATH"] = "./changed/ffmpeg"
       return false
     })
     mocks.existsSync.mockReturnValueOnce(false)

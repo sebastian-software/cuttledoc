@@ -161,7 +161,7 @@ importers:
         version: 0.12.3
     devDependencies:
       tsup:
-        specifier: ^8.5.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
         specifier: ^5.9.3
@@ -177,10 +177,10 @@ importers:
         version: 3.14.5(typescript@5.9.3)
     devDependencies:
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
-        specifier: ^5.8.3
+        specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.16
