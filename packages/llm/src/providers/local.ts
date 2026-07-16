@@ -6,7 +6,8 @@
  */
 
 import { existsSync, mkdirSync, readdirSync } from "node:fs"
-import { join } from "node:path"
+import { homedir } from "node:os"
+import { join, posix, win32 } from "node:path"
 
 import {
   countParagraphs,
@@ -59,12 +60,55 @@ async function loadLlamaModule(): Promise<LlamaModule> {
 /**
  * Get the models directory for LLM models
  */
-function getModelsDir(): string {
-  return (
-    process.env["CUTTLEDOC_LLM_MODELS_DIR"] ??
-    process.env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"] ??
-    join(process.cwd(), "models", "llm")
-  )
+interface ModelsDirectoryOptions {
+  env?: Readonly<Record<string, string | undefined>>
+  homeDirectory?: string
+  platform?: NodeJS.Platform
+}
+
+function nonEmptyEnvironmentValue(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized === "" ? undefined : normalized
+}
+
+/** @internal Resolve the stable cache directory used for embedded LLM models. */
+export function getModelsDir(options: ModelsDirectoryOptions = {}): string {
+  const env = options.env ?? process.env
+  const platform = options.platform ?? process.platform
+  const path = platform === "win32" ? win32 : posix
+  const currentConfiguredDirectory = nonEmptyEnvironmentValue(env["CUTTLEDOC_LLM_MODELS_DIR"])
+  // Deprecated pre-rename compatibility. Prefer CUTTLEDOC_LLM_MODELS_DIR.
+  const legacyConfiguredDirectory = nonEmptyEnvironmentValue(env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"])
+  const configuredDirectory = currentConfiguredDirectory ?? legacyConfiguredDirectory
+
+  if (configuredDirectory !== undefined) {
+    if (!path.isAbsolute(configuredDirectory)) {
+      const variableName =
+        currentConfiguredDirectory !== undefined ? "CUTTLEDOC_LLM_MODELS_DIR" : "LOCAL_TRANSCRIBE_LLM_MODELS_DIR"
+      throw new Error(`${variableName} must be an absolute path`)
+    }
+    return configuredDirectory
+  }
+
+  const homeDirectory = options.homeDirectory ?? homedir()
+  const xdgCacheHome = nonEmptyEnvironmentValue(env["XDG_CACHE_HOME"])
+
+  let cacheRoot: string
+  if (xdgCacheHome !== undefined && path.isAbsolute(xdgCacheHome)) {
+    cacheRoot = xdgCacheHome
+  } else if (platform === "darwin") {
+    cacheRoot = path.join(homeDirectory, "Library", "Caches")
+  } else if (platform === "win32") {
+    const localAppData = nonEmptyEnvironmentValue(env["LOCALAPPDATA"])
+    cacheRoot =
+      localAppData !== undefined && path.isAbsolute(localAppData)
+        ? localAppData
+        : path.join(homeDirectory, "AppData", "Local")
+  } else {
+    cacheRoot = path.join(homeDirectory, ".cache")
+  }
+
+  return path.join(cacheRoot, "cuttledoc", "models", "llm")
 }
 
 /**
