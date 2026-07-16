@@ -43,7 +43,7 @@ Feature suggestions are welcome! Please open an issue with:
 
 - Node.js 22+
 - pnpm 10+
-- macOS 14+ (for Apple Speech backend development)
+- macOS 14+ on Apple Silicon (for local CoreML backend development)
 
 ### Getting Started
 
@@ -74,9 +74,11 @@ cuttledoc/
 │   │   ├── src/
 │   │   │   ├── backends/    # Speech recognition backends
 │   │   │   ├── cli/         # CLI implementation
-│   │   │   ├── llm/         # LLM enhancement
 │   │   │   └── utils/       # Shared utilities
 │   │   └── ...
+│   ├── llm/           # LLM transcript enhancement (@cuttledoc/llm)
+│   │   └── src/providers/    # Ollama, local GGUF, and OpenAI providers
+│   ├── ffmpeg/        # Audio processing (@cuttledoc/ffmpeg)
 │   └── docs/          # Documentation website
 └── ...
 ```
@@ -138,7 +140,7 @@ pnpm --filter cuttledoc test:watch
 ### Adding a New Backend
 
 1. Create a new directory under `packages/cuttledoc/src/backends/`
-2. Implement the `TranscriptionBackend` interface
+2. Implement the `Backend` interface from `packages/cuttledoc/src/types.ts`
 3. Add the backend to `packages/cuttledoc/src/backend.ts`
 4. Add tests
 5. Update documentation
