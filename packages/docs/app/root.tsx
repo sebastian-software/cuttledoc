@@ -23,7 +23,7 @@ export function meta({ location, error }: Route.MetaArgs) {
     ]
   }
 
-  return createSeoMeta({ pathname: location.pathname })
+  return []
 }
 
 export const links: Route.LinksFunction = () => [
