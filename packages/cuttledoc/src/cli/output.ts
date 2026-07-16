@@ -4,6 +4,8 @@
 
 import { formatDuration } from "../types/stats.js"
 
+declare const __CUTTLEDOC_VERSION__: string
+
 /**
  * Print help message
  */
@@ -84,8 +86,7 @@ EXAMPLES:
  * Version is read from package.json at build time
  */
 export function printVersion(): void {
-  // Version injected by tsup at build time
-  console.log(`cuttledoc v${process.env["npm_package_version"] ?? "1.0.0"}`)
+  console.log(`cuttledoc v${__CUTTLEDOC_VERSION__}`)
 }
 
 /**

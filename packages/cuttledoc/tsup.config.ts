@@ -1,4 +1,10 @@
+import { readFileSync } from "node:fs"
+
 import { defineConfig } from "tsup"
+
+const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as {
+  version: string
+}
 
 export default defineConfig([
   {
@@ -24,6 +30,9 @@ export default defineConfig([
     sourcemap: true,
     target: "node22",
     treeshake: true,
+    define: {
+      __CUTTLEDOC_VERSION__: JSON.stringify(packageJson.version)
+    },
     external: ["parakeet-coreml", "whisper-coreml", "@cuttledoc/llm"]
   }
 ])

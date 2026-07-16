@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import packageJson from "../../package.json" with { type: "json" }
+
 import { printHelp, printModels, printStats, printVersion } from "./output.js"
 
 // Mock console.log
@@ -72,7 +74,7 @@ describe("cli output", () => {
     it("should print version", () => {
       printVersion()
 
-      expect(mockConsoleLog).toHaveBeenCalledWith("cuttledoc v1.0.0")
+      expect(mockConsoleLog).toHaveBeenCalledWith(`cuttledoc v${packageJson.version}`)
     })
   })
 
