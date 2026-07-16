@@ -8,7 +8,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       github-actions-dependencies:
         patterns:
@@ -20,7 +20,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       npm-dependencies:
         patterns:
@@ -32,7 +32,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       npm-dependencies:
         patterns:
@@ -44,7 +44,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       npm-dependencies:
         patterns:
@@ -56,7 +56,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       npm-dependencies:
         patterns:
@@ -68,31 +68,7 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
-    groups:
-      npm-dependencies:
-        patterns:
-          - "*"
-  - package-ecosystem: "npm"
-    directory: "/packages/parakeet-asr"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
-    groups:
-      npm-dependencies:
-        patterns:
-          - "*"
-  - package-ecosystem: "npm"
-    directory: "/packages/whisper-asr"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Europe/Berlin"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 5
     groups:
       npm-dependencies:
         patterns:
