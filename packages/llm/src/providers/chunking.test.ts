@@ -6,10 +6,11 @@ import { OllamaProcessor } from "./ollama.js"
 import { OpenAIProcessor } from "./openai.js"
 
 function resultFor(markdown: string, provider: LLMProvider): EnhanceResult {
-  const tokens = markdown.split(/\s+/).length
+  const normalizedMarkdown = markdown.trim()
+  const tokens = normalizedMarkdown.split(/\s+/).length
   return {
-    markdown,
-    plainText: markdown,
+    markdown: normalizedMarkdown,
+    plainText: normalizedMarkdown,
     stats: {
       processingTimeSeconds: 0.1,
       inputTokens: tokens,

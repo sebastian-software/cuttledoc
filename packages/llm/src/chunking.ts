@@ -23,12 +23,14 @@ export function splitTranscriptIntoChunks(
     throw new Error("chunkSize must be a positive integer")
   }
 
-  const trimmedTranscript = rawTranscript.trim()
-  if (trimmedTranscript.length === 0) {
+  if (rawTranscript.trim().length === 0) {
     return [rawTranscript]
   }
 
-  const words = trimmedTranscript.split(/\s+/)
+  const words = Array.from(rawTranscript.matchAll(/\S+/g), (match) => ({
+    start: match.index,
+    text: match[0]
+  }))
   if (words.length <= chunkSize) {
     return [rawTranscript]
   }
@@ -42,14 +44,16 @@ export function splitTranscriptIntoChunks(
     if (end < words.length) {
       const earliestBoundary = start + Math.floor((chunkSize - 1) / 2)
       for (let index = end - 1; index >= earliestBoundary; index--) {
-        if (/[.!?]$/.test(words[index] ?? "")) {
+        if (/[.!?]$/.test(words[index]?.text ?? "")) {
           end = index + 1
           break
         }
       }
     }
 
-    chunks.push(words.slice(start, end).join(" "))
+    const chunkStart = start === 0 ? 0 : (words[start]?.start ?? rawTranscript.length)
+    const chunkEnd = end === words.length ? rawTranscript.length : (words[end]?.start ?? rawTranscript.length)
+    chunks.push(rawTranscript.slice(chunkStart, chunkEnd))
     start = end
   }
 
@@ -91,6 +95,10 @@ export async function enhanceTranscriptInChunks(
   const corrections = results.flatMap((result) => result.corrections)
   const inputTokens = results.reduce((total, result) => total + result.stats.inputTokens, 0)
   const outputTokens = results.reduce((total, result) => total + result.stats.outputTokens, 0)
+  const generationTimeSeconds = results.reduce((total, result) => {
+    const { outputTokens: chunkOutputTokens, tokensPerSecond } = result.stats
+    return tokensPerSecond > 0 ? total + chunkOutputTokens / tokensPerSecond : total
+  }, 0)
   const processingTimeSeconds = (performance.now() - startTime) / 1000
 
   return {
@@ -100,7 +108,7 @@ export async function enhanceTranscriptInChunks(
       processingTimeSeconds,
       inputTokens,
       outputTokens,
-      tokensPerSecond: processingTimeSeconds > 0 ? outputTokens / processingTimeSeconds : 0,
+      tokensPerSecond: generationTimeSeconds > 0 ? outputTokens / generationTimeSeconds : 0,
       correctionsCount: corrections.length,
       paragraphCount: countParagraphs(markdown),
       provider: firstResult.stats.provider,

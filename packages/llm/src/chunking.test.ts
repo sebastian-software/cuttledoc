@@ -4,13 +4,14 @@ import { enhanceTranscriptInChunks, splitTranscriptIntoChunks } from "./chunking
 import type { EnhanceResult } from "./types.js"
 
 function resultFor(markdown: string): EnhanceResult {
+  const normalizedMarkdown = markdown.trim()
   return {
-    markdown,
-    plainText: markdown,
+    markdown: normalizedMarkdown,
+    plainText: normalizedMarkdown,
     stats: {
       processingTimeSeconds: 0.1,
-      inputTokens: markdown.split(/\s+/).length,
-      outputTokens: markdown.split(/\s+/).length,
+      inputTokens: normalizedMarkdown.split(/\s+/).length,
+      outputTokens: normalizedMarkdown.split(/\s+/).length,
       tokensPerSecond: 10,
       correctionsCount: 0,
       paragraphCount: 1,
@@ -28,8 +29,8 @@ describe("splitTranscriptIntoChunks", () => {
 
   it("prefers sentence boundaries while respecting the word limit", () => {
     expect(splitTranscriptIntoChunks("One two. Three four five. Six seven eight", 4)).toEqual([
-      "One two.",
-      "Three four five.",
+      "One two. ",
+      "Three four five. ",
       "Six seven eight"
     ])
   })
@@ -37,8 +38,16 @@ describe("splitTranscriptIntoChunks", () => {
   it("hard-splits long sentences so no chunk exceeds the limit", () => {
     const chunks = splitTranscriptIntoChunks("one two three four five six seven", 3)
 
-    expect(chunks).toEqual(["one two three", "four five six", "seven"])
-    expect(chunks.every((chunk) => chunk.split(/\s+/).length <= 3)).toBe(true)
+    expect(chunks).toEqual(["one two three ", "four five six ", "seven"])
+    expect(chunks.every((chunk) => chunk.trim().split(/\s+/).length <= 3)).toBe(true)
+  })
+
+  it("preserves whitespace across long transcript chunks", () => {
+    const transcript = "  one  two\nthree\n\nfour five  "
+    const chunks = splitTranscriptIntoChunks(transcript, 2)
+
+    expect(chunks.join("")).toBe(transcript)
+    expect(chunks).toEqual(["  one  two\n", "three\n\nfour ", "five  "])
   })
 
   it("rejects invalid chunk sizes", () => {
@@ -61,6 +70,7 @@ describe("enhanceTranscriptInChunks", () => {
     expect(result.markdown).toBe("ONE TWO\n\nTHREE FOUR\n\nFIVE")
     expect(result.stats.inputTokens).toBe(5)
     expect(result.stats.outputTokens).toBe(5)
+    expect(result.stats.tokensPerSecond).toBe(10)
     expect(result.stats.provider).toBe("ollama")
     expect(result.stats.model).toBe("test-model")
   })
