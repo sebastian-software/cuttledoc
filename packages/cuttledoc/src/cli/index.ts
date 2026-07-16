@@ -181,7 +181,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   let finalText = result.text
 
   // LLM processing (correction enabled by default)
-  if (args.correct) {
+  if (validatedArgs.llmModel !== undefined) {
     const llmModel = validatedArgs.llmModel
     const mode = args.format ? "format" : "correct"
     console.log(`LLM ${mode}: ${llmModel}`)
@@ -231,7 +231,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
       totalTimeSeconds: totalTime,
       backend: result.backend,
       wordCount: result.text.split(/\s+/).length,
-      enhanced: args.correct
+      enhanced: validatedArgs.llmModel !== undefined
     })
   }
 }

@@ -66,4 +66,11 @@ describe("validateTranscribeArgs", () => {
       "Expected one input file, received 2"
     )
   })
+
+  it("skips LLM model resolution when correction is disabled", () => {
+    expect(validateTranscribeArgs(parseArgs(["audio.mp3", "--no-correct"]))).toMatchObject({
+      llmModel: undefined,
+      llmProvider: undefined
+    })
+  })
 })

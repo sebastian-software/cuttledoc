@@ -11,7 +11,7 @@ const VALID_LLM_MODELS = [
 
 export interface ValidatedTranscribeArgs {
   backend: BackendType
-  llmModel: string
+  llmModel: string | undefined
   llmProvider: LLMProvider | undefined
   speechModel: string | undefined
 }
@@ -44,6 +44,15 @@ export function validateTranscribeArgs(args: CLIArgs): ValidatedTranscribeArgs {
 
   if (!args.correct && args.llmModel !== undefined) {
     throw new Error("--llm-model cannot be used with --no-correct")
+  }
+
+  if (!args.correct) {
+    return {
+      backend: backend as BackendType,
+      llmModel: undefined,
+      llmProvider: undefined,
+      speechModel: args.model
+    }
   }
 
   const llmModel = args.llmModel ?? "gemma3n:e4b"
