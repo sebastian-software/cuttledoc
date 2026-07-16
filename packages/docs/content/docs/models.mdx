@@ -60,10 +60,19 @@ The CLI uses `gemma3n:e4b` for correction by default. Downloaded GGUF files are 
 
 Ollama owns its model store, so use the Ollama CLI rather than `cuttledoc models download`:
 
+| Ollama model tag | Model            |
+| ---------------- | ---------------- |
+| `phi4:14b`       | Phi-4 14B        |
+| `mistral-nemo`   | Mistral Nemo 12B |
+| `gemma3n:e4b`    | Gemma 3n E4B     |
+| `gemma3n:e2b`    | Gemma 3n E2B     |
+
 ```bash
 ollama pull phi4:14b
 ollama list
 ```
+
+Provider IDs are exact: Ollama uses `mistral-nemo`, while the separately packaged embedded GGUF variant uses `mistral-nemo:12b`.
 
 Then select the model during transcription:
 

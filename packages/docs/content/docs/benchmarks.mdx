@@ -47,9 +47,9 @@ Treat these numbers as a comparison on one controlled dataset, not a guarantee f
 
 ## LLM correction
 
-Correction models were tested on TTS-generated audio lasting five to seven minutes per language, with two speakers for each language.
+Correction models were tested through Ollama on TTS-generated audio lasting five to seven minutes per language, with two speakers for each language. The first column contains the exact Ollama model tag used by the benchmark.
 
-| Model            | WER before | WER after | Improvement | Speed  |
+| Ollama model tag | WER before | WER after | Improvement | Speed  |
 | ---------------- | ---------- | --------- | ----------- | ------ |
 | **phi4:14b**     | 5.6%       | **2.8%**  | **52.0%**   | 36 t/s |
 | **mistral-nemo** | 5.6%       | 3.2%      | 42.7%       | 60 t/s |
