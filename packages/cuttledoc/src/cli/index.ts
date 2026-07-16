@@ -28,6 +28,7 @@ import { enhanceTranscript } from "@cuttledoc/llm"
 import { parseArgs } from "./args.js"
 import { runBenchmark } from "./benchmark.js"
 import { printHelp, printModels, printStats, printVersion } from "./output.js"
+import { validateTranscribeArgs } from "./validation.js"
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
@@ -146,6 +147,8 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
     process.exit(1)
   }
 
+  const validatedArgs = validateTranscribeArgs(args)
+
   if (!existsSync(inputFile)) {
     console.error(`Error: File not found: ${inputFile}`)
     process.exit(1)
@@ -154,24 +157,23 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   const startTime = performance.now()
 
   console.log(`Transcribing: ${basename(inputFile)}`)
-  console.log(`Backend: ${args.backend ?? "auto"}`)
-
-  type BackendType = keyof typeof BACKEND_TYPES
-
-  // Validate backend
-  const backendArg = args.backend ?? "auto"
-  const backend = backendArg in BACKEND_TYPES ? (backendArg as BackendType) : "auto"
+  console.log(`Backend: ${validatedArgs.backend}`)
 
   // Run transcription
-  const transcribeOptions: { backend: BackendType; language?: string; apiKey?: string; model?: string } = { backend }
+  const transcribeOptions: {
+    backend: typeof validatedArgs.backend
+    language?: string
+    apiKey?: string
+    model?: string
+  } = { backend: validatedArgs.backend }
   if (args.language !== undefined) {
     transcribeOptions.language = args.language
   }
   if (args.apiKey !== undefined) {
     transcribeOptions.apiKey = args.apiKey
   }
-  if (args.model !== undefined) {
-    transcribeOptions.model = args.model
+  if (validatedArgs.speechModel !== undefined) {
+    transcribeOptions.model = validatedArgs.speechModel
   }
   const result = await transcribe(inputFile, transcribeOptions)
 
@@ -179,18 +181,24 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   let finalText = result.text
 
   // LLM processing (correction enabled by default)
-  if (args.correct) {
-    const llmModel = args.llmModel ?? "gemma3n:e4b"
+  if (validatedArgs.llmModel !== undefined) {
+    const llmModel = validatedArgs.llmModel
     const mode = args.format ? "format" : "correct"
     console.log(`LLM ${mode}: ${llmModel}`)
 
-    // Validate model
-    const modelId = llmModel in LOCAL_MODELS ? (llmModel as keyof typeof LOCAL_MODELS) : "gemma3n:e4b"
-
-    const enhanced = await enhanceTranscript(result.text, {
-      model: modelId,
+    const enhanceOptions: {
+      model: string
+      mode: typeof mode
+      provider?: "local" | "ollama" | "openai"
+      apiKey?: string
+    } = {
+      model: llmModel,
       mode
-    })
+    }
+    if (validatedArgs.llmProvider !== undefined) enhanceOptions.provider = validatedArgs.llmProvider
+    if (validatedArgs.llmProvider === "openai" && args.apiKey !== undefined) enhanceOptions.apiKey = args.apiKey
+
+    const enhanced = await enhanceTranscript(result.text, enhanceOptions)
 
     finalText = enhanced.markdown
 
@@ -223,7 +231,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
       totalTimeSeconds: totalTime,
       backend: result.backend,
       wordCount: result.text.split(/\s+/).length,
-      enhanced: args.correct
+      enhanced: validatedArgs.llmModel !== undefined
     })
   }
 }

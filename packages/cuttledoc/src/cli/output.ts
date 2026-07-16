@@ -24,17 +24,16 @@ OPTIONS:
                           - parakeet: Fastest, 25 languages (en, de, fr, es, ...)
                           - whisper: Best quality, 99 languages (large-v3)
                           - openai: Cloud API, best quality, 50+ languages
-  -m, --model <name>      Speech model:
-                          - parakeet (default for parakeet backend)
-                          - whisper (default for whisper backend)
-                          - gpt-4o-transcribe (default for openai)
+  -m, --model <name>      OpenAI speech model (requires --backend openai):
+                          - gpt-4o-transcribe (default)
                           - gpt-4o-mini-transcribe (faster/cheaper)
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code (e.g., en, de, fr)
   -o, --output <file>     Write output to file instead of stdout
   -f, --format            Add formatting (paragraphs, headings, markdown)
   --no-correct            Disable LLM correction (raw STT output)
-  --llm-model <name>      LLM model for correction (default: gemma3n:e4b)
+  --llm-model <name>      Ollama, embedded GGUF, or OpenAI correction model
+                          (default: gemma3n:e4b)
   -s, --stats             Show processing statistics
   -q, --quiet             Minimal output (just the transcript)
   -h, --help              Show this help message
