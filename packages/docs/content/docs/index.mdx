@@ -73,7 +73,8 @@ const result = await transcribe('podcast.mp3')
 // Correction is enabled by default via CLI
 // For API usage, call enhanceTranscript explicitly:
 const enhanced = await enhanceTranscript(result.text, {
-  model: 'phi4:14b', // default, best quality (+52% WER)
+  provider: 'ollama',
+  model: 'phi4:14b', // best benchmarked quality with Ollama (+52% WER)
   mode: 'correct' // or 'format' for Markdown formatting
 })
 
@@ -153,27 +154,27 @@ cuttledoc models download gemma3n:e4b
 
 We tested LLM correction on TTS-generated audio (5-7 min per language, 2 speakers each):
 
-| Model                  | Avg WER Before | Avg WER After | Improvement | Speed  |
-| ---------------------- | -------------- | ------------- | ----------- | ------ |
-| **phi4:14b** (default) | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
-| **mistral-nemo**       | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
-| gemma3n:e4b            | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
-| gemma3n:e2b            | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
+| Model                         | Avg WER Before | Avg WER After | Improvement | Speed  |
+| ----------------------------- | -------------- | ------------- | ----------- | ------ |
+| **phi4:14b** (best quality)   | 5.6%           | **2.8%**      | **+52.0%**  | 36 t/s |
+| **mistral-nemo**              | 5.6%           | 3.2%          | +42.7%      | 60 t/s |
+| **gemma3n:e4b** (CLI default) | 5.6%           | 3.3%          | +41.2%      | 35 t/s |
+| gemma3n:e2b                   | 5.6%           | 3.6%          | +36.9%      | 44 t/s |
 
 ### 🏆 LLM Ranking
 
-| Rank | Model                  | Improvement | Speed  | Best for                   |
-| ---- | ---------------------- | ----------- | ------ | -------------------------- |
-| 🥇   | **phi4:14b** (default) | +52.0%      | 36 t/s | Best quality, DE/ES        |
-| 🥈   | **mistral-nemo**       | +42.7%      | 60 t/s | Best speed, all languages  |
-| 🥉   | **gemma3n:e4b**        | +41.2%      | 35 t/s | Most reliable, no outliers |
+| Rank | Model                         | Improvement | Speed  | Best for                   |
+| ---- | ----------------------------- | ----------- | ------ | -------------------------- |
+| 🥇   | **phi4:14b** (best quality)   | +52.0%      | 36 t/s | Best quality, DE/ES        |
+| 🥈   | **mistral-nemo**              | +42.7%      | 60 t/s | Best speed, all languages  |
+| 🥉   | **gemma3n:e4b** (CLI default) | +41.2%      | 35 t/s | Most reliable, no outliers |
 
 **Key findings:**
 
-- **phi4:14b** is the new default - best accuracy (+52%), especially for German/Spanish
+- **phi4:14b** offers the best accuracy with Ollama (+52%), especially for German/Spanish
 - **mistral-nemo** offers best speed (60 t/s) with good accuracy (+43%)
-- **gemma3n:e4b** is most reliable, no negative outliers
-- **Recommendation:** Use default phi4:14b, or mistral-nemo for speed-critical use
+- **gemma3n:e4b** is the CLI default and most reliable, with no negative outliers
+- **Recommendation:** Keep the CLI default for reliability, or explicitly select phi4:14b with Ollama for best quality
 
 ## Next Steps
 

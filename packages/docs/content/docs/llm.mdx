@@ -85,15 +85,15 @@ Easiest setup, best quality. Install [Ollama](https://ollama.com) and pull a mod
 
 ```bash
 brew install ollama
-ollama pull phi4:14b  # Best quality (default)
+ollama pull phi4:14b  # Best quality and Ollama default
 ```
 
-| Model          | Quality    | Speed  | RAM   | Use Case                    |
-| -------------- | ---------- | ------ | ----- | --------------------------- |
-| `phi4:14b`     | ⭐⭐⭐⭐⭐ | 36 t/s | 9 GB  | Best overall (default)      |
-| `mistral-nemo` | ⭐⭐⭐⭐   | 60 t/s | 8 GB  | Speed-critical applications |
-| `gemma3n:e4b`  | ⭐⭐⭐⭐   | 35 t/s | 7.5GB | Reliable, no edge cases     |
-| `gemma3n:e2b`  | ⭐⭐⭐     | 44 t/s | 5.6GB | Low-memory systems          |
+| Model          | Quality    | Speed  | RAM   | Use Case                     |
+| -------------- | ---------- | ------ | ----- | ---------------------------- |
+| `phi4:14b`     | ⭐⭐⭐⭐⭐ | 36 t/s | 9 GB  | Best overall; Ollama default |
+| `mistral-nemo` | ⭐⭐⭐⭐   | 60 t/s | 8 GB  | Speed-critical applications  |
+| `gemma3n:e4b`  | ⭐⭐⭐⭐   | 35 t/s | 7.5GB | Reliable, no edge cases      |
+| `gemma3n:e2b`  | ⭐⭐⭐     | 44 t/s | 5.6GB | Low-memory systems           |
 
 ### GGUF Models (Embedded)
 
@@ -140,12 +140,12 @@ Tested on TTS-generated audio (5-7 min per language, 2 speakers each).
 
 ### Overall Performance
 
-| Model                  | WER Before | WER After | Improvement | Speed  |
-| ---------------------- | ---------- | --------- | ----------- | ------ |
-| **phi4:14b** (default) | 5.6%       | **2.8%**  | **+52.0%**  | 36 t/s |
-| mistral-nemo           | 5.6%       | 3.2%      | +42.7%      | 60 t/s |
-| gemma3n:e4b            | 5.6%       | 3.3%      | +41.2%      | 35 t/s |
-| gemma3n:e2b            | 5.6%       | 3.6%      | +36.9%      | 44 t/s |
+| Model                         | WER Before | WER After | Improvement | Speed  |
+| ----------------------------- | ---------- | --------- | ----------- | ------ |
+| **phi4:14b** (best quality)   | 5.6%       | **2.8%**  | **+52.0%**  | 36 t/s |
+| mistral-nemo                  | 5.6%       | 3.2%      | +42.7%      | 60 t/s |
+| **gemma3n:e4b** (CLI default) | 5.6%       | 3.3%      | +41.2%      | 35 t/s |
+| gemma3n:e2b                   | 5.6%       | 3.6%      | +36.9%      | 44 t/s |
 
 ### Per-Language (phi4:14b)
 
@@ -195,8 +195,8 @@ Tested on TTS-generated audio (5-7 min per language, 2 speakers each).
 ### Model Selection
 
 ```typescript
-// Best quality (default)
-await enhanceTranscript(text, { model: 'phi4:14b' })
+// Best quality with Ollama
+await enhanceTranscript(text, { provider: 'ollama', model: 'phi4:14b' })
 
 // Fast processing
 await enhanceTranscript(text, { model: 'mistral-nemo' })
