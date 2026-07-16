@@ -54,7 +54,7 @@ async function loadLlamaModule(): Promise<LlamaModule> {
   if (llamaModule === null) {
     try {
       const mod = await import("node-llama-cpp")
-      llamaModule = mod as unknown as LlamaModule
+      llamaModule = mod
     } catch {
       throw new Error("node-llama-cpp is not installed. Run: npm install node-llama-cpp")
     }

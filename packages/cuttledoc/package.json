@@ -73,11 +73,11 @@
     "whisper-coreml": "^1.1.0"
   },
   "devDependencies": {
-    "@release-it/conventional-changelog": "^10.0.4",
-    "@vitest/coverage-v8": "^4.0.16",
-    "release-it": "^19.2.2",
+    "@release-it/conventional-changelog": "^10.0.6",
+    "@vitest/coverage-v8": "^4.1.10",
+    "release-it": "^19.2.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.1.10"
   }
 }
