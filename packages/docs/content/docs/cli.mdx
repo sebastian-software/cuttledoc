@@ -1,0 +1,114 @@
+---
+title: CLI Reference
+description: Commands and options for transcription, model management, and benchmarking
+---
+
+The `cuttledoc` CLI transcribes an audio or video file, optionally enhances the transcript with an LLM, and writes the result to standard output or a file.
+
+## Commands
+
+```text
+cuttledoc <audio-file> [options]
+cuttledoc models [list|download <model>]
+cuttledoc benchmark [run|report]
+```
+
+Use `npx cuttledoc` in place of `cuttledoc` when the package is installed locally rather than globally.
+
+## Transcription options
+
+| Option                  | Description                                                               |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `-b, --backend <name>`  | `auto`, `parakeet`, `whisper`, or `openai`; defaults to `auto`            |
+| `-m, --model <name>`    | OpenAI speech model; valid only with `--backend openai`                   |
+| `--api-key <key>`       | OpenAI API key; `OPENAI_API_KEY` is used when this option is omitted      |
+| `-l, --language <code>` | Language code such as `en`, `de`, or `fr`                                 |
+| `-o, --output <file>`   | Write the transcript to a file instead of printing it                     |
+| `-f, --format`          | Correct the transcript and add Markdown paragraphs, headings, and lists   |
+| `--no-correct`          | Return raw speech-to-text output without LLM correction                   |
+| `--llm-model <name>`    | Select the correction model; defaults to `gemma3n:e4b`                    |
+| `-s, --stats`           | Print duration, backend, word count, processing time, and real-time speed |
+| `-q, --quiet`           | Minimize output                                                           |
+| `-h, --help`            | Show command help                                                         |
+| `-v, --version`         | Show the installed cuttledoc version                                      |
+
+LLM correction is enabled by default. `--format` implies correction, while `--no-correct` disables enhancement entirely and cannot be combined with `--llm-model`.
+
+The `--model` option selects an OpenAI speech model and accepts `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`. The local backends use their bundled model and reject this option.
+
+Use `--` to stop option parsing when an input path starts with a dash:
+
+```bash
+cuttledoc -- -recording.wav
+```
+
+## Examples
+
+```bash
+# Default backend with LLM correction
+cuttledoc podcast.mp3
+
+# Raw speech-to-text output
+cuttledoc podcast.mp3 --no-correct
+
+# Formatted Markdown written to a file
+cuttledoc interview.m4a --format --output interview.md
+
+# German transcription with the local Parakeet backend
+cuttledoc meeting.mp4 --backend parakeet --language de
+
+# OpenAI transcription with the smaller speech model
+OPENAI_API_KEY=sk-... cuttledoc call.wav \
+  --backend openai \
+  --model gpt-4o-mini-transcribe
+
+# Include processing statistics
+cuttledoc lecture.m4a --stats
+```
+
+See [Backends](/docs/backends) for platform and credential requirements and [LLM Enhancement](/docs/llm) for correction providers and models.
+
+## Model commands
+
+```bash
+# List downloadable speech and embedded LLM models
+cuttledoc models list
+
+# Download one speech model
+cuttledoc models download parakeet
+cuttledoc models download whisper
+
+# Download all speech models; asr is an alias for all
+cuttledoc models download all
+cuttledoc models download asr
+
+# Download an embedded GGUF correction model
+cuttledoc models download gemma3n:e4b
+```
+
+See [Model Management](/docs/models) for the complete model list and the distinction between speech, embedded GGUF, Ollama, and cloud models.
+
+## Benchmark commands
+
+```text
+cuttledoc benchmark run [models...] [options]
+cuttledoc benchmark report [options]
+
+Options:
+  --fixtures <dir>   Directory with audio and reference files (default: ./fixtures)
+  --output <file>    Benchmark report file (default: <fixtures>/benchmark.json)
+  --language <code>  Only benchmark fixtures for one language
+```
+
+```bash
+# Benchmark all downloaded speech models
+cuttledoc benchmark run
+
+# Benchmark Whisper only with fixtures in another directory
+cuttledoc benchmark run whisper --fixtures ./evaluation
+
+# Print the latest stored report
+cuttledoc benchmark report
+```
+
+Each audio fixture needs a matching `.md` or `.txt` reference transcript with the same base name. See [Benchmarks](/docs/benchmarks) for the methodology and current results.

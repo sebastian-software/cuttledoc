@@ -1,0 +1,92 @@
+---
+title: Benchmarks
+description: Speech recognition and LLM correction accuracy, speed, and methodology
+---
+
+This page is the canonical location for cuttledoc benchmark results. Word Error Rate (WER) is lower when transcription is more accurate; Real-Time Factor (RTF) is lower when transcription is faster.
+
+## Speech recognition
+
+The speech backends were measured on native-speaker recordings from the [FLEURS](https://huggingface.co/datasets/google/fleurs) dataset.
+
+| Backend                    | 🇬🇧 EN | 🇪🇸 ES | 🇩🇪 DE | 🇫🇷 FR | 🇧🇷 PT | Avg WER | RTF  |
+| -------------------------- | ----- | ----- | ----- | ----- | ----- | ------- | ---- |
+| **gpt-4o-mini-transcribe** | 5.7%  | 1.3%  | 3.4%  | 7.3%  | 6.0%  | 4.8%    | 0.10 |
+| **gpt-4o-transcribe**      | 9.9%  | 2.1%  | 2.8%  | 6.3%  | 4.6%  | 5.1%    | 0.16 |
+| **Whisper large-v3-turbo** | 4.9%  | 2.1%  | 2.8%  | 10.6% | 5.2%  | 5.1%    | 0.07 |
+| **Parakeet v3**            | 4.6%  | 3.6%  | 4.5%  | 10.1% | 9.0%  | 6.4%    | 0.03 |
+
+_RTF = processing time divided by audio duration. An RTF of 0.10 means one second of processing for ten seconds of audio._
+
+### Ranking by accuracy
+
+| Rank | Backend                    | Avg WER | Best for                           |
+| ---- | -------------------------- | ------- | ---------------------------------- |
+| 1    | **gpt-4o-mini-transcribe** | 4.8%    | Cloud, best overall result         |
+| 2    | **gpt-4o-transcribe**      | 5.1%    | Cloud, strongest German result     |
+| 2    | **Whisper large-v3-turbo** | 5.1%    | Offline, broadest language support |
+| 4    | **Parakeet v3**            | 6.4%    | Offline, compact and fast          |
+
+### Ranking by speed
+
+| Rank | Backend                    | RTF  | Execution        |
+| ---- | -------------------------- | ---- | ---------------- |
+| 1    | **Parakeet v3**            | 0.03 | Local CoreML     |
+| 2    | **Whisper large-v3-turbo** | 0.07 | Local CoreML     |
+| 3    | **gpt-4o-mini-transcribe** | 0.10 | OpenAI cloud API |
+| 4    | **gpt-4o-transcribe**      | 0.16 | OpenAI cloud API |
+
+### Methodology
+
+- WER was measured on raw speech-to-text output before LLM enhancement.
+- The dataset contained ten FLEURS samples for each of five languages.
+- Local results were measured on an Apple M1 Pro using CoreML.
+- Cloud results used the named OpenAI transcription model.
+
+Treat these numbers as a comparison on one controlled dataset, not a guarantee for every microphone, speaker, or domain. Run the CLI benchmark on representative recordings before choosing a production backend.
+
+## LLM correction
+
+Correction models were tested through Ollama on TTS-generated audio lasting five to seven minutes per language, with two speakers for each language. The first column contains the exact Ollama model tag used by the benchmark.
+
+| Ollama model tag | WER before | WER after | Improvement | Speed  |
+| ---------------- | ---------- | --------- | ----------- | ------ |
+| **phi4:14b**     | 5.6%       | **2.8%**  | **52.0%**   | 36 t/s |
+| **mistral-nemo** | 5.6%       | 3.2%      | 42.7%       | 60 t/s |
+| **gemma3n:e4b**  | 5.6%       | 3.3%      | 41.2%       | 35 t/s |
+| **gemma3n:e2b**  | 5.6%       | 3.6%      | 36.9%       | 44 t/s |
+
+### phi4:14b by language
+
+| Language   | Before | After | Improvement |
+| ---------- | ------ | ----- | ----------- |
+| German     | 6.7%   | 1.6%  | 76%         |
+| English    | 5.5%   | 2.8%  | 49%         |
+| Spanish    | 3.5%   | 1.3%  | 63%         |
+| French     | 6.5%   | 5.7%  | 12%         |
+| Portuguese | 6.0%   | 3.3%  | 45%         |
+
+The results show a quality and speed tradeoff: `phi4:14b` produced the strongest correction result, while `mistral-nemo` processed the test set fastest. Language-specific results varied substantially, so validate the model on your own content.
+
+## Run your own benchmark
+
+The benchmark command compares downloaded local speech models against paired audio and reference files:
+
+```bash
+cuttledoc models download all
+cuttledoc benchmark run --fixtures ./fixtures
+cuttledoc benchmark report --fixtures ./fixtures
+```
+
+Use the same base name for each audio file and its `.md` or `.txt` reference transcript. You can limit a run to one model or language and save the JSON report elsewhere:
+
+```bash
+cuttledoc benchmark run whisper \
+  --fixtures ./evaluation \
+  --language de \
+  --output ./reports/whisper-de.json
+
+cuttledoc benchmark report --output ./reports/whisper-de.json
+```
+
+See the [CLI Reference](/docs/cli#benchmark-commands) for option details.
