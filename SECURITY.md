@@ -6,7 +6,7 @@ We release patches for security vulnerabilities. Which versions are eligible for
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+| 1.x     | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
@@ -33,4 +33,4 @@ When we receive a security bug report, we will assign it to a primary handler. T
 
 ## Recognition
 
-We maintain a [Security Hall of Fame](https://github.com/your-username/cuttledoc/security/advisories) to recognize those who have helped make cuttledoc more secure.
+We maintain a [Security Hall of Fame](https://github.com/sebastian-software/cuttledoc/security/advisories) to recognize those who have helped make cuttledoc more secure.
