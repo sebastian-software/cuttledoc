@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sebastian-software.github.io/cuttledoc/sitemap.xml

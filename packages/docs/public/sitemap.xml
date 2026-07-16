@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://sebastian-software.github.io/cuttledoc/</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/api</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/backends</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/benchmarks</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/cli</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/llm</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/models</loc></url>
+  <url><loc>https://sebastian-software.github.io/cuttledoc/docs/troubleshooting</loc></url>
+</urlset>

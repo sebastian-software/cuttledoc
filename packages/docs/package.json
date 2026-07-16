@@ -4,9 +4,11 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "build": "react-router build",
-    "dev": "react-router dev",
+    "build": "pnpm run generate:seo && react-router build",
+    "dev": "pnpm run generate:seo && react-router dev",
+    "generate:seo": "node scripts/generate-seo-files.js",
     "start": "serve ./build/client",
+    "test": "node --test scripts/*.test.js",
     "types:check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "lint": "prettier --check .",

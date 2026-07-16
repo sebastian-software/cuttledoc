@@ -10,16 +10,10 @@ import openaiLogo from '../assets/logos/openai.svg'
 import geminiLogo from '../assets/logos/gemini.svg'
 import appleLogo from '../assets/logos/apple.svg'
 import { baseOptions } from '../lib/layout.shared'
+import { createSeoMeta } from '../lib/seo'
 
-export function meta(_args: Route.MetaArgs) {
-  return [
-    { title: 'cuttledoc - Fast Offline Speech-to-Text for Node.js' },
-    {
-      name: 'description',
-      content:
-        'Fast, offline speech-to-text transcription library for Node.js with multiple backends and LLM enhancement.'
-    }
-  ]
+export function meta({ location }: Route.MetaArgs) {
+  return createSeoMeta({ pathname: location.pathname })
 }
 
 export default function Home() {
