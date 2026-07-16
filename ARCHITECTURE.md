@@ -168,8 +168,8 @@ cuttledoc/
 
 1. **Input**: Raw transcription text
 2. **LLM Processing**: Send to the CLI default gemma3n:e4b or an explicitly selected provider model
-3. **Enhancement**: Generate summary, format, correct errors
-4. **Output**: Enhanced Markdown document
+3. **Enhancement**: Correct transcription errors and optionally add Markdown formatting without summarizing or changing the content
+4. **Output**: Enhanced plain text and Markdown
 
 ## Key Design Principles
 
@@ -178,7 +178,7 @@ cuttledoc/
 3. **macOS Optimized**: Full Apple Silicon acceleration via CoreML
 4. **Offline-First**: All local processing happens without internet
 5. **Type Safety**: Full TypeScript coverage
-6. **ESM-Only**: Modern JavaScript module system
+6. **Dual Module Support**: Package exports support both ESM `import` and CommonJS `require`
 
 ## Dependencies
 
