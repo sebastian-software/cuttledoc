@@ -54,7 +54,7 @@ The backend system provides a unified interface for speech recognition:
   - Uses Neural Engine (ANE) and Metal GPU for acceleration
   - Two optimized models:
     - **Parakeet TDT v3** (160 MB) – fastest, 25 languages, RTF 0.03
-    - **Whisper large-v3-turbo** (800 MB) – best coverage, 99 languages, RTF 0.07
+    - **Whisper large-v3-turbo** (~2.9 GB) – best coverage, 99 languages, RTF 0.07
   - Based on `parakeet-coreml` and `whisper-coreml` packages
 
 - **OpenAI Backend** (`backends/openai/`)

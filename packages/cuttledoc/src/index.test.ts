@@ -7,7 +7,10 @@ const mocks = vi.hoisted(() => ({
   coremlDispose: vi.fn<() => Promise<void>>(),
   coremlInitialize: vi.fn<(language?: string) => Promise<void>>(),
   coremlTranscribe: vi.fn<(audioPath: string, options: TranscribeOptions) => Promise<TranscriptionResult>>(),
+  downloadWhisperCoreMLModel: vi.fn<() => Promise<string>>(),
+  downloadWhisperModel: vi.fn<() => Promise<string>>(),
   getBackend: vi.fn<() => BackendType>(),
+  isWhisperModelDownloaded: vi.fn<() => boolean>(),
   selectBestBackend: vi.fn<(language?: string, apiKey?: string) => BackendType>()
 }))
 
@@ -49,7 +52,13 @@ vi.mock("@cuttledoc/llm", () => ({
   isModelDownloaded: vi.fn()
 }))
 
-import { cleanup, transcribe } from "./index.js"
+vi.mock("whisper-coreml", () => ({
+  downloadCoreMLModel: mocks.downloadWhisperCoreMLModel,
+  downloadModel: mocks.downloadWhisperModel,
+  isModelDownloaded: mocks.isWhisperModelDownloaded
+}))
+
+import { cleanup, downloadModel, isModelDownloaded, transcribe } from "./index.js"
 
 const transcriptionResult: TranscriptionResult = {
   backend: BACKEND_TYPES.parakeet,
@@ -133,5 +142,29 @@ describe("transcribe backend resolution", () => {
     expect(mocks.constructCoreMLBackend).toHaveBeenCalledOnce()
     expect(mocks.coremlInitialize).toHaveBeenCalledOnce()
     expect(mocks.coremlInitialize).toHaveBeenCalledWith(undefined)
+  })
+})
+
+describe("downloadModel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("downloads both Whisper model artifacts", async () => {
+    mocks.downloadWhisperModel.mockResolvedValue("/models/ggml-large-v3-turbo.bin")
+    mocks.downloadWhisperCoreMLModel.mockResolvedValue("/models/ggml-large-v3-turbo-encoder.mlmodelc")
+
+    await downloadModel(BACKEND_TYPES.whisper)
+
+    expect(mocks.downloadWhisperModel).toHaveBeenCalledOnce()
+    expect(mocks.downloadWhisperCoreMLModel).toHaveBeenCalledOnce()
+  })
+
+  it.each([true, false])("uses whisper-coreml's aggregate completeness check (%s)", async (downloaded) => {
+    mocks.isWhisperModelDownloaded.mockReturnValue(downloaded)
+
+    await expect(isModelDownloaded(BACKEND_TYPES.whisper)).resolves.toBe(downloaded)
+
+    expect(mocks.isWhisperModelDownloaded).toHaveBeenCalledOnce()
   })
 })
