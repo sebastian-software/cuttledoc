@@ -1,9 +1,6 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { parseArgs } from "./args.js"
-
-// Suppress console.warn during tests
-vi.spyOn(console, "warn").mockImplementation(() => undefined)
 
 describe("parseArgs", () => {
   describe("flags", () => {
@@ -111,6 +108,20 @@ describe("parseArgs", () => {
       const args = parseArgs(["--llm-model", "gemma3n:e4b"])
       expect(args.llmModel).toBe("gemma3n:e4b")
     })
+
+    it("should parse --api-key option", () => {
+      const args = parseArgs(["--api-key", "test-key"])
+      expect(args.apiKey).toBe("test-key")
+    })
+
+    it.each(["-b", "--backend", "-m", "--model", "-l", "--language", "-o", "--output", "--llm-model", "--api-key"])(
+      "should reject a missing value for %s",
+      (option) => {
+        expect(() => parseArgs([option])).toThrow(`Option ${option} requires a value`)
+        expect(() => parseArgs([option, ""])).toThrow(`Option ${option} requires a value`)
+        expect(() => parseArgs([option, "--quiet"])).toThrow(`Option ${option} requires a value`)
+      }
+    )
   })
 
   describe("subcommands", () => {
@@ -183,10 +194,8 @@ describe("parseArgs", () => {
       expect(args.positional).toEqual([])
     })
 
-    it("should warn on unknown option", () => {
-      parseArgs(["--unknown-flag"])
-
-      expect(console.warn).toHaveBeenCalledWith("Unknown option: --unknown-flag")
+    it("should reject an unknown option", () => {
+      expect(() => parseArgs(["--unknown-flag"])).toThrow("Unknown option: --unknown-flag")
     })
   })
 

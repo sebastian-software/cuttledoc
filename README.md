@@ -114,7 +114,7 @@ cuttledoc models [list|download <model>]
 
 Options:
   -b, --backend <name>    Backend: auto, whisper, parakeet, openai (default: auto)
-  -m, --model <name>      Model: gpt-4o-transcribe, gpt-4o-mini-transcribe, etc.
+  -m, --model <name>      OpenAI speech model (requires -b openai)
   --api-key <key>         OpenAI API key (or set OPENAI_API_KEY env var)
   -l, --language <code>   Language code: en, de, fr, es, etc.
   -o, --output <file>     Write output to file

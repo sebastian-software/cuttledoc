@@ -35,6 +35,14 @@ describe("cli output", () => {
       expect(output).toContain("-b")
     })
 
+    it("should scope the speech model option to the OpenAI backend", () => {
+      printHelp()
+
+      const output = mockConsoleLog.mock.calls[0]?.[0] as string
+      expect(output).toContain("OpenAI speech model (requires --backend openai)")
+      expect(output).toContain("Ollama, embedded GGUF, or OpenAI correction model")
+    })
+
     it("should document language option", () => {
       printHelp()
 

@@ -26,6 +26,14 @@ export interface CLIArgs {
   positional: string[]
 }
 
+function readOptionValue(argv: string[], optionIndex: number): string {
+  const value = argv[optionIndex + 1]
+  if (value === undefined || value.length === 0 || value.startsWith("-")) {
+    throw new Error(`Option ${argv[optionIndex] ?? ""} requires a value`)
+  }
+  return value
+}
+
 /**
  * Parse CLI arguments
  */
@@ -73,17 +81,23 @@ export function parseArgs(argv: string[]): CLIArgs {
     }
     // Options with values
     else if (arg === "-b" || arg === "--backend") {
-      args.backend = argv[++i]
+      args.backend = readOptionValue(argv, i)
+      i++
     } else if (arg === "-m" || arg === "--model") {
-      args.model = argv[++i]
+      args.model = readOptionValue(argv, i)
+      i++
     } else if (arg === "-l" || arg === "--language") {
-      args.language = argv[++i]
+      args.language = readOptionValue(argv, i)
+      i++
     } else if (arg === "-o" || arg === "--output") {
-      args.output = argv[++i]
+      args.output = readOptionValue(argv, i)
+      i++
     } else if (arg === "--llm-model") {
-      args.llmModel = argv[++i]
+      args.llmModel = readOptionValue(argv, i)
+      i++
     } else if (arg === "--api-key") {
-      args.apiKey = argv[++i]
+      args.apiKey = readOptionValue(argv, i)
+      i++
     }
     // Subcommands
     else if (arg === "models") {
@@ -101,7 +115,7 @@ export function parseArgs(argv: string[]): CLIArgs {
     }
     // Unknown option
     else {
-      console.warn(`Unknown option: ${arg}`)
+      throw new Error(`Unknown option: ${arg}`)
     }
 
     i++
