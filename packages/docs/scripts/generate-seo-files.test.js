@@ -26,7 +26,7 @@ test('robots points crawlers to the canonical sitemap', async () => {
 
   assert.match(robots, /^User-agent: \*$/m)
   assert.match(robots, /^Allow: \/$/m)
-  assert.ok(robots.split('\n').includes(`Sitemap: ${siteConfig.siteUrl}/sitemap.xml`))
+  assert.ok(robots.split(/\r?\n/).includes(`Sitemap: ${siteConfig.siteUrl}/sitemap.xml`))
 })
 
 test('social preview is a 1200 by 630 PNG', async () => {
