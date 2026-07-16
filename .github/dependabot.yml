@@ -25,6 +25,15 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    # Keep type declarations aligned with the oldest supported Node.js major,
+    # and defer TypeScript 7 until typescript-eslint supports it.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "npm"
     directory: "/packages/cuttledoc"
     schedule:
@@ -37,6 +46,10 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "npm"
     directory: "/packages/docs"
     schedule:
@@ -49,6 +62,10 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "npm"
     directory: "/packages/ffmpeg"
     schedule:
@@ -61,6 +78,10 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "npm"
     directory: "/packages/llm"
     schedule:
@@ -73,3 +94,7 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
