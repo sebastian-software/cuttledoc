@@ -61,7 +61,53 @@ function getExecutableName(): string {
 }
 
 /**
+ * Get the configured FFmpeg executable path, if one was provided.
+ */
+function getConfiguredPath(): string | undefined {
+  const configuredPath = process.env.FFMPEG_PATH?.trim()
+  return configuredPath ? resolve(configuredPath) : undefined
+}
+
+/**
+ * Get the bundled executable path when the current platform is supported.
+ */
+function getBundledPath(): string | undefined {
+  try {
+    return resolve(getBinaryDir(), getExecutableName())
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Resolve an available FFmpeg executable in priority order.
+ */
+function resolveFFmpegPath(): { path?: string; checkedPaths: string[] } {
+  const checkedPaths: string[] = []
+  const configuredPath = getConfiguredPath()
+  if (configuredPath !== undefined) {
+    checkedPaths.push(configuredPath)
+    if (existsSync(configuredPath)) {
+      return { path: configuredPath, checkedPaths }
+    }
+  }
+
+  const bundledPath = getBundledPath()
+  if (bundledPath !== undefined) {
+    checkedPaths.push(bundledPath)
+    if (existsSync(bundledPath)) {
+      return { path: bundledPath, checkedPaths }
+    }
+  }
+
+  return { checkedPaths }
+}
+
+/**
  * Get the absolute path to the FFmpeg binary.
+ *
+ * A valid FFMPEG_PATH environment variable takes precedence over the bundled
+ * executable. Missing configured paths fall back to the bundled binary.
  *
  * @returns Absolute path to the FFmpeg executable
  * @throws Error if the binary is not available
@@ -77,14 +123,17 @@ function getExecutableName(): string {
  * ```
  */
 export function ffmpegPath(): string {
-  const path = resolve(getBinaryDir(), getExecutableName())
-  if (!existsSync(path)) {
-    throw new Error(
-      `FFmpeg binary not found at ${path}. ` +
-        "Try reinstalling @cuttledoc/ffmpeg or set FFMPEG_PATH environment variable."
-    )
+  const { path, checkedPaths } = resolveFFmpegPath()
+  if (path !== undefined) {
+    return path
   }
-  return path
+
+  const checkedMessage = checkedPaths.length > 0 ? ` Checked: ${checkedPaths.join(", ")}.` : ""
+
+  throw new Error(
+    `FFmpeg binary not found.${checkedMessage} ` +
+      "Set FFMPEG_PATH to an FFmpeg executable or reinstall @cuttledoc/ffmpeg."
+  )
 }
 
 /**
@@ -93,12 +142,7 @@ export function ffmpegPath(): string {
  * @returns true if FFmpeg is available, false otherwise
  */
 export function isFFmpegAvailable(): boolean {
-  try {
-    const path = resolve(getBinaryDir(), getExecutableName())
-    return existsSync(path)
-  } catch {
-    return false
-  }
+  return resolveFFmpegPath().path !== undefined
 }
 
 /**
