@@ -111,7 +111,10 @@ console.log(enhanced.markdown) // With formatting (if mode="format")
 
 ```
 cuttledoc <audio-file> [options]
-cuttledoc models [list|download <model>]
+cuttledoc models list
+cuttledoc models download <model>
+cuttledoc models download all|asr
+cuttledoc benchmark [run|report]
 
 Options:
   -b, --backend <name>    Backend: auto, whisper, parakeet, openai (default: auto)
@@ -139,10 +142,35 @@ cuttledoc models list
 # Download speech models
 cuttledoc models download parakeet    # 160 MB, 25 languages
 cuttledoc models download whisper     # ~2.9 GB, 99 languages
+cuttledoc models download all         # Download all speech models
+cuttledoc models download asr         # Alias for "all"
 
 # Download LLM model (for correction/formatting)
 # For Ollama (recommended): ollama pull phi4:14b
 # For GGUF: cuttledoc models download gemma3n:e4b
+```
+
+### Benchmarking
+
+```
+cuttledoc benchmark run [models...] [options]
+cuttledoc benchmark report [options]
+
+Options:
+  --fixtures <dir>    Directory with audio and reference files (default: ./fixtures)
+  --output <file>     Benchmark report file (default: <fixtures>/benchmark.json)
+  --language <code>   Only benchmark fixtures for one language
+```
+
+```bash
+# Benchmark all downloaded speech models
+cuttledoc benchmark run
+
+# Benchmark one speech model
+cuttledoc benchmark run whisper
+
+# Show the latest benchmark report
+cuttledoc benchmark report
 ```
 
 ## Backends
@@ -348,7 +376,6 @@ pnpm docs:dev
 ```bash
 # Build specific package
 pnpm --filter cuttledoc build
-pnpm --filter @cuttledoc/cli build
 pnpm --filter @cuttledoc/docs build
 
 # Run tests in specific package
