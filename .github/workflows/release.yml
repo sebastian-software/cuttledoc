@@ -19,8 +19,47 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  dry-run:
+    if: ${{ inputs.dry_run }}
+    name: Release dry run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Install the release npm CLI
+        run: npm install --global npm@11.14.0
+      - run: pnpm install --frozen-lockfile
+      - name: Validate version input
+        run: |
+          node --input-type=module -e '
+            const value = process.env.RELEASE_VERSION;
+            const increment = /^(?:patch|minor|major|prepatch|preminor|premajor|prerelease)$/;
+            const exact = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+            if (!increment.test(value) && !exact.test(value)) {
+              console.error(`Invalid release version: ${value}`);
+              process.exit(1);
+            }
+          '
+      - name: Dry run
+        run: pnpm release:dry "$RELEASE_VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release:
-    name: ${{ inputs.dry_run && 'Release dry run' || 'Release' }}
+    if: ${{ !inputs.dry_run }}
+    name: Release
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -29,12 +68,12 @@ jobs:
     env:
       RELEASE_VERSION: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
           ref: main
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -58,7 +97,6 @@ jobs:
             }
           '
       - name: Verify published runtime dependencies
-        if: ${{ !inputs.dry_run }}
         run: |
           node --input-type=module -e '
             import { readFile } from "node:fs/promises";
@@ -77,13 +115,7 @@ jobs:
               }
             }
           '
-      - name: Dry run
-        if: ${{ inputs.dry_run }}
-        run: pnpm release:dry "$RELEASE_VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish release
-        if: ${{ !inputs.dry_run }}
         run: pnpm release:auto "$RELEASE_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

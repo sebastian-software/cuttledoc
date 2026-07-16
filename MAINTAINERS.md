@@ -47,8 +47,9 @@ lint, typecheck, test, and build suite before `release-it` creates the release
 commit and tag, publishes `cuttledoc`, and creates the GitHub release. Dry run
 is enabled by default.
 
-Publishing uses npm Trusted Publishing (OIDC), not a stored npm token. Configure
-the `cuttledoc` package on npm with these exact values before the first release:
+Publishing uses npm Trusted Publishing (OIDC), not a stored npm token, and
+includes a verifiable provenance attestation. Configure the `cuttledoc` package
+on npm with these exact values before the first release:
 
 - Provider: GitHub Actions
 - Organization or user: `sebastian-software`

@@ -12,7 +12,7 @@
   },
   "npm": {
     "publish": true,
-    "publishArgs": ["--no-git-checks"],
+    "publishArgs": ["--no-git-checks", "--provenance"],
     "publishPackageManager": "pnpm",
     "skipChecks": true
   },
