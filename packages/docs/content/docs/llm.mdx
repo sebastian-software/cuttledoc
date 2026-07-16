@@ -111,10 +111,10 @@ const result = await enhanceTranscript(text, {
 Downloaded GGUF models are stored in a stable per-user cache:
 
 - Linux: `$XDG_CACHE_HOME/cuttledoc/models/llm`, or `~/.cache/cuttledoc/models/llm`
-- macOS: `~/Library/Caches/cuttledoc/models/llm`
+- macOS: `$XDG_CACHE_HOME/cuttledoc/models/llm` when `XDG_CACHE_HOME` is an absolute path, otherwise `~/Library/Caches/cuttledoc/models/llm`
 - Windows: `%LOCALAPPDATA%\cuttledoc\models\llm`
 
-Set `CUTTLEDOC_LLM_MODELS_DIR` to an absolute path to use a custom location. The old
+Set `CUTTLEDOC_LLM_MODELS_DIR` to an absolute path to use a custom location. Relative override paths are rejected. The old
 `LOCAL_TRANSCRIBE_LLM_MODELS_DIR` name remains supported for compatibility but is deprecated.
 
 If an earlier cuttledoc release downloaded models into `./models/llm`, move that directory into the user cache above or point `CUTTLEDOC_LLM_MODELS_DIR` at the existing absolute path to avoid another download.

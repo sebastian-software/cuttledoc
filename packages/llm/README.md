@@ -144,8 +144,8 @@ Tested on TTS-generated audio (5-7 min per language, 2 speakers each) across DE,
 
 GGUF models are cached per user instead of in the current working directory. The default is
 `$XDG_CACHE_HOME/cuttledoc/models/llm` (or `~/.cache/cuttledoc/models/llm`) on Linux,
-`~/Library/Caches/cuttledoc/models/llm` on macOS, and `%LOCALAPPDATA%\cuttledoc\models\llm` on Windows.
-Override it with an absolute `CUTTLEDOC_LLM_MODELS_DIR` path. The legacy `LOCAL_TRANSCRIBE_LLM_MODELS_DIR` variable remains supported but is deprecated.
+`$XDG_CACHE_HOME/cuttledoc/models/llm` on macOS when `XDG_CACHE_HOME` is an absolute path (otherwise `~/Library/Caches/cuttledoc/models/llm`), and `%LOCALAPPDATA%\cuttledoc\models\llm` on Windows.
+Override it with an absolute `CUTTLEDOC_LLM_MODELS_DIR` path; relative override paths are rejected. The legacy `LOCAL_TRANSCRIBE_LLM_MODELS_DIR` variable remains supported but is deprecated.
 
 For models downloaded by older versions into `./models/llm`, move the directory to the user cache or set `CUTTLEDOC_LLM_MODELS_DIR` to its absolute path.
 

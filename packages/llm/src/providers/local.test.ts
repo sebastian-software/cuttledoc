@@ -29,6 +29,16 @@ describe("local model directory", () => {
     )
   })
 
+  it("prefers an absolute XDG cache directory on macOS", () => {
+    expect(
+      getModelsDir({
+        env: { XDG_CACHE_HOME: "/var/cache/user" },
+        homeDirectory: "/Users/user",
+        platform: "darwin"
+      })
+    ).toBe("/var/cache/user/cuttledoc/models/llm")
+  })
+
   it("uses LOCALAPPDATA on Windows", () => {
     expect(
       getModelsDir({
@@ -70,5 +80,23 @@ describe("local model directory", () => {
         platform: "linux"
       })
     ).toBe("/models/legacy")
+  })
+
+  it("rejects relative current and deprecated override paths", () => {
+    expect(() =>
+      getModelsDir({
+        env: { CUTTLEDOC_LLM_MODELS_DIR: "models/current" },
+        homeDirectory: "/home/user",
+        platform: "linux"
+      })
+    ).toThrow("CUTTLEDOC_LLM_MODELS_DIR must be an absolute path")
+
+    expect(() =>
+      getModelsDir({
+        env: { LOCAL_TRANSCRIBE_LLM_MODELS_DIR: "models/legacy" },
+        homeDirectory: "/home/user",
+        platform: "linux"
+      })
+    ).toThrow("LOCAL_TRANSCRIBE_LLM_MODELS_DIR must be an absolute path")
   })
 })

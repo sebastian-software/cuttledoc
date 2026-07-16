@@ -74,17 +74,22 @@ function nonEmptyEnvironmentValue(value: string | undefined): string | undefined
 /** @internal Resolve the stable cache directory used for embedded LLM models. */
 export function getModelsDir(options: ModelsDirectoryOptions = {}): string {
   const env = options.env ?? process.env
-  const configuredDirectory =
-    nonEmptyEnvironmentValue(env["CUTTLEDOC_LLM_MODELS_DIR"]) ??
-    // Deprecated pre-rename compatibility. Prefer CUTTLEDOC_LLM_MODELS_DIR.
-    nonEmptyEnvironmentValue(env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"])
+  const platform = options.platform ?? process.platform
+  const path = platform === "win32" ? win32 : posix
+  const currentConfiguredDirectory = nonEmptyEnvironmentValue(env["CUTTLEDOC_LLM_MODELS_DIR"])
+  // Deprecated pre-rename compatibility. Prefer CUTTLEDOC_LLM_MODELS_DIR.
+  const legacyConfiguredDirectory = nonEmptyEnvironmentValue(env["LOCAL_TRANSCRIBE_LLM_MODELS_DIR"])
+  const configuredDirectory = currentConfiguredDirectory ?? legacyConfiguredDirectory
 
   if (configuredDirectory !== undefined) {
+    if (!path.isAbsolute(configuredDirectory)) {
+      const variableName =
+        currentConfiguredDirectory !== undefined ? "CUTTLEDOC_LLM_MODELS_DIR" : "LOCAL_TRANSCRIBE_LLM_MODELS_DIR"
+      throw new Error(`${variableName} must be an absolute path`)
+    }
     return configuredDirectory
   }
 
-  const platform = options.platform ?? process.platform
-  const path = platform === "win32" ? win32 : posix
   const homeDirectory = options.homeDirectory ?? homedir()
   const xdgCacheHome = nonEmptyEnvironmentValue(env["XDG_CACHE_HOME"])
 
