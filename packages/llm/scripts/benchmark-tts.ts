@@ -1,4 +1,3 @@
-#!/usr/bin/env npx tsx
 /**
  * LLM Correction Benchmark with TTS Audio
  *
