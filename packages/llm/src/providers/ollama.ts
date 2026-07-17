@@ -100,6 +100,21 @@ export class OllamaProcessor {
   ): Promise<EnhanceResult> {
     const startTime = performance.now()
 
+    let availableModels: string[]
+
+    try {
+      availableModels = await listOllamaModels()
+    } catch (error) {
+      throw new Error(
+        `Ollama does not appear to be running at ${this.baseUrl}. Start it with: ollama serve` +
+          (error instanceof Error ? ` (${error.message})` : "")
+      )
+    }
+
+    if (!availableModels.some((m) => m.startsWith(this.model))) {
+      throw new Error(`Ollama model "${this.model}" is not available. Try: ollama pull ${this.model}`)
+    }
+
     // Select prompt based on mode
     const mode = options.mode ?? "correct"
     const systemPrompt = mode === "correct" ? TRANSCRIPT_CORRECTION_PROMPT : TRANSCRIPT_FORMAT_PROMPT
@@ -122,7 +137,8 @@ export class OllamaProcessor {
     })
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.statusText}`)
+      const bodyText = await response.text().catch(() => "")
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}${bodyText ? ` - ${bodyText}` : ""}`)
     }
 
     const data = (await response.json()) as OllamaGenerateResponse
@@ -160,10 +176,7 @@ export class OllamaProcessor {
   }
 
   /** Process long transcripts in bounded chunks. */
-  async enhanceChunked(
-    rawTranscript: string,
-    options: ChunkedEnhanceOptions = {}
-  ): Promise<EnhanceResult> {
+  async enhanceChunked(rawTranscript: string, options: ChunkedEnhanceOptions = {}): Promise<EnhanceResult> {
     return enhanceTranscriptInChunks(rawTranscript, this.enhance.bind(this), options)
   }
 
