@@ -115,6 +115,14 @@ describe("OllamaProcessor", () => {
     )
   })
 
+  it("throws a server-down hint when Ollama isn't reachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED")))
+
+    await expect(new OllamaProcessor({ model: "phi4:14b" }).enhance("hello")).rejects.toThrow(
+      /Ollama does not appear to be running.*ollama serve/s
+    )
+  })
+
   it("surfaces the response body on an unsuccessful generation response", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

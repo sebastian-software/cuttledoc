@@ -100,7 +100,18 @@ export class OllamaProcessor {
   ): Promise<EnhanceResult> {
     const startTime = performance.now()
 
-    if (!(await hasOllamaModel(this.model))) {
+    let availableModels: string[]
+
+    try {
+      availableModels = await listOllamaModels()
+    } catch (error) {
+      throw new Error(
+        `Ollama does not appear to be running at ${this.baseUrl}. Start it with: ollama serve` +
+          (error instanceof Error ? ` (${error.message})` : "")
+      )
+    }
+
+    if (!availableModels.some((m) => m.startsWith(this.model))) {
       throw new Error(`Ollama model "${this.model}" is not available. Try: ollama pull ${this.model}`)
     }
 
