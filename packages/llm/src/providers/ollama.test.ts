@@ -58,14 +58,19 @@ describe("Ollama availability", () => {
 describe("OllamaProcessor", () => {
   it("sends the requested model and returns Ollama timing metrics", async () => {
     vi.spyOn(performance, "now").mockReturnValueOnce(1_000).mockReturnValueOnce(3_000)
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      Response.json({
-        response: "**Hello world.**",
-        done: true,
-        eval_count: 20,
-        eval_duration: 2_000_000_000
-      })
-    )
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      // 1st call: the new pre-check hitting /api/tags
+      .mockResolvedValueOnce(Response.json({ models: [{ name: "test-model" }] }))
+      // 2nd call: the actual /api/generate request
+      .mockResolvedValueOnce(
+        Response.json({
+          response: "**Hello world.**",
+          done: true,
+          eval_count: 20,
+          eval_duration: 2_000_000_000
+        })
+      )
     vi.stubGlobal("fetch", fetchMock)
 
     const result = await new OllamaProcessor({ model: "test-model" }).enhance("hello world", {
@@ -73,7 +78,8 @@ describe("OllamaProcessor", () => {
       temperature: 0.7
     })
 
-    const request = fetchMock.mock.calls[0]
+    // calls[0] is now the /api/tags pre-check; the generate request is calls[1]
+    const request = fetchMock.mock.calls[1]
     expect(request?.[0]).toEqual(expect.stringMatching(/\/api\/generate$/))
     expect(request?.[1]).toMatchObject({
       method: "POST",
@@ -101,9 +107,30 @@ describe("OllamaProcessor", () => {
     })
   })
 
-  it("surfaces an unsuccessful generation response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503, statusText: "Unavailable" })))
+  it("throws a targeted pull hint when the configured model isn't pulled", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ models: [] })))
 
-    await expect(new OllamaProcessor().enhance("hello")).rejects.toThrow("Ollama API error: Unavailable")
+    await expect(new OllamaProcessor({ model: "gemma3n:e4b" }).enhance("hello")).rejects.toThrow(
+      'Ollama model "gemma3n:e4b" is not available. Try: ollama pull gemma3n:e4b'
+    )
+  })
+
+  it("surfaces the response body on an unsuccessful generation response", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      // model is present, so the pre-check passes...
+      .mockResolvedValueOnce(Response.json({ models: [{ name: "phi4:14b" }] }))
+      // ...but the generate call itself fails with a body-carrying error
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "model 'phi4:14b' not found, try pulling it first" }), {
+          status: 404,
+          statusText: "Not Found"
+        })
+      )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(new OllamaProcessor().enhance("hello")).rejects.toThrow(
+      /Ollama API error: 404 Not Found - .*try pulling it first/
+    )
   })
 })

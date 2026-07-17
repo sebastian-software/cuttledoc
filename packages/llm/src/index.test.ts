@@ -32,17 +32,23 @@ describe("enhanceTranscript", () => {
   })
 
   it("chunks long Ollama transcripts through the public API", async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve({
+    const fetchMock = vi.fn((url: string) => {
+      if (url.toString().endsWith("/api/tags")) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ models: [{ name: "test-model" }] })
+        })
+      }
+      return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ response: "enhanced", done: true, eval_count: 1, eval_duration: 1_000_000_000 })
       })
-    )
+    })
     vi.stubGlobal("fetch", fetchMock)
 
     await enhanceTranscript(longTranscript, { provider: "ollama", model: "test-model" })
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
   })
 
   it("chunks long OpenAI transcripts through the public API", async () => {
