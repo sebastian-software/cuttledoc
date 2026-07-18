@@ -12,6 +12,7 @@
 import { existsSync } from "node:fs"
 import { writeFile } from "node:fs/promises"
 import { basename } from "node:path"
+import { pathToFileURL } from "node:url"
 
 import {
   transcribe,
@@ -234,9 +235,10 @@ export async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>
   }
 }
 
-// Run as CLI entrypoint. Skipped under test (vitest sets VITEST) so the
-// exported functions can be imported without triggering a full run.
-if (process.env["VITEST"] === undefined) {
+// Run main() only when this module is the process entrypoint (invoked directly),
+// not when it's imported (e.g. by tests). Uses the ESM-native import.meta.url
+// check so it doesn't depend on any test-runner environment variable.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error: unknown) => {
     console.error("Error:", error instanceof Error ? error.message : String(error))
     process.exit(1)
