@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import packageJson from "../../package.json" with { type: "json" }
 
-import { printHelp, printModels, printStats, printVersion } from "./output.js"
+import { printHelp, printModels, printStats, printStatus, printVersion } from "./output.js"
 
 // Mock console.log
 const mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => undefined)
+const mockConsoleError = vi.spyOn(console, "error").mockImplementation(() => undefined)
 
 /** Helper to collect all console.log output as a single string */
 function getAllConsoleOutput(): string {
@@ -15,6 +16,23 @@ function getAllConsoleOutput(): string {
 describe("cli output", () => {
   beforeEach(() => {
     mockConsoleLog.mockClear()
+    mockConsoleError.mockClear()
+  })
+
+  describe("printStatus", () => {
+    it("writes status to stderr, never stdout", () => {
+      printStatus("Transcribing: audio.mp3")
+
+      expect(mockConsoleError).toHaveBeenCalledWith("Transcribing: audio.mp3")
+      expect(mockConsoleLog).not.toHaveBeenCalled()
+    })
+
+    it("stays silent in quiet mode", () => {
+      printStatus("Backend: parakeet", true)
+
+      expect(mockConsoleError).not.toHaveBeenCalled()
+      expect(mockConsoleLog).not.toHaveBeenCalled()
+    })
   })
 
   describe("printHelp", () => {

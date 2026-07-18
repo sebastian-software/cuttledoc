@@ -90,6 +90,17 @@ export function printVersion(): void {
 }
 
 /**
+ * Print a status/progress line.
+ *
+ * Status is written to stderr so stdout stays a clean, pipeable transcript,
+ * and is suppressed entirely in quiet mode (`-q`).
+ */
+export function printStatus(message: string, quiet = false): void {
+  if (quiet) return
+  console.error(message)
+}
+
+/**
  * Print available models
  */
 export function printModels(

@@ -27,10 +27,10 @@ import { enhanceTranscript } from "@cuttledoc/llm"
 
 import { parseArgs } from "./args.js"
 import { runBenchmark } from "./benchmark.js"
-import { printHelp, printModels, printStats, printVersion } from "./output.js"
+import { printHelp, printModels, printStats, printStatus, printVersion } from "./output.js"
 import { validateTranscribeArgs } from "./validation.js"
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
 
   // Handle flags
@@ -137,7 +137,7 @@ async function handleModelsCommand(args: ReturnType<typeof parseArgs>): Promise<
   process.exit(1)
 }
 
-async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Promise<void> {
+export async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Promise<void> {
   const inputFile = args.positional[0]
 
   if (inputFile === undefined) {
@@ -156,8 +156,8 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
 
   const startTime = performance.now()
 
-  console.log(`Transcribing: ${basename(inputFile)}`)
-  console.log(`Backend: ${validatedArgs.backend}`)
+  printStatus(`Transcribing: ${basename(inputFile)}`, args.quiet)
+  printStatus(`Backend: ${validatedArgs.backend}`, args.quiet)
 
   // Run transcription
   const transcribeOptions: {
@@ -184,7 +184,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   if (validatedArgs.llmModel !== undefined) {
     const llmModel = validatedArgs.llmModel
     const mode = args.format ? "format" : "correct"
-    console.log(`LLM ${mode}: ${llmModel}`)
+    printStatus(`LLM ${mode}: ${llmModel}`, args.quiet)
 
     const enhanceOptions: {
       model: string
@@ -202,9 +202,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
 
     finalText = enhanced.markdown
 
-    if (!args.quiet) {
-      console.log(`LLM corrections: ${enhanced.stats.correctionsCount.toString()}`)
-    }
+    printStatus(`LLM corrections: ${enhanced.stats.correctionsCount.toString()}`, args.quiet)
   }
 
   // Output
@@ -212,7 +210,7 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
 
   if (args.output !== undefined) {
     await writeFile(args.output, finalText, "utf-8")
-    console.log(`Output written to: ${args.output}`)
+    printStatus(`Output written to: ${args.output}`, args.quiet)
   } else if (!args.quiet) {
     console.log(`\n${"─".repeat(60)}\n`)
     console.log(finalText)
@@ -236,8 +234,11 @@ async function handleTranscribeCommand(args: ReturnType<typeof parseArgs>): Prom
   }
 }
 
-// Run
-main().catch((error: unknown) => {
-  console.error("Error:", error instanceof Error ? error.message : String(error))
-  process.exit(1)
-})
+// Run as CLI entrypoint. Skipped under test (vitest sets VITEST) so the
+// exported functions can be imported without triggering a full run.
+if (process.env["VITEST"] === undefined) {
+  main().catch((error: unknown) => {
+    console.error("Error:", error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  })
+}
