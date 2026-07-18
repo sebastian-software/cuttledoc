@@ -26,7 +26,7 @@ const errSpy = vi.spyOn(console, "error").mockImplementation(() => undefined)
 
 /** Join a spy's calls into a single string, mirroring what a pipe would capture. */
 function joined(spy: typeof logSpy): string {
-  return spy.mock.calls.map((c: unknown[]) => String(c[0])).join("\n")
+  return spy.mock.calls.map((c: unknown[]) => c.map(String).join(" ")).join("\n")
 }
 
 describe("handleTranscribeCommand output streams", () => {
