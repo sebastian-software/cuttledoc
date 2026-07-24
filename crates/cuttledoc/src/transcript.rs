@@ -193,6 +193,14 @@ impl TranscriptReducer {
         )
     }
 
+    pub fn final_segments(&self) -> Vec<TranscriptionSegment> {
+        self.segments
+            .iter()
+            .filter(|stored| stored.stability == Stability::Final)
+            .map(|stored| stored.segment.clone())
+            .collect()
+    }
+
     pub fn segment_count(&self) -> usize {
         self.segments.len()
     }
@@ -282,5 +290,6 @@ mod tests {
         assert_eq!(error, ContractError::SegmentOutsideAffectedRange);
         assert_eq!(reducer.next_sequence(), 1);
         assert_eq!(reducer.segment_count(), 0);
+        assert_eq!(reducer.final_segments(), Vec::new());
     }
 }

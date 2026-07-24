@@ -7,6 +7,7 @@ mod capability;
 mod error;
 mod lifecycle;
 mod progress;
+mod recognition;
 mod transcript;
 
 pub use audio::{AudioFormat, PcmBuffer, SampleFormat};
@@ -23,6 +24,7 @@ pub use cuttledoc_models::{
 pub use error::{CuttledocError, ErrorCode, Result};
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use progress::{ProgressEvent, ProgressPhase};
+pub use recognition::{transcribe_pcm, transcribe_pcm_with_cancellation};
 pub use transcript::{
     ContractError, Stability, TimeRange, TranscribeOptions, TranscriptReducer, TranscriptionResult,
     TranscriptionSegment, TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,

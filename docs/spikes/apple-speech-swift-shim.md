@@ -149,3 +149,12 @@ dynamic spike and the statically linked product form; running the same static
 binary with normal macOS system-service access succeeded. Hermetic CI therefore
 checks build, link, ownership, and typed callback semantics, while the real
 Speech smoke is an explicit host-level gate.
+
+The same pinned PCM now completes through the public
+`cuttledoc::transcribe_pcm` function. It returns `en_US`, the exact 10,560 ms
+media duration, one final product segment, the unchanged final text, and all 19
+word ranges/confidence values. Apple narrows the final native result from the
+whole-audio volatile range to the 0–8,940 ms speech range. The product bridge
+therefore expands only the reducer's technical affected range to retire the
+preceding volatile hypothesis; the returned segment and word timestamps remain
+the native Apple values.

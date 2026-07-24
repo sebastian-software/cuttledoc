@@ -138,11 +138,19 @@ works with normal macOS system-service access.
 
 The first real product-adapter smoke streamed the pinned 10.56-second FLEURS
 PCM fixture through Rust, reproduced the spike's 27 volatile replacements plus
-one final update, and retained all 19 final time/confidence segments. A separate
-cancel path joined and destroyed the native session cleanly. These system
-service smokes must run outside restricted sandboxes; unit and callback
-contract tests remain hermetic. The next slice maps the adapter values into the
-public reducer/result types and exposes the Rust one-shot PCM path.
+one final update, and retained all 19 final time/confidence segments. The same
+fixture now also completes through the public `cuttledoc::transcribe_pcm` path
+and returns the resolved locale, exact media duration, final text, final segment
+range, and all 19 word ranges/confidence values in `TranscriptionResult`.
+
+The product mapping preserves Apple's narrower final speech range while
+expanding only the technical affected range needed to replace the preceding
+whole-audio volatile hypothesis. This keeps native timing evidence intact and
+passes every update through the shared reducer contract. A separate cancel path
+joined and destroyed the native session cleanly. These system-service smokes
+must run outside restricted sandboxes; unit and callback contract tests remain
+hermetic. The next slice exposes dynamic locale/asset capabilities and a CLI
+development entry point before crossing the Node boundary.
 
 Scope:
 

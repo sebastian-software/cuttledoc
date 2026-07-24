@@ -87,11 +87,7 @@ fn apple_speech_capabilities() -> RecognitionCapabilities {
     use cuttledoc_apple_speech::BuildSupport;
 
     let availability = match cuttledoc_apple_speech::build_support() {
-        BuildSupport::SupportedHost => Availability::Unavailable {
-            reason: AvailabilityReason::NativeComponentUnavailable,
-            detail: "the Phase 2 Swift adapter is not linked yet".to_owned(),
-            remediation: Some("install a Cuttledoc build with Apple Speech support".to_owned()),
-        },
+        BuildSupport::SupportedHost => Availability::Available,
         BuildSupport::UnsupportedHost => Availability::Unavailable {
             reason: AvailabilityReason::UnsupportedPlatform,
             detail: "Apple Speech requires macOS 26 or newer on Apple Silicon".to_owned(),
@@ -129,12 +125,14 @@ mod tests {
             .find(|capability| capability.backend.as_str() == "apple-speech")
             .expect("Apple Speech is a known backend");
 
-        assert!(!apple.availability.is_available());
-        let expected = if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
-            AvailabilityReason::NativeComponentUnavailable
+        if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+            assert!(apple.availability.is_available());
         } else {
-            AvailabilityReason::UnsupportedPlatform
-        };
-        assert_eq!(apple.availability.reason(), Some(expected));
+            assert!(!apple.availability.is_available());
+            assert_eq!(
+                apple.availability.reason(),
+                Some(AvailabilityReason::UnsupportedPlatform)
+            );
+        }
     }
 }

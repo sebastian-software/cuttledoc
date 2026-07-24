@@ -46,15 +46,9 @@ mod tests {
             recognition_backends(),
             vec![BackendCapability {
                 id: "apple-speech".to_owned(),
-                available: false,
-                unavailable_reason: Some(
-                    if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
-                        "native_component_unavailable"
-                    } else {
-                        "unsupported_platform"
-                    }
-                    .to_owned()
-                ),
+                available: cfg!(all(target_os = "macos", target_arch = "aarch64")),
+                unavailable_reason: (!cfg!(all(target_os = "macos", target_arch = "aarch64")))
+                    .then(|| "unsupported_platform".to_owned()),
             }]
         );
     }
