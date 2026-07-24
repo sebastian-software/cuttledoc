@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-glm-5.2-de-en-1",
+  "plan_id": "postprocessing-factorial-primary-languages-v1",
+  "plan_revision": "postprocessing-factorial-plan-6",
+  "purpose": "Test GLM-5.2 as one additional prominent hosted challenger against the completed Gemini 3.6 Flash control on the frozen German and English target-complete correction subset.",
+  "scope": {
+    "document_statuses": [
+      "ready",
+      "blocked"
+    ],
+    "tts_engines": [
+      "apple-avspeechsynthesizer",
+      "qwen3-tts-1.7b-voicedesign-mlx-audio",
+      "voxtral-tts-4b-bf16-mlx-audio"
+    ],
+    "document_ids": [
+      "document--de-DE--apple-de-b--repeat-1--qwen3-asr-0.6b-mlx-direct",
+      "document--de-DE--voxtral-de-male--seed-0-repeat-1--parakeet-tdt-0.6b-v3-coreml",
+      "document--en-US--qwen-en-clear--repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "document--en-US--voxtral-en-female--seed-1-repeat-1--qwen3-asr-0.6b-mlx-direct"
+    ],
+    "document_count": 4,
+    "sections_per_document": 6,
+    "request_mode": "single-target-section",
+    "hidden_reference_visible_to_model": false,
+    "qualification_reports": [
+      {
+        "tts_engine": "voxtral-tts-4b-bf16-mlx-audio",
+        "path": "benchmarks/postprocessing/qualifications/voxtral-tts-4b-bf16.technical-a-1.json",
+        "sha256": "934783817093e344136037238b9fae41197f9436f8f167d88f748833eb58ff4f",
+        "required_disposition": "technical-gate-passed"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "glm-5.2-openrouter-baseten-fp8",
+      "role": "open-weight-multilingual-hosted-challenger",
+      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/glm-5.2-baseten-fp8.json",
+      "model_manifest_sha256": "ac7c7fcef80f88e76a70edf93837173402acf9227757a0e4559c88772e105092"
+    }
+  ],
+  "generation": {
+    "runtime": "OpenRouter with a pinned model/provider tuple and provider fallback disabled",
+    "prompt_id": "conservative-target-complete-v5",
+    "prompt_path": "benchmarks/postprocessing/prompts/conservative-target-complete-v5.txt",
+    "prompt_sha256": "bb135e4a70be705daf94e25a96ac6170916e397fdd2b7751f4fbdd87e1730585",
+    "max_tokens": 2048,
+    "timeout_ms": 300000,
+    "repetitions": 2,
+    "output_contract": "bounded-transcript-target-complete-v5",
+    "structured_output": {
+      "type": "json_schema",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "expected_counts": {
+    "documents": 4,
+    "document_model_pairs": 4,
+    "target_model_pairs": 24,
+    "requests": 48,
+    "section_outputs": 48
+  },
+  "result_path": "benchmarks/postprocessing/hosted-llm-glm-5.2-de-en-results.json",
+  "execution_policy": {
+    "resume_valid_results": true,
+    "retain_every_raw_response": true,
+    "map_target_position_to_immutable_section_id_locally": true,
+    "derive_authoritative_diffs_locally": true,
+    "context_is_read_only": true,
+    "provider_fallback": false,
+    "data_collection": "deny",
+    "zdr_required": true,
+    "automatic_paid_or_ambiguous_request_retry": false,
+    "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
+    "minimum_delay_between_requests_ms": 1000
+  },
+  "claim_limit": "This selected synthetic German and English development slice is a fast challenger screen. It cannot estimate release quality, establish behavior in other languages, or replace held-out professional-audio evidence."
+}

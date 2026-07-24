@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "id": "glm-5.2-openrouter-baseten-fp8",
+  "task": "text-generation",
+  "candidate_role": "open-weight-multilingual-hosted-challenger",
+  "model": {
+    "requested_id": "z-ai/glm-5.2",
+    "allowed_response_ids": [
+      "z-ai/glm-5.2",
+      "z-ai/glm-5.2-20260616"
+    ],
+    "upstream_identity": "zai-org/GLM-5.2",
+    "provider_model_identity": "z-ai/glm-5.2-20260616",
+    "release": "2026-06-16",
+    "weights": "open",
+    "license": "MIT",
+    "total_parameters": 753000000000,
+    "context_tokens": 1048576,
+    "identity_limit": "BaseTen exposes the named open-weight model through an FP8 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
+  },
+  "gateway": {
+    "name": "OpenRouter",
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "catalog_captured_at": "2026-07-24",
+    "provider_slug": "baseten/fp8",
+    "provider_name": "BaseTen",
+    "endpoint_tag": "baseten/fp8",
+    "endpoint_identity": "BaseTen FP8 | z-ai/glm-5.2-20260616",
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "structured_outputs",
+      "response_format",
+      "max_tokens",
+      "temperature",
+      "top_p",
+      "stop",
+      "frequency_penalty",
+      "presence_penalty",
+      "tools",
+      "tool_choice",
+      "reasoning_effort"
+    ],
+    "request_policy": {
+      "only": [
+        "baseten/fp8"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true,
+      "data_collection": "deny",
+      "zdr": true
+    },
+    "pricing_snapshot_usd_per_token": {
+      "prompt": "0.0000014",
+      "completion": "0.0000044",
+      "input_cache_read": "0.00000014"
+    }
+  },
+  "request_defaults": {
+    "token_limit_field": "max_tokens",
+    "json_schema_numeric_bounds": true,
+    "temperature": 0,
+    "seed": null,
+    "reasoning": {
+      "effort": "none",
+      "exclude": true
+    },
+    "response_format": {
+      "type": "json_schema",
+      "schema_id": "bounded-transcript-correction-v1",
+      "strict": true
+    }
+  },
+  "claim_limit": "Hosted open-weight multilingual challenger only. This FP8 provider result is not local-runtime evidence, and the German/English development slice cannot establish general multilingual or product quality."
+}
