@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1",
+  "plan_id": "postprocessing-factorial-primary-languages-v1",
+  "plan_revision": "postprocessing-factorial-plan-6",
+  "screen_path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-screen.json",
+  "summary_path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-results.json",
+  "decision_path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-decision.json",
+  "purpose": "Test whether DeepSeek V4 Pro materially improves on the completed DeepSeek V4 Flash value candidate while preserving the same pragmatic correction contract and safety gates.",
+  "selection": {
+    "disposition": "frozen-challenging-development-slice",
+    "languages": [
+      "de-DE",
+      "en-US",
+      "es-419",
+      "fr-FR",
+      "pt-BR"
+    ],
+    "documents_per_language": 2,
+    "documents": 10,
+    "target_sections_per_document": 6,
+    "target_sections": 60,
+    "source_plan": {
+      "path": "benchmarks/postprocessing/local-llm-gemma-target-ab-plan.json",
+      "sha256": "a8c7c4a2b034456316ceac71bc25bc3159ce5bc8c5ad754f06ad17e06e9cc8a8"
+    },
+    "source_decision": {
+      "path": "benchmarks/postprocessing/local-llm-gemma-target-ab-results.json",
+      "sha256": "43bbf7eee3119a8572c63a9e9ee93f161e39678b1a7cb30bf3a081c017e42bae"
+    }
+  },
+  "candidates": [
+    "deepseek-v4-pro-openrouter-coreweave-fp8"
+  ],
+  "stages": [
+    {
+      "id": "repeat-1",
+      "repetition": 1,
+      "candidate_scope": "deepseek-v4-pro",
+      "maximum_requests": 60,
+      "decision": "Complete repeat one unless the response contract becomes unreachable, a token limit is reached, or an accepted output exceeds the 30 percent normalized word-edit boundary."
+    },
+    {
+      "id": "repeat-2",
+      "repetition": 2,
+      "candidate_scope": "repeat-1-survivor-only",
+      "maximum_requests": 60,
+      "decision": "Run only after repeat one meets the pragmatic quality and contract gates; evaluate the same requirements over both repeats and independently in repeat two."
+    }
+  ],
+  "evaluation_policy": {
+    "mode": "pragmatic-expected-utility",
+    "minimum_overall_relative_wer_reduction": 0.05,
+    "correct_input_regressions": "record-and-semantic-review",
+    "locale_macro_wer_regressions": "report-separately-without-global-rejection",
+    "semantic_review_required_before_product_shortlist": true,
+    "comparison_controls": [
+      "deepseek-v4-flash-openrouter-parasail-fp8",
+      "gpt-5.6-sol-openrouter-azure-eu"
+    ],
+    "rationale": "The raw transcript remains available and enhancement is optional. Promotion requires material aggregate restoration, while numbers, dates, names, negation, and technical terms still receive explicit semantic review."
+  },
+  "first_repeat_gates": {
+    "completed_requests_required": 60,
+    "mechanically_accepted_requests_minimum": 59,
+    "token_limit_failures_maximum": 0,
+    "accepted_sections_above_30_percent_input_output_word_edit_rate_maximum": 0,
+    "section_regressions_must_not_exceed_improvements": true,
+    "overall_relative_error_change_maximum": -0.05
+  },
+  "two_repeat_gates": {
+    "completed_requests_required": 120,
+    "mechanically_accepted_requests_minimum": 118,
+    "token_limit_failures_maximum": 0,
+    "accepted_sections_above_30_percent_input_output_word_edit_rate_maximum": 0,
+    "section_regressions_must_not_exceed_improvements": true,
+    "overall_relative_error_change_maximum": -0.05,
+    "repeat_equality": "observation-only-for-remote-services"
+  },
+  "irreversible_early_stop": {
+    "mechanical": "Stop once accepted requests plus every remaining request in the active gate cannot reach its minimum.",
+    "token_limit": "Stop after the first token-limit failure.",
+    "gross_edit": "Stop after the first mechanically accepted target above the 30 percent normalized word-edit boundary.",
+    "correct_input_regression": "Record and continue; inspect severity after the full repeat."
+  },
+  "routing_policy": {
+    "provider_pinned": true,
+    "provider_fallback": false,
+    "require_parameters": true,
+    "data_collection": "deny",
+    "zdr_required": true,
+    "non_zdr_exception_required": false
+  },
+  "cost_policy": {
+    "currency": "USD",
+    "estimate_path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-estimate.json",
+    "estimate_required_before_execution": true,
+    "runner_budget_required": true,
+    "automatic_paid_or_ambiguous_request_retry": false,
+    "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
+    "maximum_configured_completion_tokens_per_request": 2048,
+    "conservative_input_accounting": "Count each rendered Unicode code point as one input token for the hard planning envelope; this deliberately overstates normal tokenizer usage."
+  },
+  "decision_rule": "Run repeat two only if repeat one achieves at least five percent aggregate relative WER reduction, more improvements than regressions, and no hard contract or gross-edit failure. Compare the two-repeat result and semantic regressions directly with the frozen DeepSeek V4 Flash and GPT-5.6 Sol evidence.",
+  "claim_limit": "This is a selected synthetic development challenge. It compares one postprocessing challenger but cannot estimate product quality, rank raw STT engines, or replace held-out human professional-audio evidence."
+}

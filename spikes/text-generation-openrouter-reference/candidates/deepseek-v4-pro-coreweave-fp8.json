@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "id": "deepseek-v4-pro-openrouter-coreweave-fp8",
+  "task": "text-generation",
+  "candidate_role": "hosted-quality-challenger",
+  "model": {
+    "requested_id": "deepseek/deepseek-v4-pro",
+    "allowed_response_ids": [
+      "deepseek/deepseek-v4-pro",
+      "deepseek/deepseek-v4-pro-20260423"
+    ],
+    "upstream_identity": "deepseek-ai/DeepSeek-V4-Pro",
+    "provider_model_identity": "deepseek/deepseek-v4-pro-20260423",
+    "release": "2026-04-23",
+    "weights": "open",
+    "license": "MIT",
+    "total_parameters": 1600000000000,
+    "activated_parameters": 49000000000,
+    "context_tokens": 1048576,
+    "identity_limit": "CoreWeave exposes the named upstream model through an FP8 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
+  },
+  "gateway": {
+    "name": "OpenRouter",
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "catalog_captured_at": "2026-07-24",
+    "provider_slug": "coreweave",
+    "provider_name": "CoreWeave",
+    "endpoint_tag": "coreweave/fp8",
+    "endpoint_identity": "CoreWeave FP8 | deepseek/deepseek-v4-pro-20260423",
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "max_tokens",
+      "temperature",
+      "top_p",
+      "top_k",
+      "repetition_penalty",
+      "frequency_penalty",
+      "presence_penalty",
+      "stop",
+      "seed",
+      "response_format",
+      "structured_outputs",
+      "tools",
+      "tool_choice",
+      "logprobs",
+      "top_logprobs",
+      "reasoning_effort"
+    ],
+    "request_policy": {
+      "only": [
+        "coreweave"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true,
+      "data_collection": "deny",
+      "zdr": true
+    },
+    "pricing_snapshot_usd_per_token": {
+      "prompt": "0.00000174",
+      "completion": "0.00000348",
+      "input_cache_read": "0.00000014"
+    }
+  },
+  "request_defaults": {
+    "token_limit_field": "max_tokens",
+    "json_schema_numeric_bounds": true,
+    "temperature": 0,
+    "seed": 0,
+    "reasoning": {
+      "effort": "none",
+      "exclude": true
+    },
+    "response_format": {
+      "type": "json_schema",
+      "schema_id": "bounded-transcript-correction-v1",
+      "strict": true
+    }
+  },
+  "claim_limit": "Hosted open-weight quality challenger only. This FP8 provider result is not local-runtime evidence and must be compared on the same frozen target slice and prompt as the existing DeepSeek V4 Flash and GPT-5.6 Sol results."
+}

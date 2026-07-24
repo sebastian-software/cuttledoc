@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1-cost-estimate-1",
+  "plan_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1",
+  "plan_sha256": "e91b36c58ce8d1c751ba287032b25d67b2c06a5a7dd6503108a12beec5d1ae11",
+  "screen_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-1",
+  "screen_sha256": "27427047e054b1cd6465d42d9c0a4bc0e4a621d908cb34cccce3b8e78d688cd3",
+  "captured_at": "2026-07-24T05:45:42.830Z",
+  "method": {
+    "hard_input_envelope": "One input token per rendered Unicode code point.",
+    "likely_input_estimate": "One input token per four rendered Unicode code points.",
+    "hard_output_envelope": "Every request consumes the configured completion-token maximum.",
+    "likely_output_estimate": "One output token per three Unicode code points in the raw target JSON, plus 768 hidden reasoning tokens per request for low-reasoning routes.",
+    "limitation": "Only provider-reported usage and cost are authoritative after execution."
+  },
+  "scope": {
+    "documents": 10,
+    "targets_per_document": 6,
+    "requests_per_candidate_per_repeat": 60,
+    "candidates": 1,
+    "maximum_repeats": 2
+  },
+  "rendered_inputs": {
+    "minimum_code_points": 7951,
+    "maximum_code_points": 8634,
+    "mean_code_points": 8369.7,
+    "total_code_points_per_candidate_repeat": 502182
+  },
+  "candidates": [
+    {
+      "candidate": "deepseek-v4-pro-openrouter-coreweave-fp8",
+      "requested_model": "deepseek/deepseek-v4-pro",
+      "provider_slug": "coreweave",
+      "pricing_snapshot_usd_per_token": {
+        "prompt": "0.00000174",
+        "completion": "0.00000348"
+      },
+      "requests_per_repeat": 60,
+      "rendered_prompt_code_points_per_repeat": 502182,
+      "likely_input_tokens_per_repeat": 125546,
+      "maximum_configured_completion_tokens_per_repeat": 122880,
+      "likely_reasoning_tokens_per_request": 0,
+      "likely_output_tokens_per_repeat": 19022,
+      "likely_cost_per_repeat_usd": 0.2846466,
+      "conservative_planning_envelope_per_repeat_usd": 1.30141908,
+      "recommended_runner_budget_per_repeat_usd": 1.31
+    }
+  ],
+  "aggregate": {
+    "likely_cost_repeat_1_all_candidates_usd": 0.2846466,
+    "conservative_planning_envelope_repeat_1_all_candidates_usd": 1.30141908,
+    "conservative_planning_envelope_two_repeats_all_candidates_usd": 2.60283816,
+    "recommended_runner_budget_repeat_1_all_candidates_usd": 1.31,
+    "recommended_runner_budget_two_repeats_all_candidates_usd": 2.62
+  },
+  "authorization_boundary": "The estimate does not authorize requests. The runner additionally requires an explicit per-invocation USD budget."
+}
