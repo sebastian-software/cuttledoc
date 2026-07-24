@@ -64,7 +64,7 @@
     "temperature": 0,
     "seed": 0,
     "reasoning": {
-      "effort": "none",
+      "effort": "low",
       "exclude": true
     },
     "response_format": {
@@ -73,5 +73,5 @@
       "strict": true
     }
   },
-  "claim_limit": "Remote prominent-model challenger only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default."
+  "claim_limit": "Remote prominent-model challenger only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default. The xAI ZDR endpoint rejects disabled reasoning, so its lowest explicit reasoning effort is part of the candidate tuple."
 }

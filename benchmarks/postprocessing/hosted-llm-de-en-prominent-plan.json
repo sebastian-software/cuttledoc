@@ -45,6 +45,13 @@
       "initial_result": "Amazon Bedrock rejected output_config.format before inference; the request was unbilled and produced no result.",
       "selected_transport": "OpenRouter JSON object with the unchanged target-complete prompt and exact local one-field parser",
       "comparison_limit": "Correction quality remains directly comparable, while strict server-side schema compliance is a separate operational disadvantage for this route."
+    },
+    {
+      "candidate": "grok-4.5-openrouter-xai-zdr",
+      "initial_transport": "Strict JSON schema with reasoning disabled",
+      "initial_result": "xAI rejected disabled reasoning before inference; the request was unbilled and produced no result.",
+      "selected_transport": "Strict JSON schema with the endpoint's lowest explicit reasoning effort and reasoning text excluded",
+      "comparison_limit": "The output contract remains identical, but mandatory hidden reasoning is part of this model/provider tuple and its cost."
     }
   ],
   "stages": [

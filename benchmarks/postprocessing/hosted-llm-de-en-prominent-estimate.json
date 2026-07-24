@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-de-en-prominent-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-de-en-prominent-plan-1",
-  "plan_sha256": "35294995b6b841947b4b9b8f811bb364e27f5cb1f119b19946c0ca4b961f2b62",
+  "plan_sha256": "f87f2c14b49152c6449951c5b53ba4bf7b0416898354f1f691cc8dacb4a2f800",
   "screen_id": "postprocessing-factorial-hosted-de-en-prominent-1",
-  "screen_sha256": "62b424cbd32e2a1b64dc6b20352494dd2962865345fdd07c8348cc82e064fdd3",
-  "captured_at": "2026-07-24T20:20:00.859Z",
+  "screen_sha256": "721b65530fba04c9dc52db6a5143ae10cc1db14f10c08580ff494e0ea780ef7b",
+  "captured_at": "2026-07-24T20:24:35.266Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",
@@ -75,15 +75,15 @@
       "rendered_prompt_code_points_per_repeat": 197916,
       "likely_input_tokens_per_repeat": 49479,
       "maximum_configured_completion_tokens_per_repeat": 49152,
-      "likely_reasoning_tokens_per_request": 0,
-      "likely_output_tokens_per_repeat": 7449,
-      "likely_cost_per_repeat_usd": 0.143652,
+      "likely_reasoning_tokens_per_request": 768,
+      "likely_output_tokens_per_repeat": 25881,
+      "likely_cost_per_repeat_usd": 0.254244,
       "conservative_planning_envelope_per_repeat_usd": 0.690744,
       "recommended_runner_budget_per_repeat_usd": 0.7
     }
   ],
   "aggregate": {
-    "likely_cost_repeat_1_all_candidates_usd": 1.1416623000000001,
+    "likely_cost_repeat_1_all_candidates_usd": 1.2522543000000002,
     "conservative_planning_envelope_repeat_1_all_candidates_usd": 3.4512348000000004,
     "conservative_planning_envelope_two_repeats_all_candidates_usd": 6.902469600000001,
     "recommended_runner_budget_repeat_1_all_candidates_usd": 3.4700000000000006,

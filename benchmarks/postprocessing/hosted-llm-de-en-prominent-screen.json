@@ -50,7 +50,7 @@
       "id": "grok-4.5-openrouter-xai-zdr",
       "role": "prominent-hosted-challenger",
       "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/grok-4.5-xai-zdr.json",
-      "model_manifest_sha256": "ca30361a6db658d18821b2191166b23b576257c63d3d0564aa149b75d5ad326b"
+      "model_manifest_sha256": "008427c157321ae1cbeaa40cb2735ab5f02796ab2d8d9bd471116fa93321fae1"
     }
   ],
   "generation": {
