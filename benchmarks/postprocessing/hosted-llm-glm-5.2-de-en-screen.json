@@ -86,7 +86,7 @@
     "zdr_required": true,
     "automatic_paid_or_ambiguous_request_retry": false,
     "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
-    "minimum_delay_between_requests_ms": 1000
+    "minimum_delay_between_requests_ms": 10000
   },
   "claim_limit": "This selected synthetic German and English development slice is a fast challenger screen. It cannot estimate release quality, establish behavior in other languages, or replace held-out professional-audio evidence."
 }

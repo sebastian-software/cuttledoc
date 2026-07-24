@@ -29,6 +29,15 @@
   "candidates": [
     "glm-5.2-openrouter-baseten-fp8"
   ],
+  "route_revisions": [
+    {
+      "candidate": "glm-5.2-openrouter-baseten-fp8",
+      "initial_minimum_delay_between_requests_ms": 1000,
+      "initial_result": "The strict output contract succeeded for one request, but BaseTen repeatedly returned explicit unbilled HTTP 429 responses at the initial pace.",
+      "selected_minimum_delay_between_requests_ms": 10000,
+      "continuation": "Resume the identical pinned route and existing valid result; do not combine providers."
+    }
+  ],
   "stages": [
     {
       "id": "repeat-1",

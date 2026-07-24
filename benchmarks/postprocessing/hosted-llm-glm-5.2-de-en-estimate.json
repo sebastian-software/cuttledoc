@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-glm-5.2-de-en-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-glm-5.2-de-en-plan-1",
-  "plan_sha256": "ed4bd83843e3fb72ff7acb903744a8e1a2965fd256e471da085ea9aace482c16",
+  "plan_sha256": "8d0fa4044fc4e6b668ec36a8dfdc44dd32233dee91a0b9bbc3dc6eaf7552d22c",
   "screen_id": "postprocessing-factorial-hosted-glm-5.2-de-en-1",
-  "screen_sha256": "5226d9a0db3a6a5f328bf85b5d39b1f158c3c30530f04967d902a9aba9e9e76b",
-  "captured_at": "2026-07-24T20:42:40.801Z",
+  "screen_sha256": "73cf39a1c4dfb9c46a4feb297c1c38a721a220ebfff17dee49ba611c54679c57",
+  "captured_at": "2026-07-24T20:44:32.985Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",
