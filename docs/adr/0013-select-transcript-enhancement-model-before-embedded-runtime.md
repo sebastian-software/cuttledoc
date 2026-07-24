@@ -48,17 +48,18 @@ decision. Freeze the complete model revision, conversion, quantization, prompt
 hash, decoding settings, language, domain, ASR backend, and supplied context for
 every result.
 
-After the quality bakeoff, carry the surviving model or models through both:
+After the quality bakeoff, carry the surviving model through a narrow
+repository-owned C++ adapter and C ABI over official MLX. This reuses the
+already accepted Apple-local runtime, safetensors delivery, and upgrade
+boundary. A parallel Core ML conversion is no longer an initial implementation
+gate. Reopen it only when the selected MLX path fails its memory, parity,
+energy, lifecycle, or packaging gates, or when measured Neural Engine execution
+offers a material product advantage.
 
-- a narrow repository-owned C++ adapter and C ABI over official MLX; and
-- a pinned Core ML conversion with state, conversion-parity, and actual compute
-  placement evidence.
-
-Select the product runtime using measured startup, first-token latency,
-throughput, memory, artifact size, energy procedure, conversion fidelity,
-streaming, cancellation, lifecycle, packaging, and maintenance cost. Do not
-assume that Core ML implies Neural Engine execution, or that one runtime wins
-for every model.
+Select or reject the product runtime using measured startup, first-token
+latency, throughput, memory, artifact size, energy procedure, conversion
+fidelity, streaming, cancellation, lifecycle, packaging, and maintenance cost.
+Do not assume that Core ML implies Neural Engine execution.
 
 Text generation remains a separate, provider-neutral task contract. OpenAI,
 Ollama, and future embedded adapters implement `TextGenerationEngine`
@@ -75,7 +76,8 @@ is a shipment gate, not a deferral of the model and runtime bakeoff.
 ### Positive
 
 - Model quality and runtime delivery are measured as separate decisions.
-- MLX and Core ML both remain serious Apple-local candidates.
+- MLX remains the selected first Apple-local implementation path without
+  precluding a triggered Core ML comparison.
 - A small but weak model cannot win solely through easy packaging or speed.
 - A strong model is not rejected solely because its native adapter is harder.
 - Mechanical guards, not prompt obedience, define the correction safety
@@ -84,13 +86,12 @@ is a shipment gate, not a deferral of the model and runtime bakeoff.
 
 ### Negative
 
-- The work requires two stages and may port more than one quality finalist.
-- Core ML needs a reproducible conversion and may not use the Neural Engine for
-  the selected graph.
+- The work still requires a model-specific graph, cache, and native adapter
+  after reference quality selection.
 - An official-MLX backend still requires Cuttledoc to own a model-specific graph,
   cache, task ABI, and upgrade tests.
-- Initial v3 still has no bundled offline enhancement model until the held-out
-  gates pass.
+- Initial v3 still needs explicit memory and packaging qualification before
+  bundling offline enhancement.
 
 ## Validation
 
@@ -106,10 +107,15 @@ not a model-quality decision.
 
 Issue #20 and the
 [`transcript-enhancement model bakeoff`](../transcript-enhancement-model-bakeoff.md)
-define the corrective experiment. Final validation requires independent,
-human-verified professional podcast and audiobook sources, German first,
-followed by the agreed primary European languages. A later ADR records the
-selected model, runtime, conversion, interop boundary, and shipment scope.
+define the corrective experiment. Independent professional podcast and
+audiobook sources remain appropriate for later release-quality claims; they
+are no longer an implementation-selection gate.
+
+ADR-0014 now records the accepted local-first product direction: Gemma 4
+26B-A4B 4-bit is the local model, Gemini 3.6 Flash is the explicit hosted
+quality option, and official MLX is the initial embedded implementation path.
+The synthetic development screen supports that implementation choice but does
+not establish universal podcast or audiobook accuracy.
 
 The first issue-#20 development matrix is complete. Across the three frozen
 prompts, Gemma returned two no-ops and one fenced structured response that the

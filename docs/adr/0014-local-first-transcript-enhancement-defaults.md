@@ -47,9 +47,11 @@ Cuttledoc uses a local-first transcript-enhancement policy:
 
 The completed Gemma evidence was produced through a pinned MLX reference. The
 initial embedded implementation should therefore continue through the planned
-repository-owned adapter over official MLX. ADR-0013's runtime, conversion,
-interop, packaging, and parity gates still apply before that adapter becomes a
-shipped product backend.
+repository-owned adapter over official MLX. Runtime, interop, packaging, memory,
+and parity gates still apply before that adapter becomes a shipped product
+backend. A parallel Core ML conversion is not an initial gate; reconsider it
+only if the MLX path fails those gates or Core ML demonstrates a material
+delivery advantage.
 
 ## Consequences
 

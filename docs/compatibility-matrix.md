@@ -151,17 +151,22 @@ Human-readable output may change. Machine-readable JSON receives a schema versio
 
 ## Transcript enhancement
 
-| Capability              | Baseline                | v3 decision                                  |
-| ----------------------- | ----------------------- | -------------------------------------------- |
-| Raw transcription       | Always available        | Required                                     |
-| Correction mode         | Default CLI enhancement | Evaluate with compatibility/product decision |
-| Markdown formatting     | Supported               | Evaluate; likely retain                      |
-| Ollama                  | Supported               | Evaluate for Rust HTTP implementation        |
-| OpenAI enhancement      | Supported               | Evaluate for Rust HTTP implementation        |
-| Embedded GGUF           | `node-llama-cpp`        | Defer unless distribution cost is justified  |
-| Chunking and statistics | Supported               | Preserve if enhancement ships                |
+| Capability              | Baseline                | v3 decision                                                   |
+| ----------------------- | ----------------------- | ------------------------------------------------------------- |
+| Raw transcription       | Always available        | Required and always retained                                  |
+| Correction mode         | Default CLI enhancement | Local Gemma on capable machines; off when memory is insufficient |
+| Local model             | Ollama-managed models   | Gemma 4 26B-A4B 4-bit over official MLX; 32 GB recommended   |
+| Hosted enhancement      | OpenAI                  | Gemini 3.6 Flash through explicit OpenRouter configuration    |
+| Hosted fallback         | Provider-dependent      | Never automatic; local resource limits retain the raw text    |
+| Markdown formatting     | Supported               | Preserve above the provider-neutral generation engine         |
+| Ollama                  | Supported               | Optional future provider, not an initial v3 implementation    |
+| Embedded GGUF           | `node-llama-cpp`        | Defer unless cross-platform distribution justifies the cost   |
+| Chunking and statistics | Supported               | Preserve in the enhancement orchestrator                      |
 
-The v3 release must explicitly state whether enhancement parity is part of 3.0 or a later milestone. It must not delay a complete raw transcription product without a written decision.
+ADR-0014 records the local-first decision. Enhancement remains separable from
+raw transcription and does not delay a complete transcription product. The
+selected synthetic development results guide the implementation but are not a
+universal podcast or audiobook accuracy claim.
 
 ## Artifact test matrix
 

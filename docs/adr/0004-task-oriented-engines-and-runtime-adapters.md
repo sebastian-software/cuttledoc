@@ -64,9 +64,9 @@ runtime handles. ADR-0010 fixes the remaining backend identity, capability,
 worker, queue, cancellation, and shutdown semantics.
 
 Issue #7 now validates the separate text-generation delta, deterministic-option,
-streaming, cancellation, and mechanical-output-gate boundary. ADR-0013 requires
-model-quality selection before comparing official MLX and Core ML embedded
-paths, while keeping remote OpenAI, local Ollama, and future embedded adapters
-independently implementable.
+streaming, cancellation, and mechanical-output-gate boundary. ADR-0014 selects
+Gemma through the owned official-MLX path as the first embedded implementation
+and Gemini as the explicit hosted option, while keeping future provider and
+runtime adapters independently implementable.
 Phase 5 validates speech synthesis before accepting its contract (ADR-0009);
 it must not be retrofitted through recognition or text generation.

@@ -1,9 +1,22 @@
 # Transcript postprocessing evaluation
 
-**Status:** historical evidence imported; model-first Cuttledoc 3 bakeoff in
-progress under issue #20.
+**Status:** historical evidence imported; Cuttledoc 3 implementation selection
+complete under issue #20 and ADR-0014.
 
-**Evidence date:** 2026-07-22.
+**Evidence date:** 2026-07-24.
+
+## Selected Cuttledoc 3 direction
+
+The completed frozen five-language development challenge selects Gemma 4
+26B-A4B 4-bit as the local-first model and Gemini 3.6 Flash as the explicit
+hosted quality option. Aggregate macro WER moved from 6.56% raw to 5.12% with
+Gemma and 4.17% with Gemini. The tested smaller local models are not fallback
+tiers; enhancement remains off when the machine lacks sufficient headroom.
+
+The raw transcript is always retained, and invalid or overly broad corrections
+fall back to it. These selected synthetic development results justify the
+implementation direction, not a universal podcast or audiobook accuracy claim.
+See [ADR-0014](adr/0014-local-first-transcript-enhancement-defaults.md).
 
 The Cuttledoc 2 correction path used a constrained transcript-proofreading
 prompt and local Ollama models. The CLI default was **Gemma 3n E4B**

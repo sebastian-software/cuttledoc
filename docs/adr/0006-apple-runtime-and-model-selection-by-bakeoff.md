@@ -56,4 +56,9 @@ LLM/transcript-enhancement runtime selection is evaluated separately because aut
 
 ## Validation
 
-The Phase 0 milestone ends with a machine-readable benchmark record, a model/runtime recommendation, and follow-up ADRs for the selected ASR and optional LLM paths. ADR-0013 records the issue-#7 runtime evidence and requires a model-quality bakeoff before comparing official MLX and Core ML as embedded product runtimes.
+The Phase 0 milestone ends with machine-readable benchmark records,
+model/runtime recommendations, and follow-up ADRs for the selected ASR and
+optional LLM paths. ADR-0015 selects Apple Speech as the first ASR backend with
+Whisper as the opt-in fallback. ADR-0014 selects Gemma over the owned official
+MLX path as the first local enhancement implementation and Gemini as the
+explicit hosted option.

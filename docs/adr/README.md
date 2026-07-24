@@ -18,6 +18,7 @@ ADRs capture decisions that materially constrain the implementation. Proposed AD
 | [0012](0012-official-mlx-boundary-for-voxtral.md)                      | Official MLX boundary for Voxtral                    | Accepted |
 | [0013](0013-select-transcript-enhancement-model-before-embedded-runtime.md) | Select the transcript-enhancement model before its embedded runtime | Accepted |
 | [0014](0014-local-first-transcript-enhancement-defaults.md)            | Local-first transcript-enhancement defaults          | Accepted |
+| [0015](0015-apple-speech-first-local-asr-backend.md)                   | Apple Speech as the first local ASR backend           | Accepted |
 
 Status values: proposed, accepted, superseded, rejected.
 

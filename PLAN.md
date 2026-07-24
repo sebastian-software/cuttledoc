@@ -67,30 +67,31 @@ Exit criteria:
 
 ### Current Phase 0 status
 
-Evidence snapshot: 2026-07-23.
+Evidence snapshot: 2026-07-24.
 
 | Workstream | State | Remaining gate |
 | --- | --- | --- |
 | Dependency policy and runtime matrix (#10, #2) | Complete | Apply the accepted policy to each newly selected production pin. |
 | Capability-oriented API and ownership (#8) | Complete | Check the provisional types against the first real vertical slice. |
-| CoreML feasibility (#5) | Foundation proven | A complete repository-owned ASR graph, typed adapter errors, and cancellation boundary remain; the legacy CoreML paths now have common benchmark evidence. |
+| MLX prior-art audit (#3) | Complete by disposition | Community bindings and `mlx-node` remain reference-only; official MLX through repository-owned task adapters is the selected foundation. Reproducing the obsolete Node-owned packaging path has no remaining decision value. |
+| CoreML feasibility (#5) | Foundation proven | The real-model lifecycle goal is complete. Productization gaps are deferred until a selected backend needs Core ML rather than keeping the feasibility issue open indefinitely. |
 | Apple Speech feasibility (#11) | Foundation proven | The multilingual benchmark is complete; shipped executable identity, clean-host cold start, and energy remain productization evidence. |
 | Official MLX feasibility (#6) | Complete | The official C++ core, owned C ABI, two-release upgrade, packaging, and repeated encoder lifecycle are proven. |
 | End-to-end MLX ASR (#15) | Complete | The common-schema record now contains quality, lifecycle, timing, memory, model, and artifact evidence. Broader languages and product behavior move to #4, #12, and the selected vertical slice. |
 | Mandatory ASR benchmark (#4) | Complete | Ten multilingual fixtures select Apple SpeechTranscriber as the first vertical-slice backend and Whisper large-v3-turbo as an opt-in fallback. Energy, clean-host cold start, and statistical scale remain release-threshold follow-ups. |
 | Exploratory ASR sweep (#12) | Complete | Qwen3-ASR advanced to the owned adapter in #17. The later Voxtral Realtime refresh replaces its stale vLLM-only blocker with pinned Apple-local MLX measurements and a bounded repository-owned live session; held-out, long-audio, and product-integration gates remain. |
 | Direct Qwen3-ASR over official MLX (#17) | Complete | The owned adapter reaches exact fixed-fixture parity, completes the 15-fixture multilingual audiobook pilot, and proves reusable Rust lifecycle plus stable invalid, busy, and cancelled states. Held-out target-domain data, common-engine integration, and release pruning are follow-ups. |
-| Held-out target-domain corpus (#18) | Complete | Three CC-BY-4.0 German podcast episodes are frozen as exact ten-minute validation/test passages with five speakers and digest-pinned source, publisher-draft, and PCM artifacts. The validation review bundle and five complete-coverage, unscored Apple/Whisper/Qwen/Parakeet/Voxtral drafts are committed; Qwen uses 20 digest-pinned 30 s chunks, while Voxtral uses ten fresh-process 60 s chunks after an aborted whole-passage diagnostic exposed an approximately 50 GB practical working set. Both test episodes remain closed. Independent human validation and the hosted-survivor screen are now the explicit #20 gate; audiobook and additional-language acquisition stay paused. |
+| Held-out target-domain corpus (#18) | Complete | Three CC-BY-4.0 German podcast episodes are frozen as exact ten-minute validation/test passages with five speakers and digest-pinned source, publisher-draft, and PCM artifacts. The validation review bundle and five complete-coverage, unscored Apple/Whisper/Qwen/Parakeet/Voxtral drafts are committed. Independent review remains available for later release-quality claims but is no longer an implementation-selection gate. |
 | Voxtral Realtime live streaming (#19) | Complete | The repository-owned official-MLX session retains incremental mel, causal-convolution, 32-layer encoder, downsampler, 26-layer decoder, token, and text state behind the bounded Rust/C ABI. Real-time 480/2,400 ms runs reproduce the pinned 177-token streaming text exactly with append-only deltas; a ten-run DE/EN/ES/FR/PT control preserves language/delay cells and confirms 320 ms input as the stable path. The pure-C/MPS control proves a tiny binary but a larger BF16 model/working set, missing lifecycle semantics, and an ADR-0005 failure; ADR-0012 selects the owned official-MLX boundary. Held-out data moves to #18; common-engine, long-audio, and clean-host delivery are focused productization follow-ups. |
-| Synthetic TTS roundtrip (#13) | In progress | The required Apple, Qwen VoiceDesign, and Voxtral BF16 factorial slices are complete: 370 digest-pinned audio artifacts, 1,110 three-receiver transcripts, and 180 six-section LLM documents across DE/EN/ES/FR/PT. Voxtral passed all ten technical voice gates, completed 120 primary documents without a retry or token cap, and produced 10/10 identical same-seed audio plus 30/30 identical transcript controls. Hosted TTS ceilings and held-out human professional audio remain optional comparison/final-quality work. |
+| Synthetic TTS roundtrip (#13) | Deferred, non-blocking | The required Apple, Qwen VoiceDesign, and Voxtral BF16 factorial evidence is complete. A public synthesis contract and product backend remain later work and do not block Phase 1 or the first transcription release. |
 | Thin Node/npm boundary (#9) | Complete | Node 22/24 CI builds, packs, compiler-free installs, and tests the same macOS arm64 tarball through ESM and CommonJS, including streaming fields, background work, progress, errors, cancellation, and missing-artifact diagnostics. |
 | Local text-generation runtime (#7) | Complete | The pinned Qwen3 0.6B MLX reference proves load, deterministic streaming, cancellation, and external lexical rejection. It is explicitly a runtime/negative control, not quality selection. |
-| Transcript-enhancement model/runtime bakeoff (#20) | In progress | The hosted challenge preflight is complete with 479/479 valid responses and `$4.7060354` provider-reported quality-request cost, plus the separately documented `$0.008559` cap calibration. Gemini 3.6 Flash, Kimi K3, and GPT-5.6 Terra pass both repeats and every language macro gate; GPT-5.6 Sol and Claude Sonnet 5 stop on correct-input semantic regressions. A post-hoc review of all 27 WER regressions retains the formal survivors but orders the next held-out screen Gemini → Kimi → Terra. None is product-selected; fact-bearing-token safety on human-verified professional audio remains the gate. |
+| Transcript-enhancement model/runtime bakeoff (#20) | Complete | ADR-0014 selects Gemma 4 26B-A4B 4-bit as the local-first model and Gemini 3.6 Flash as the explicit OpenRouter quality option. The raw transcript remains available, smaller local models are rejected, 32 GB unified memory is recommended, and official MLX is the first embedded implementation path. |
 
-The open issue list is a work queue, not a second architecture plan. Completed
-foundation issues should close with links to their evidence. Productization
-gaps receive focused follow-ups rather than keeping a successful feasibility
-spike indefinitely open.
+Phase 0 is complete. Remaining clean-host, energy, held-out, and backend-specific
+measurements are productization or release-threshold follow-ups. They do not
+justify keeping successful feasibility spikes open or delaying the Phase 1
+workspace.
 
 ## Phase 1 — Workspace foundation
 
@@ -195,15 +196,12 @@ Evaluate independently:
 
 Gate:
 
-- Issue #7 proves the runtime and safety-gate foundation. Issue #20 selects the
-  model before the embedded runtime: the first embedded-size reference matrix
-  found no winner, while hosted Qwen/frontier controls prove the task is
-  executable by stronger models. Run both classes on human-verified German
-  professional audio, then port only a quality survivor with a plausible local
-  representation through official MLX and Core ML. Keep remote and Ollama
-  providers independently implementable behind the runtime-neutral
-  text-generation contract and retain llama.cpp/GGUF as the cross-platform
-  fallback.
+- Issue #7 proves the runtime and safety-gate foundation. Issue #20 and
+  ADR-0014 select Gemma 4 26B-A4B 4-bit as the local model and Gemini 3.6 Flash
+  as the explicit hosted option. Implement Gemma first through a narrow owned
+  adapter over official MLX after the common text-generation and enhancement
+  contracts exist. A Core ML conversion is triggered only by a material MLX
+  memory, parity, energy, lifecycle, or packaging problem.
 - Keep enhancement only where measured transcript quality, install size, and operational complexity justify it.
 - Do not select an immature runtime merely because its model experiment succeeds.
 - Preserve raw transcription as a complete product regardless of this decision.
@@ -303,30 +301,14 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-1. Complete independent human review of the exact German podcast validation
-   passage and promote only that digest-pinned transcript to gold. Keep both
-   test episodes closed while the validation configuration is still changing.
-2. Score the five committed Apple SpeechTranscriber, Whisper large-v3-turbo,
-   direct Qwen3-ASR, Parakeet, and Voxtral Realtime drafts against that gold.
-   Retain raw output, surface scores, semantic-severity review, and
-   backend-specific error profiles.
-3. Carry the now streaming-parity-proven official-MLX Voxtral adapter into the
-   held-out and common-engine gates. Keep 320 ms as the measured default,
-   retain the 80 ms backpressure stress gate, and add long-audio cache/memory
-   coverage. ADR-0012 completed the C/MPS comparison and rejects both the
-   reference runtime's unbounded queue and the pure-C path as product boundaries.
-4. Continue #20 with the completed hosted challenge survivors in semantic-risk
-   order: Gemini 3.6 Flash, Kimi K3, then GPT-5.6 Terra. Run them on identical
-   human-verified professional-audio raw ASR outputs, German first, and score
-   names, numbers, dates, negation, and technical terms separately from
-   punctuation, casing, and aggregate WER. Do not spend a full matrix on Gemma
-   4 E2B: both its complete-text and bounded-patch contracts are irreversibly
-   rejected. Use remote controls to measure available quality, not local
-   latency; keep corrected text separate from raw ASR ranking and port only a
-   held-out semantic-safety survivor through official MLX and Core ML.
-5. Resolve the exact remaining acceptance gaps in #5 and close or explicitly
-   rescope the prior-art audit in #3.
-6. Finish #9 with Node 22 plus packed-artifact CI gates.
-7. Record Apple SpeechTranscriber as the selected first backend and Whisper
-   large-v3-turbo as the opt-in fallback in an ADR, then scaffold only the
-   Phase 1 crates justified by that decision.
+1. Close the completed or superseded Phase 0 issues with links to their
+   evidence, then close the Phase 0 epic.
+2. Scaffold the Phase 1 Cargo workspace with only the common product crates and
+   the Apple Speech adapter selected by ADR-0015.
+3. Establish formatting, Clippy, unit-test, dependency-policy, and macOS CI
+   gates around the empty vertical architecture.
+4. Build the first real Apple Speech transcription path through Rust, CLI, and
+   the packed Node artifact before adding the Whisper fallback.
+5. Add transcript enhancement after the common `TextGenerationEngine` and raw
+   transcription result paths exist: Gemma locally on capable machines and
+   Gemini only through explicit OpenRouter configuration.

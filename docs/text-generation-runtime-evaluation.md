@@ -1,9 +1,9 @@
 # Apple-local text-generation runtime evaluation
 
-**Status:** issue #7 runtime probe complete; model-first quality and runtime
-bakeoff continues in issue #20.
+**Status:** issue #7 runtime probe and issue #20 implementation selection
+complete; ADR-0014 selects local Gemma and hosted Gemini.
 
-**Evidence date:** 2026-07-22.
+**Evidence date:** 2026-07-24.
 
 ## Outcome
 
@@ -20,18 +20,15 @@ The practical decision is therefore:
 2. keep `TextGenerationEngine` independent of STT, TTS, and inference runtime;
 3. allow OpenAI and Ollama adapters to be implemented independently behind
    that contract;
-4. compare Gemma 4 E2B, Qwen 3.5 0.8B, and SmolLM3 3B through one pinned
-   local reference layer, then use larger hosted open-weight and frontier
-   controls to establish whether model capability is the limiting variable;
-5. carry only the quality survivor or survivors through both a narrow
-   repository-owned adapter over official MLX and a pinned Core ML conversion;
-   and
-6. ship no embedded backend until a frozen model/prompt/runtime tuple passes
-   multilingual held-out transcript-enhancement gates.
+4. implement Gemma 4 26B-A4B 4-bit as the local-first model through a narrow
+   repository-owned adapter over official MLX;
+5. expose Gemini 3.6 Flash only through explicit OpenRouter configuration; and
+6. keep enhancement off on machines without sufficient local memory unless the
+   user deliberately selects the hosted option.
 
-MLX-LM over official MLX is the common reference layer for the initial model
-comparison because it supports the three candidates on the target hardware.
-That is an experimental convenience, not a product-runtime decision. See the
+MLX-LM over official MLX remains the pinned reference layer. It is not a product
+dependency; the selected embedded path owns its task graph and C ABI directly
+over official MLX. See the
 [`transcript-enhancement model bakeoff`](transcript-enhancement-model-bakeoff.md).
 
 ## Representative-candidate development result
@@ -95,11 +92,11 @@ delivery cost, and replaceability all contribute to the disposition.
 
 | Candidate | 2026-07-21 evidence | Model and delivery implications | Disposition |
 | --- | --- | --- | --- |
-| [Official MLX](https://github.com/ml-explore/mlx) plus an owned model adapter | Apple-maintained MIT project; about 27.6k stars; v0.32.0 released 2026-07-07; current macOS/Metal work. [MLX-LM](https://github.com/ml-explore/mlx-lm) is the official reference implementation, with about 6.4k stars and v0.31.3. | MLX safetensors fit the existing verified model-cache design and reuse the already accepted MLX runtime foundation. Cuttledoc still owns the model graph, architecture-specific cache, task ABI, lifecycle, and upgrade tests. | Serious embedded finalist after model-quality selection. `mlx-lm` and Python remain reference-only; a product path uses a narrow owned C++/C ABI over official MLX. |
+| [Official MLX](https://github.com/ml-explore/mlx) plus an owned model adapter | Apple-maintained MIT project; about 27.6k stars; v0.32.0 released 2026-07-07; current macOS/Metal work. [MLX-LM](https://github.com/ml-explore/mlx-lm) is the official reference implementation, with about 6.4k stars and v0.31.3. | MLX safetensors fit the existing verified model-cache design and reuse the already accepted MLX runtime foundation. Cuttledoc still owns the model graph, architecture-specific cache, task ABI, lifecycle, and upgrade tests. | Selected first embedded path for Gemma. `mlx-lm` and Python remain reference-only; the product path uses a narrow owned C++/C ABI over official MLX. |
 | [llama.cpp](https://github.com/ggml-org/llama.cpp) | Mature MIT project; about 121k stars; frequent numbered builds; Apple Silicon/Metal, GGUF, a C API, CLI, and local server are first-class paths. | Strong model availability and portable delivery, but GGUF creates a second model format and cache alongside the MLX safetensors already needed by Cuttledoc. It also adds another native runtime to build, sign, test, and update. | Credible fallback. Promote if cross-platform embedded inference or GGUF distribution becomes more valuable than one Apple-local runtime foundation. |
 | [mistral.rs](https://github.com/EricLBuehler/mistral.rs) | Active MIT Rust project; about 7.5k stars; v0.9.0 released 2026-07-07; Metal, safetensors, GGUF/UQFF, Rust SDK, servers, multimodal and agent features. | Capable, but its broad runtime and feature surface are disproportionate to Cuttledoc's narrow correction task. Adoption would add a large second ownership and dependency surface instead of reusing official MLX. | Reference only. Re-evaluate only if its Rust-native lifecycle or supported model produces a measured advantage large enough to pay for the surface. |
 | [Candle](https://github.com/huggingface/candle) | Established Apache-2.0/MIT Rust framework; about 20.7k stars; active Metal kernels and safetensors/GGUF support; no GitHub release stream at the snapshot. | Cuttledoc would own or closely track model-specific implementations as well as the runtime integration. Current model coverage is not a stable task-level compatibility promise. | Reference only. Useful implementation prior art, not an initial embedded dependency. |
-| [Core ML](https://apple.github.io/coremltools/docs-guides/source/stateful-models.html) | Apple supports stateful models, KV-cache-style state, and compressed weights on current platforms; the framework itself is mature and system-delivered. | Requires a maintained converted model, conversion validation, compiled artifacts, and model-specific state mapping. Compute placement is graph- and device-dependent; Core ML does not imply Neural Engine execution. | Serious embedded finalist after model-quality selection. Port the same survivor as MLX and measure conversion parity, actual compute placement, delivery, energy procedure, and lifecycle. |
+| [Core ML](https://apple.github.io/coremltools/docs-guides/source/stateful-models.html) | Apple supports stateful models, KV-cache-style state, and compressed weights on current platforms; the framework itself is mature and system-delivered. | Requires a maintained converted model, conversion validation, compiled artifacts, and model-specific state mapping. Compute placement is graph- and device-dependent; Core ML does not imply Neural Engine execution. | Triggered alternative only. Reconsider when MLX fails a material product gate or measured Core ML execution offers a meaningful delivery advantage. |
 | Ollama HTTP adapter | Existing Cuttledoc 2 behavior and a pragmatic local-process provider boundary. | Ollama owns process lifecycle and its model cache. Cuttledoc owns provider configuration, request cancellation, errors, and capability mapping, but does not embed the runtime. | Independently implementable local provider; not the embedded runtime decision. |
 | OpenAI HTTP adapter | Remote model access without local native runtime or model delivery. | No local model cache. Credentials, privacy, cost, network errors, rate limits, cancellation, and opaque model revisions remain provider concerns. | Independently implementable remote provider; not coupled to Ollama or an embedded backend. |
 

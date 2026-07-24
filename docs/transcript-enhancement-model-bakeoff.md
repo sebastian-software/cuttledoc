@@ -1,8 +1,23 @@
 # Transcript-enhancement model bakeoff
 
-**Status:** in progress under issue #20.
+**Status:** complete for implementation selection under issue #20 and ADR-0014.
 
-**Evidence date:** 2026-07-22.
+**Evidence date:** 2026-07-24.
+
+## Pragmatic closeout
+
+The later frozen five-language challenge supersedes the initial single-fixture
+screen as implementation-selection evidence. Gemma 4 26B-A4B 4-bit reduced
+macro WER from 6.56% to 5.12% and is the selected local-first model. Gemini 3.6
+Flash reduced it to 4.17% and is the explicit hosted quality option. The small
+Gemma E2B, Qwen, and SmolLM configurations are not local fallback tiers.
+
+ADR-0014 accepts this selected synthetic development evidence for product-mode
+and implementation direction while retaining raw text and mechanical fallback.
+The originally planned human-verified stages below remain useful for future
+release-quality claims, but they no longer block Phase 1 or the first embedded
+adapter. Core ML is likewise no longer a mandatory parallel implementation;
+official MLX is the first product path.
 
 ## Development-matrix outcome
 
@@ -80,8 +95,8 @@ The experiment separates these questions deliberately:
 
 1. compare model and prompt quality through one common pinned reference layer;
 2. freeze the surviving tuple or tuples; and
-3. compare those finalists through repository-owned official-MLX and Core ML
-   paths.
+3. implement the selected local tuple through repository-owned official MLX,
+   reopening Core ML only on a material delivery or runtime trigger.
 
 This prevents a fast small model from winning before its corrections are useful
 and prevents a stronger model from being discarded merely because its adapter
@@ -132,6 +147,12 @@ This stage rejects broken artifacts, incompatible templates, instruction
 failures, and obviously unsuitable model/prompt tuples. It does not select a
 production model.
 
+### Deferred release-quality expansion
+
+The following original Stage B and Stage C design remains available when the
+project needs broader release-quality claims. It is not an implementation or
+Phase 1 gate after ADR-0014.
+
 ### Stage B: German professional-audio selection
 
 - Use source-grouped, human-verified professional podcast and independently
@@ -154,9 +175,11 @@ Report every language/domain cell separately. Synthetic roundtrip audio may
 increase voice and pronunciation variance but remains a diagnostic control,
 not acceptance gold.
 
-### Stage D: embedded runtime comparison
+### Stage D: embedded runtime implementation
 
-Port only the quality survivor or survivors.
+Port the selected local survivor through official MLX. Execute the Core ML
+column only if the MLX path triggers a comparison through a material memory,
+parity, energy, lifecycle, or packaging problem.
 
 | Evidence | Official MLX path | Core ML path |
 | --- | --- | --- |
