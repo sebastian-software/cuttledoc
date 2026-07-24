@@ -217,7 +217,10 @@ function validateCandidateShape(candidate) {
       !(gateway?.endpoint_identity?.length > 0) ||
       !Array.isArray(gateway?.supported_parameters) ||
       !gateway.supported_parameters.includes('response_format') ||
-      !gateway.supported_parameters.includes('structured_outputs')) {
+      (
+        defaults?.response_format?.type === 'json_schema' &&
+        !gateway.supported_parameters.includes('structured_outputs')
+      )) {
     errors.push('gateway and endpoint identity are incomplete');
   }
   if (!Array.isArray(policy?.only) || policy.only.length !== 1 ||

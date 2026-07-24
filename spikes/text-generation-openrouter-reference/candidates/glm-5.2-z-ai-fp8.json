@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "id": "glm-5.2-openrouter-fireworks",
+  "id": "glm-5.2-openrouter-z-ai-fp8",
   "task": "text-generation",
   "candidate_role": "open-weight-multilingual-hosted-challenger",
   "model": {
@@ -16,39 +16,31 @@
     "license": "MIT",
     "total_parameters": 753000000000,
     "context_tokens": 1048576,
-    "identity_limit": "Fireworks exposes the named open-weight model, but the hosted quantization, exact artifact, and serving implementation remain opaque to this repository."
+    "identity_limit": "Z.AI exposes its named open-weight model through a first-party FP8 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
   },
   "gateway": {
     "name": "OpenRouter",
     "endpoint": "https://openrouter.ai/api/v1/chat/completions",
     "catalog_captured_at": "2026-07-24",
-    "provider_slug": "fireworks",
-    "provider_name": "Fireworks",
-    "endpoint_tag": "fireworks",
-    "endpoint_identity": "Fireworks | z-ai/glm-5.2-20260616",
+    "provider_slug": "z-ai/fp8",
+    "provider_name": "Z.AI",
+    "endpoint_tag": "z-ai/fp8",
+    "endpoint_identity": "Z.AI FP8 | z-ai/glm-5.2-20260616",
     "supported_parameters": [
       "reasoning",
       "include_reasoning",
-      "structured_outputs",
-      "response_format",
       "max_tokens",
       "temperature",
       "top_p",
-      "stop",
-      "frequency_penalty",
-      "presence_penalty",
       "top_k",
-      "repetition_penalty",
-      "logit_bias",
-      "logprobs",
-      "top_logprobs",
       "tools",
       "tool_choice",
+      "response_format",
       "reasoning_effort"
     ],
     "request_policy": {
       "only": [
-        "fireworks"
+        "z-ai/fp8"
       ],
       "allow_fallbacks": false,
       "require_parameters": true,
@@ -71,10 +63,10 @@
       "exclude": true
     },
     "response_format": {
-      "type": "json_schema",
+      "type": "json_object",
       "schema_id": "bounded-transcript-correction-v1",
-      "strict": true
+      "strict": false
     }
   },
-  "claim_limit": "Hosted open-weight multilingual challenger only. The provider does not disclose quantization for this route, this is not local-runtime evidence, and the German/English development slice cannot establish general multilingual or product quality."
+  "claim_limit": "Hosted open-weight multilingual challenger only. The first-party route does not advertise strict structured outputs, so JSON-object transport is paired with the same prompt and exact local output-shape parser. This is not local-runtime evidence, and the German/English development slice cannot establish general multilingual or product quality."
 }

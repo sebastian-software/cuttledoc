@@ -35,10 +35,10 @@
   },
   "candidates": [
     {
-      "id": "glm-5.2-openrouter-fireworks",
+      "id": "glm-5.2-openrouter-z-ai-fp8",
       "role": "open-weight-multilingual-hosted-challenger",
-      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/glm-5.2-fireworks.json",
-      "model_manifest_sha256": "91c795b7b3b508fed0e3a8bc508ea225185afb884152bf5b0bf6c0cf77880354"
+      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/glm-5.2-z-ai-fp8.json",
+      "model_manifest_sha256": "27464e9ecba1ae34516ca76ad4395c4ddd5227237ae525863ed722a62f2dfc1c"
     }
   ],
   "generation": {

@@ -27,7 +27,7 @@
     }
   },
   "candidates": [
-    "glm-5.2-openrouter-fireworks"
+    "glm-5.2-openrouter-z-ai-fp8"
   ],
   "route_revisions": [
     {
@@ -39,9 +39,15 @@
     },
     {
       "candidate": "glm-5.2-openrouter-fireworks",
+      "minimum_delay_between_requests_ms": 1000,
+      "result": "Fireworks returned five consecutive explicit unbilled HTTP 429 responses before inference.",
+      "disposition": "No quality response captured; route rejected as unavailable."
+    },
+    {
+      "candidate": "glm-5.2-openrouter-z-ai-fp8",
       "selected_minimum_delay_between_requests_ms": 1000,
-      "selection": "Fireworks appears in OpenRouter's authenticated ZDR list, advertises strict structured outputs, uses the same price snapshot, and had high current availability.",
-      "continuation": "Restart repeat one from zero on the new pinned provider."
+      "selection": "Use the official Z.AI FP8 ZDR route as the strongest available model identity. The endpoint advertises JSON-object response format rather than strict structured outputs.",
+      "continuation": "Restart repeat one from zero; retain the unchanged prompt and enforce the exact one-field output shape locally."
     }
   ],
   "stages": [
