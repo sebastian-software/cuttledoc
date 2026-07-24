@@ -30,7 +30,7 @@
     }
   },
   "candidates": [
-    "deepseek-v4-pro-openrouter-coreweave-fp8"
+    "deepseek-v4-pro-openrouter-novita-fp8"
   ],
   "stages": [
     {
@@ -90,6 +90,12 @@
     "data_collection": "deny",
     "zdr_required": true,
     "non_zdr_exception_required": false
+  },
+  "route_revision": {
+    "initial_provider": "CoreWeave FP8",
+    "initial_completed_diagnostic_requests": 49,
+    "reason": "The route entered repeated explicit unbilled HTTP 429 sequences and remained unavailable after a cooldown. The complete evidence run therefore restarts on Novita FP8; provider results are never combined.",
+    "selected_provider": "Novita FP8"
   },
   "cost_policy": {
     "currency": "USD",

@@ -41,10 +41,10 @@
   },
   "candidates": [
     {
-      "id": "deepseek-v4-pro-openrouter-coreweave-fp8",
+      "id": "deepseek-v4-pro-openrouter-novita-fp8",
       "role": "hosted-quality-challenger",
-      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/deepseek-v4-pro-coreweave-fp8.json",
-      "model_manifest_sha256": "bcc943319cf2e97f9d55682bd1ee51e10e25ca2e4eb4ed39a8d73b6c22b25d99"
+      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/deepseek-v4-pro-novita-fp8.json",
+      "model_manifest_sha256": "f905add1d1300b4b9f5a49a7ceee03223d29398041285f75005ae7151b57c028"
     }
   ],
   "generation": {
@@ -93,5 +93,6 @@
     "automatic_paid_or_ambiguous_request_retry": false,
     "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5
   },
+  "operational_note": "The initially pinned CoreWeave FP8 route produced 49 mechanically valid diagnostic responses, then remained rate-limited across a cooldown despite reporting healthy status. Those partial artifacts are retained outside the committed evidence and are not mixed with the complete Novita FP8 challenger.",
   "claim_limit": "The direct comparison is valid only against candidates run on the same frozen documents and prompt. This selected synthetic development slice cannot estimate release quality or replace held-out professional-audio evidence."
 }
