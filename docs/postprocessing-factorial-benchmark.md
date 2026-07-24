@@ -581,6 +581,68 @@ should next be used as a cheap preflight for a materially stronger local model
 or the already pinned hosted ceilings; only a contract-and-quality survivor
 should reach held-out professional audio.
 
+## Larger local MLX candidate screen
+
+The capacity follow-up keeps the same ten documents, 60 independently targeted
+sections, prompt, hidden-reference boundary, and two deterministic repeats. It
+changes only the local model. All three candidates use revision-pinned
+`mlx-community` artifacts through the pinned `mlx-lm` reference over official
+Apple MLX:
+
+- Gemma 4 26B-A4B 4-bit as the general sparse quality candidate;
+- Qwen 3.5 27B 4-bit as the dense quality challenger;
+- Qwen 3.5 35B-A3B 4-bit as the sparse efficiency challenger.
+
+The run completes all 360 requests. Every response is mechanically accepted,
+none reaches the token cap or changes more than 30% of its target, and all 180
+repeat pairs are byte-identical.
+
+| Candidate | Macro WER | Relative reduction | Better / worse per repeat | Unique correct-input regressions | Mean generation | Disposition |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Gemma 4 26B-A4B 4-bit | 6.56% → 5.12% | 22.0% | 34 / 6 | 2 | 67.1 tok/s | Local general development leader |
+| Qwen 3.5 27B 4-bit | 6.56% → 5.44% | 17.1% | 31 / 10 | 2 | 24.1 tok/s | Reject: Gemma is better in every locale and about 2.8× faster |
+| Qwen 3.5 35B-A3B 4-bit | 6.56% → 5.78% | 11.8% | 28 / 12 | 2 | 65.9 tok/s | Retain only as the English-specific local challenger |
+
+The language split matters:
+
+| Candidate | DE | EN | ES | FR | PT |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Gemma 4 26B-A4B 4-bit | 10.42% | 3.17% | 2.91% | 4.15% | 4.93% |
+| Qwen 3.5 27B 4-bit | 11.16% | 3.29% | 3.25% | 4.55% | 4.94% |
+| Qwen 3.5 35B-A3B 4-bit | 11.93% | **2.91%** | 3.47% | 5.17% | 5.45% |
+
+Gemma leads German, Spanish, French, and Portuguese. Qwen 35B-A3B leads
+English and does not damage a previously correct English input, but it
+regresses the French aggregate and is not a multilingual default. Qwen 27B has
+no compensating locale advantage for its dense-model latency.
+
+Post-hoc inspection of Gemma's two unique correct-input regressions finds one
+real English source-fidelity change (`become ... grow` becomes `became ...
+grew`) and one meaning-preserving Portuguese grammatical expansion. Gemma is
+therefore a strong local development candidate, not an unconditional product
+postprocessor.
+
+On the same frozen slice, Gemma is slightly better than hosted DeepSeek V4
+Flash (5.12% versus 5.22% macro WER), close to Kimi K3 (5.09%), and materially
+behind Gemini 3.6 Flash and GPT-5.6 Sol (4.17% and 4.12%). This makes Gemma a
+useful privacy and marginal-cost option while Gemini remains the stronger
+hosted development ceiling.
+
+An Apache-2.0 Gemma 8-bit MLX artifact is available at pinned revision
+`33c6d23798a0af159529890f79329206dbfbd73c` with 27,986,021,905 runtime bytes.
+It should fit 64 GiB unified memory, but the current data volume cannot hold it
+with a safe disk margin: even after deleting the 4-bit snapshot, only about
+3 GiB would remain. The bounded 8-bit A/B is deferred until more disk space is
+available; it should continue only if one frozen repeat materially improves
+WER or the two Gemma semantic-regression cases.
+
+The machine-readable
+[plan](../benchmarks/postprocessing/local-llm-upscale-challenger-plan.json),
+[screen](../benchmarks/postprocessing/local-llm-upscale-challenger-screen.json),
+[complete report](../benchmarks/postprocessing/local-llm-upscale-challenger-results.json),
+and [decision](../benchmarks/postprocessing/local-llm-upscale-challenger-decision.json)
+pin the complete evidence and recommendation.
+
 ## Hosted challenge preflight
 
 The hosted preflight reuses the exact ten documents and 60 single-target

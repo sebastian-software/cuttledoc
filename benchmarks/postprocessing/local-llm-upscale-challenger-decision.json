@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-local-llm-upscale-challenger-plan-1-decision-1",
+  "plan_id": "postprocessing-factorial-local-llm-upscale-challenger-plan-1",
+  "plan_sha256": "924cf4851032f71ebfcd102a6e72683afd801b8107b9e0632983dd55c2f2a2c8",
+  "screen_id": "postprocessing-factorial-local-llm-upscale-challenger-screen-1",
+  "screen_sha256": "07c3837cadcb065f87ca4afa6aa75b0010cc693faecaa5fd2fe5c32add0f94e3",
+  "summary_path": "benchmarks/postprocessing/local-llm-upscale-challenger-results.json",
+  "summary_sha256": "aa8145eeab3338a4295f811fa2f5d3dda6106bbd6227c049028103ecc47f2997",
+  "captured_at": "2026-07-24T15:03:54Z",
+  "status": "complete",
+  "execution": {
+    "completed_requests": 360,
+    "mechanically_accepted_requests": 360,
+    "invalid_requests": 0,
+    "token_limit_failures": 0,
+    "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+    "complete_repeat_pairs": 180,
+    "byte_identical_raw_output_pairs": 180
+  },
+  "general_ranking": [
+    {
+      "rank": 1,
+      "candidate": "gemma-4-26b-a4b-it-4bit-mlx",
+      "disposition": "promote-as-local-general-development-leader",
+      "rationale": "It has the best aggregate and four-of-five-locale quality, no locale regression, and sparse-model throughput. It is not a product default because two unique previously correct inputs acquire normalized word errors.",
+      "combined": {
+        "completed_requests": 120,
+        "mechanically_accepted_requests": 120,
+        "macro_mean_raw_wer": 0.0655743598097896,
+        "macro_mean_post_wer": 0.05116396258217779,
+        "relative_error_change": -0.21975658274685092,
+        "improved_sections": 68,
+        "regressed_sections": 12,
+        "unique_improved_sections_per_repeat": 34,
+        "unique_regressed_sections_per_repeat": 6,
+        "changed_correct_input_to_error": 4,
+        "unique_changed_correct_input_to_error": 2,
+        "maximum_input_output_word_edit_rate": 0.25161290322580643,
+        "mean_generation_tokens_per_second": 67.09948128247403,
+        "mean_complete_generation_ms": 6043.244034308335
+      },
+      "locale_post_wer": {
+        "de-DE": 0.10415489277827451,
+        "en-US": 0.031721043241514084,
+        "es-419": 0.029100276722292123,
+        "fr-FR": 0.04153163165861276,
+        "pt-BR": 0.04931196851019576
+      },
+      "repeat_stability": {
+        "complete_pairs": 60,
+        "byte_identical_raw_output_pairs": 60
+      }
+    },
+    {
+      "rank": 2,
+      "candidate": "qwen3.5-27b-4bit-mlx",
+      "disposition": "reject-from-local-shortlist",
+      "rationale": "Gemma is better in every evaluated locale, has fewer regressions, and is approximately 2.8 times faster. The dense candidate exposes no compensating quality advantage on this slice.",
+      "combined": {
+        "completed_requests": 120,
+        "mechanically_accepted_requests": 120,
+        "macro_mean_raw_wer": 0.0655743598097896,
+        "macro_mean_post_wer": 0.05437199409618522,
+        "relative_error_change": -0.17083454182547697,
+        "improved_sections": 62,
+        "regressed_sections": 20,
+        "unique_improved_sections_per_repeat": 31,
+        "unique_regressed_sections_per_repeat": 10,
+        "changed_correct_input_to_error": 4,
+        "unique_changed_correct_input_to_error": 2,
+        "maximum_input_output_word_edit_rate": 0.2,
+        "mean_generation_tokens_per_second": 24.099262406149485,
+        "mean_complete_generation_ms": 23717.461766275006
+      },
+      "locale_post_wer": {
+        "de-DE": 0.11160667692862462,
+        "en-US": 0.03289164666352463,
+        "es-419": 0.03249346849391385,
+        "fr-FR": 0.04547834284467298,
+        "pt-BR": 0.0493898355501901
+      },
+      "repeat_stability": {
+        "complete_pairs": 60,
+        "byte_identical_raw_output_pairs": 60
+      }
+    },
+    {
+      "rank": 3,
+      "candidate": "qwen3.5-35b-a3b-4bit-mlx",
+      "disposition": "retain-as-english-only-local-challenger",
+      "rationale": "It trails Gemma overall and regresses French macro WER, so it is rejected as a multilingual default. It nevertheless has the best local English post-WER, no previously correct English input regression, and sparse-model throughput.",
+      "combined": {
+        "completed_requests": 120,
+        "mechanically_accepted_requests": 120,
+        "macro_mean_raw_wer": 0.0655743598097896,
+        "macro_mean_post_wer": 0.057848098992601425,
+        "relative_error_change": -0.11782441856237102,
+        "improved_sections": 56,
+        "regressed_sections": 24,
+        "unique_improved_sections_per_repeat": 28,
+        "unique_regressed_sections_per_repeat": 12,
+        "changed_correct_input_to_error": 4,
+        "unique_changed_correct_input_to_error": 2,
+        "maximum_input_output_word_edit_rate": 0.2129032258064516,
+        "mean_generation_tokens_per_second": 65.87178368634235,
+        "mean_complete_generation_ms": 5700.730433300002
+      },
+      "locale_post_wer": {
+        "de-DE": 0.11925835639814142,
+        "en-US": 0.029058454978550585,
+        "es-419": 0.03469521627202827,
+        "fr-FR": 0.05171266497414955,
+        "pt-BR": 0.05451580234013755
+      },
+      "repeat_stability": {
+        "complete_pairs": 60,
+        "byte_identical_raw_output_pairs": 60
+      }
+    }
+  ],
+  "language_selection": {
+    "de-DE": "gemma-4-26b-a4b-it-4bit-mlx",
+    "en-US": "qwen3.5-35b-a3b-4bit-mlx",
+    "es-419": "gemma-4-26b-a4b-it-4bit-mlx",
+    "fr-FR": "gemma-4-26b-a4b-it-4bit-mlx",
+    "pt-BR": "gemma-4-26b-a4b-it-4bit-mlx",
+    "scope": "Development preference on this selected synthetic slice, not a release default."
+  },
+  "gemma_semantic_regression_review": [
+    {
+      "document_id": "document--en-US--qwen-en-clear--repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "section_id": "en-technical-a",
+      "repeats": 2,
+      "classification": "meaningful-source-fidelity-regression",
+      "finding": "The previously correct normalized input changes present tense 'become ... grow' to past tense 'became ... grew'. The result is grammatical but no longer matches the source reference."
+    },
+    {
+      "document_id": "document--pt-BR--voxtral-pt-female--seed-1-repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "section_id": "pt-technical-b",
+      "repeats": 2,
+      "classification": "meaning-preserving-grammatical-expansion",
+      "finding": "The previously correct normalized input gains Portuguese copulas and related grammatical framing. WER counts the additions, but the inspected meaning remains intact."
+    }
+  ],
+  "hosted_context": {
+    "same_frozen_slice": true,
+    "comparators": [
+      {
+        "candidate": "gemini-3.6-flash-openrouter-google-vertex-global",
+        "macro_mean_post_wer": 0.041680391301637844,
+        "position_relative_to_gemma": "materially-better-hosted-quality-ceiling"
+      },
+      {
+        "candidate": "gpt-5.6-sol-openrouter-azure-eu",
+        "macro_mean_post_wer": 0.04120282833660454,
+        "position_relative_to_gemma": "materially-better-aggregate-with-a-wider-semantic-regression-surface"
+      },
+      {
+        "candidate": "kimi-k3-openrouter-moonshot-int4",
+        "macro_mean_post_wer": 0.05087710135455419,
+        "position_relative_to_gemma": "slightly-better-hosted-quality"
+      },
+      {
+        "candidate": "deepseek-v4-flash-openrouter-parasail-fp8",
+        "macro_mean_post_wer": 0.05218755063693597,
+        "position_relative_to_gemma": "slightly-worse-hosted-quality"
+      }
+    ],
+    "conclusion": "Gemma is competitive with the middle of the hosted shortlist and offers a useful local privacy and marginal-cost tradeoff. Gemini remains the stronger hosted development ceiling."
+  },
+  "quantization_follow_up": {
+    "candidate": "mlx-community/gemma-4-26b-a4b-it-8bit",
+    "observed_revision": "33c6d23798a0af159529890f79329206dbfbd73c",
+    "license": "Apache-2.0",
+    "runtime_snapshot_bytes": 27986021905,
+    "unified_memory_disposition": "The approximately 28 GB snapshot should fit a 64 GiB unified-memory machine with material execution headroom.",
+    "execution_status": "deferred-insufficient-local-disk-headroom",
+    "disk_observation": "The data volume had approximately 17 GiB free with the 4-bit snapshot present. Deleting it would leave only approximately 3 GiB after downloading the 8-bit snapshot, which is not a safe operating margin.",
+    "trigger": "Run one frozen 60-target repeat when enough disk space is available to retain a safe operating margin. Continue to repeat two only if 8-bit materially reduces Gemma's unique semantic regressions or post-WER."
+  },
+  "recommendation": {
+    "local_general": "Use Gemma 4 26B-A4B 4-bit as the local development leader.",
+    "local_english_only": "Retain Qwen 3.5 35B-A3B 4-bit as the English-specific challenger.",
+    "hosted": "Keep Gemini 3.6 Flash as the primary hosted development quality ceiling.",
+    "product_boundary": "Do not enable unconditional post-processing by default from this selected synthetic development screen. Preserve raw text and validate the selected local/hosted route on held-out professional human audio."
+  },
+  "claim_limit": "This deliberately challenging synthetic development slice compares prompt, model, language, and output-contract behavior. It is selected from prior observed failures, is not held out, and cannot establish release quality on human professional podcasts or audiobooks."
+}
