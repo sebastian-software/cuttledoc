@@ -1,7 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "id": "postprocessing-factorial-hosted-de-en-prominent-comparison-1",
-  "captured_at": "2026-07-24T20:36:58Z",
+  "id": "postprocessing-factorial-hosted-de-en-prominent-comparison-2",
+  "supersedes": "postprocessing-factorial-hosted-de-en-prominent-comparison-1",
+  "captured_at": "2026-07-24T20:51:20Z",
   "status": "complete",
   "scope": {
     "locales": [
@@ -30,6 +31,11 @@
       "role": "gemini-control",
       "path": "benchmarks/postprocessing/hosted-llm-target-complete-results.json",
       "sha256": "6c01d3edee7f788e49ebc4b28bc721266857bc29e728c53e9f19d8899215861b"
+    },
+    {
+      "role": "glm-5.2-extension",
+      "path": "benchmarks/postprocessing/hosted-llm-glm-5.2-de-en-results.json",
+      "sha256": "c773ac1e2da29aef02852d28d3e664b6372d40032e69974dbbbab9d4806b3383"
     }
   ],
   "candidates": [
@@ -115,6 +121,33 @@
       "disposition": "stop-after-repeat-1"
     },
     {
+      "candidate": "glm-5.2-openrouter-z-ai-fp8",
+      "role": "open-weight-multilingual-hosted-challenger",
+      "post_macro_wer": 0.0661317289685469,
+      "relative_error_change": -0.2348532200159968,
+      "improved_sections": 16,
+      "regressed_sections": 3,
+      "changed_correct_input_to_error": 1,
+      "cost_usd_for_compared_requests": 0.07182343999999999,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.10086379611452205,
+          "relative_error_change": -0.2749234233543291,
+          "improved_sections": 12,
+          "regressed_sections": 0
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.031399661822571694,
+          "relative_error_change": -0.06970740471143029,
+          "improved_sections": 4,
+          "regressed_sections": 3
+        }
+      ],
+      "disposition": "stop-after-repeat-1"
+    },
+    {
       "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
       "role": "open-weight-hosted-challenger",
       "post_macro_wer": 0.06794456068266375,
@@ -182,19 +215,25 @@
     {
       "candidate": "grok-4.5-openrouter-xai-zdr",
       "finding": "The ZDR route requires at least low reasoning effort; hidden reasoning is therefore part of this tuple's cost and latency."
+    },
+    {
+      "candidate": "glm-5.2-openrouter-z-ai-fp8",
+      "finding": "BaseTen yielded four strict-schema diagnostics but remained persistently rate-limited, and Fireworks was rate-limited before inference. The complete evidence restarts on the official Z.AI FP8 ZDR route using JSON-object transport and exact local shape validation; provider outputs are not mixed."
     }
   ],
   "cost": {
     "new_three_candidate_repeat_1_usd": 0.9768786,
     "deepseek_v4_pro_completion_increment_usd": 0.0384618,
-    "new_spend_for_this_comparison_usd": 1.0153404,
+    "glm_5_2_discarded_baseten_diagnostics_usd": 0.0119342,
+    "glm_5_2_z_ai_repeat_1_usd": 0.07182343999999999,
+    "new_spend_for_this_comparison_usd": 1.09909804,
     "failed_pre_inference_route_checks_usd": 0
   },
   "decision": {
     "repeat_2_candidates": [],
     "winner": "gemini-3.6-flash-openrouter-google-vertex-global",
     "rationale": "Every new challenger passed the basic expected-utility gate, but Gemini retained the lowest overall, German, and English postprocessed macro WER, had no numeric regressions, and was not more expensive than the closest challenger Grok on the compared requests. A second repeat would not satisfy the precommitted requirement that a challenger be competitive overall or expose a language-specific advantage.",
-    "product_effect": "Do not add Luna, Opus, Grok, or DeepSeek V4 Pro to the hosted product shortlist from this screen. Keep the existing Gemini control and prior broader hosted evidence; raw transcripts remain available and enhancement remains optional."
+    "product_effect": "Do not add Luna, Opus, Grok, GLM-5.2, or DeepSeek V4 Pro to the hosted product shortlist from this screen. Keep the existing Gemini control and prior broader hosted evidence; raw transcripts remain available and enhancement remains optional."
   },
   "claim_limit": "This fast screen eliminates candidates that fail to improve on the existing control for German and English synthetic professional-style audio. It does not estimate release quality, replace the five-language evidence, or establish behavior on held-out human podcast and audiobook recordings."
 }

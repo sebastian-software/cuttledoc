@@ -884,10 +884,11 @@ identical model, prompt, and document tuples.
 | Gemini 3.6 Flash | 5.80% | 32.9% | 37.7% | 13.0% | 15 / 0 | 0 | `$0.188804` |
 | Grok 4.5 | 6.14% | 28.9% | 33.6% | 9.9% | 15 / 2 | 0 | `$0.192481` |
 | Claude Opus 5 | 6.58% | 23.8% | 27.2% | 10.0% | 15 / 1 | 1 | `$0.705970` |
+| GLM-5.2 | 6.61% | 23.5% | 27.5% | 7.0% | 16 / 3 | 1 | `$0.071823` |
 | DeepSeek V4 Pro | 6.79% | 21.4% | 26.1% | 2.0% | 15 / 1 | 1 | `$0.068487` |
 | GPT-5.6 Luna | 7.03% | 18.7% | 20.4% | 11.6% | 12 / 6 | 1 | `$0.078428` |
 
-All four challengers pass the coarse expected-utility gate, but none beats
+All five challengers pass the coarse expected-utility gate, but none beats
 Gemini overall, in German, or in English. Gemini also has the narrowest
 numeric regression surface. The machine-readable
 [comparison](../benchmarks/postprocessing/hosted-llm-de-en-prominent-comparison.json)
@@ -895,17 +896,32 @@ therefore authorizes no repeat-two candidate and adds no model to the product
 shortlist. Grok is the best new challenger, but costs slightly more than Gemini
 on these requests and has no language-specific quality advantage.
 
+GLM-5.2 was added in a separate
+[plan](../benchmarks/postprocessing/hosted-llm-glm-5.2-de-en-plan.json)
+after the initial comparison. Its complete
+[report](../benchmarks/postprocessing/hosted-llm-glm-5.2-de-en-results.json)
+and [basic-gate decision](../benchmarks/postprocessing/hosted-llm-glm-5.2-de-en-decision.json)
+contain 24/24 valid responses. GLM passes the generic five-percent
+expected-utility gate, but the control comparison stops it after repeat one:
+it is slightly behind Opus overall, materially behind Gemini in both languages,
+and has three numeric regressions.
+
 The route preflight also matters operationally. Mistral Medium 3.5 has no
 OpenRouter ZDR endpoint and was excluded before inference. Opus 5 is ZDR via
 Amazon Bedrock, but that route rejects strict JSON-schema translation and
 requires JSON-object transport with exact local shape validation. Grok's xAI
-ZDR route requires at least low reasoning effort. The three completed new
-candidate runs cost `$0.976879`; finishing the prior DeepSeek run added
-`$0.038462`. Failed pre-inference route checks were unbilled.
+ZDR route requires at least low reasoning effort. GLM-5.2 exposed a separate
+provider-capacity issue: BaseTen produced four valid diagnostics but remained
+persistently rate-limited, and Fireworks was rate-limited before inference.
+The complete run restarts from zero on the official Z.AI FP8 ZDR route using
+JSON-object transport; provider outputs are not mixed. The three initial
+candidate runs cost `$0.976879`, finishing the prior DeepSeek run added
+`$0.038462`, and GLM added `$0.083758`, including its discarded BaseTen
+diagnostics. Failed pre-inference route checks were unbilled.
 
 This quick decision does not replace the five-language hosted evidence or
 held-out human professional-audio validation. It answers the narrower question:
-none of these prominent additions justifies more benchmark spend for the
+none of these prominent additions, including GLM-5.2, justifies more benchmark spend for the
 current German/English transcript-correction shortlist.
 
 ## Larger local-model follow-up
