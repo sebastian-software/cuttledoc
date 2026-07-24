@@ -82,6 +82,7 @@ impl fmt::Display for AdapterError {
 
 impl Error for AdapterError {}
 
+#[cfg(any(target_os = "macos", test))]
 fn validate_pcm(samples: &[f32]) -> Result<(), AdapterError> {
     if samples.is_empty() {
         return Err(AdapterError::new(
