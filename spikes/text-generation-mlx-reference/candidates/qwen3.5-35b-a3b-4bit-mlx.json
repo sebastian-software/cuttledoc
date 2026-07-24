@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "id": "qwen3.5-35b-a3b-4bit-mlx",
+  "task": "text-generation",
+  "candidate_role": "sparse-efficiency-challenger",
+  "source": {
+    "repository": "Qwen/Qwen3.5-35B-A3B",
+    "observed_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+    "license": "Apache-2.0",
+    "parameter_count": 35951822704,
+    "advertised_active_parameter_count": 3000000000,
+    "context_tokens": 262144,
+    "provenance_limit": "The conversion identifies Qwen/Qwen3.5-35B-A3B but does not name the exact source commit used. The observed revision pins capability and license evidence without claiming conversion identity."
+  },
+  "conversion": {
+    "repository": "mlx-community/Qwen3.5-35B-A3B-4bit",
+    "revision": "1e20fd8d42056f870933bf98ca6211024744f7ec",
+    "license": "Apache-2.0",
+    "format": "MLX 4-bit safetensors with multimodal towers",
+    "converter": "conversion toolchain not pinned by conversion repository metadata",
+    "quantization_bits": 4,
+    "quantization_group_size": 64,
+    "weight_bytes": 20391679439,
+    "snapshot_bytes": 20418622319,
+    "provenance_limit": "The conversion revision and every runtime artifact are pinned. The conversion metadata does not establish the exact converter commit or exact source-model commit."
+  },
+  "reference_runtime": {
+    "repository": "ml-explore/mlx-lm",
+    "revision": "ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd",
+    "version": "0.31.3",
+    "license": "MIT",
+    "mlx_repository": "ml-explore/mlx",
+    "mlx_revision": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247",
+    "mlx_version": "0.32.0",
+    "boundary": "Pinned Python reference over official Apple MLX; not an accepted product dependency or stable API"
+  },
+  "generation_contract": {
+    "prompt_id": "surface-only-v1",
+    "policy_mode": "surface-only",
+    "render_mode": "template",
+    "output_mode": "plain-text",
+    "context_fields": [
+      "language",
+      "domain",
+      "transcript"
+    ],
+    "prompt_path": "benchmarks/postprocessing/prompts/surface-only-v1.txt",
+    "prompt_sha256": "c8e31bcc1ed1169fa02e04f5504c7fc1e3599cf61b8272d6ee32cff0dbc889a7",
+    "chat_template": "pinned model tokenizer template with enable_thinking=false",
+    "chat_template_options": {
+      "enable_thinking": false
+    },
+    "seed": 0,
+    "temperature": 0.0,
+    "max_tokens": 256,
+    "stream": true,
+    "cancellation_probe_after_tokens": 4,
+    "rationale": "Greedy non-thinking decoding isolates surface-formatting behavior and makes the development runtime probe repeatable."
+  },
+  "result_contract": {
+    "run_id": "phase9.qwen3.5-35b-a3b-4bit-mlx-reference.issue7-de-audiobook-whisper-1",
+    "purpose": "development-runtime-probe",
+    "fixture_path": "benchmarks/postprocessing/fixtures/issue7-de-audiobook-whisper.json",
+    "result_path": "benchmarks/postprocessing/runs/phase9.qwen3.5-35b-a3b-4bit-mlx-reference.issue7-de-audiobook-whisper-1.json",
+    "result_required": false
+  },
+  "artifacts": [
+    {
+      "path": "chat_template.jinja",
+      "bytes": 7756,
+      "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+    },
+    {
+      "path": "config.json",
+      "bytes": 3809,
+      "sha256": "c0cf317cba802cfb1d2984d4b4afc98ceb3d86450ed757e028383bfb03643964"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 244,
+      "sha256": "4f25002776b741773666203dcea8f54619f177ace3ae483d311102092a4658e0"
+    },
+    {
+      "path": "model-00001-of-00004.safetensors",
+      "bytes": 5285828971,
+      "sha256": "0952c2fd5ec5f6163a045003eb0e60465290ac0ebedbe2cecde35dd95abed345"
+    },
+    {
+      "path": "model-00002-of-00004.safetensors",
+      "bytes": 5366101807,
+      "sha256": "ddf163fcbaa7fc1ff2e93ee2e3306b1c31c4fe3c7dd46990cd2737d0cc30197f"
+    },
+    {
+      "path": "model-00003-of-00004.safetensors",
+      "bytes": 5364643286,
+      "sha256": "5e7d8deca9240eec828c9a451fbd8a95389a7cc18494f400c330d0717c41f6e1"
+    },
+    {
+      "path": "model-00004-of-00004.safetensors",
+      "bytes": 4375105375,
+      "sha256": "b540bac1ef081d7011e32428e0c2da77f00699db2f4f1508da73ee3b8de40551"
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "bytes": 215755,
+      "sha256": "56f02123353b7fe444b287a46a779a836cb939860502908da4a79e3b43931cdb"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "bytes": 390,
+      "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+    },
+    {
+      "path": "processor_config.json",
+      "bytes": 1300,
+      "sha256": "14932921ca485d458a04dafd8069fbb0a4505622a48208d19ed247115801385b"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 19989343,
+      "sha256": "87a7830d63fcf43bf241c3c5242e96e62dd3fdc29224ca26fed8ea333db72de4"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 1139,
+      "sha256": "e98f1901ac6f0adff67b1d540bfa0c36ac1a0cf59eb72ed78146ef89aafa1182"
+    },
+    {
+      "path": "video_preprocessor_config.json",
+      "bytes": 385,
+      "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13"
+    },
+    {
+      "path": "vocab.json",
+      "bytes": 6722759,
+      "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+    }
+  ]
+}

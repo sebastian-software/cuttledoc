@@ -70,7 +70,7 @@
       "conversion": {
         "repository": "mlx-community/Qwen3.5-35B-A3B-4bit",
         "revision": "1e20fd8d42056f870933bf98ca6211024744f7ec",
-        "snapshot_bytes": 20418624545,
+        "snapshot_bytes": 20418622319,
         "quantization_bits": 4
       }
     },
