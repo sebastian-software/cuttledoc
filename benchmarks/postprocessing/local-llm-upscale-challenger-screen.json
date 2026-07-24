@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-local-llm-upscale-challenger-screen-1",
+  "plan_id": "postprocessing-factorial-primary-languages-v1",
+  "plan_revision": "postprocessing-factorial-plan-6",
+  "purpose": "Compare three materially larger local MLX post-processing candidates on the frozen multilingual target-complete development slice.",
+  "scope": {
+    "document_statuses": [
+      "ready",
+      "blocked"
+    ],
+    "tts_engines": [
+      "apple-avspeechsynthesizer",
+      "qwen3-tts-1.7b-voicedesign-mlx-audio",
+      "voxtral-tts-4b-bf16-mlx-audio"
+    ],
+    "document_ids": [
+      "document--de-DE--apple-de-b--repeat-1--qwen3-asr-0.6b-mlx-direct",
+      "document--de-DE--voxtral-de-male--seed-0-repeat-1--parakeet-tdt-0.6b-v3-coreml",
+      "document--en-US--qwen-en-clear--repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "document--en-US--voxtral-en-female--seed-1-repeat-1--qwen3-asr-0.6b-mlx-direct",
+      "document--es-419--qwen-es-clear--repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "document--es-419--voxtral-es-male--seed-0-repeat-1--parakeet-tdt-0.6b-v3-coreml",
+      "document--fr-FR--apple-fr-b--repeat-1--parakeet-tdt-0.6b-v3-coreml",
+      "document--fr-FR--voxtral-fr-female--seed-1-repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+      "document--pt-BR--qwen-pt-clear--repeat-1--parakeet-tdt-0.6b-v3-coreml",
+      "document--pt-BR--voxtral-pt-female--seed-1-repeat-1--whisper-large-v3-turbo-coreml-whispercpp"
+    ],
+    "document_count": 10,
+    "sections_per_document": 6,
+    "request_mode": "single-target-section",
+    "hidden_reference_visible_to_model": false,
+    "qualification_reports": [
+      {
+        "tts_engine": "voxtral-tts-4b-bf16-mlx-audio",
+        "path": "benchmarks/postprocessing/qualifications/voxtral-tts-4b-bf16.technical-a-1.json",
+        "sha256": "934783817093e344136037238b9fae41197f9436f8f167d88f748833eb58ff4f",
+        "required_disposition": "technical-gate-passed"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "gemma-4-26b-a4b-it-4bit-mlx",
+      "role": "sparse-quality-candidate",
+      "model_manifest_path": "spikes/text-generation-mlx-reference/candidates/gemma-4-26b-a4b-it-4bit-mlx.json",
+      "model_directory_name": "gemma-4-26b-a4b-it-4bit-mlx",
+      "rights_disposition": "Apache-2.0; evaluation-only pending product-runtime review"
+    },
+    {
+      "id": "qwen3.5-35b-a3b-4bit-mlx",
+      "role": "sparse-efficiency-challenger",
+      "model_manifest_path": "spikes/text-generation-mlx-reference/candidates/qwen3.5-35b-a3b-4bit-mlx.json",
+      "model_directory_name": "qwen3.5-35b-a3b-4bit-mlx",
+      "rights_disposition": "Apache-2.0; evaluation-only pending product-runtime review"
+    },
+    {
+      "id": "qwen3.5-27b-4bit-mlx",
+      "role": "dense-quality-challenger",
+      "model_manifest_path": "spikes/text-generation-mlx-reference/candidates/qwen3.5-27b-4bit-mlx.json",
+      "model_directory_name": "qwen3.5-27b-4bit-mlx",
+      "rights_disposition": "Apache-2.0; evaluation-only pending product-runtime review"
+    }
+  ],
+  "generation": {
+    "runtime": "pinned mlx-lm reference over official Apple MLX",
+    "prompt_id": "conservative-target-complete-v5",
+    "prompt_path": "benchmarks/postprocessing/prompts/conservative-target-complete-v5.txt",
+    "prompt_sha256": "bb135e4a70be705daf94e25a96ac6170916e397fdd2b7751f4fbdd87e1730585",
+    "seed": 0,
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "repetitions": 2,
+    "chat_template_options": {
+      "enable_thinking": false
+    },
+    "output_contract": "bounded-transcript-target-complete-v5"
+  },
+  "expected_counts": {
+    "documents": 10,
+    "document_model_pairs": 30,
+    "target_model_pairs": 180,
+    "requests": 360,
+    "section_outputs": 360
+  },
+  "result_path": "benchmarks/postprocessing/local-llm-upscale-challenger-results.json",
+  "execution_policy": {
+    "resume_valid_results": true,
+    "load_model_once_per_batch": true,
+    "retain_every_raw_response": true,
+    "map_target_position_to_immutable_section_id_locally": true,
+    "derive_authoritative_diffs_locally": true,
+    "context_is_read_only": true,
+    "one_model_resident_at_a_time": true
+  },
+  "claim_limit": "This deliberately challenging synthetic development slice compares prompt and output-contract behavior only. It is selected from prior observed failures, is not held out, and cannot establish product quality or tune a release safety threshold."
+}

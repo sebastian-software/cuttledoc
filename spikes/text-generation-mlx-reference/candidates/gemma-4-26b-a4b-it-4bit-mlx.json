@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0.0",
+  "id": "gemma-4-26b-a4b-it-4bit-mlx",
+  "task": "text-generation",
+  "candidate_role": "sparse-quality-candidate",
+  "source": {
+    "repository": "google/gemma-4-26B-A4B-it",
+    "observed_revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+    "license": "Apache-2.0",
+    "parameter_count": 25805936206,
+    "advertised_active_parameter_count": 4000000000,
+    "context_tokens": 262144,
+    "provenance_limit": "The conversion identifies google/gemma-4-26B-A4B-it but does not name the exact source commit used. The observed revision pins capability and license evidence without claiming conversion identity."
+  },
+  "conversion": {
+    "repository": "mlx-community/gemma-4-26b-a4b-it-4bit",
+    "revision": "0d77464eeb233a2da68ebf9d7dc4edaac7db956d",
+    "license": "Apache-2.0",
+    "format": "MLX mixed 4-bit safetensors with multimodal towers and 8-bit router projections",
+    "converter": "conversion toolchain not pinned by conversion repository metadata",
+    "quantization_bits": 4,
+    "quantization_group_size": 64,
+    "weight_bytes": 15341205776,
+    "snapshot_bytes": 15373586252,
+    "provenance_limit": "The conversion revision and every runtime artifact are pinned. The conversion metadata does not establish the exact converter commit or exact source-model commit."
+  },
+  "reference_runtime": {
+    "repository": "ml-explore/mlx-lm",
+    "revision": "ed1fca4cef15a824c5f1702c80f70b4cffc8e4dd",
+    "version": "0.31.3",
+    "license": "MIT",
+    "mlx_repository": "ml-explore/mlx",
+    "mlx_revision": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247",
+    "mlx_version": "0.32.0",
+    "boundary": "Pinned Python reference over official Apple MLX; not an accepted product dependency or stable API"
+  },
+  "generation_contract": {
+    "prompt_id": "surface-only-v1",
+    "policy_mode": "surface-only",
+    "render_mode": "template",
+    "output_mode": "plain-text",
+    "context_fields": [
+      "language",
+      "domain",
+      "transcript"
+    ],
+    "prompt_path": "benchmarks/postprocessing/prompts/surface-only-v1.txt",
+    "prompt_sha256": "c8e31bcc1ed1169fa02e04f5504c7fc1e3599cf61b8272d6ee32cff0dbc889a7",
+    "chat_template": "pinned model tokenizer template with enable_thinking=false",
+    "chat_template_options": {
+      "enable_thinking": false
+    },
+    "seed": 0,
+    "temperature": 0.0,
+    "max_tokens": 256,
+    "stream": true,
+    "cancellation_probe_after_tokens": 4,
+    "rationale": "Greedy non-thinking decoding isolates surface-formatting behavior and makes the development runtime probe repeatable."
+  },
+  "result_contract": {
+    "run_id": "phase9.gemma-4-26b-a4b-it-4bit-mlx-reference.issue7-de-audiobook-whisper-1",
+    "purpose": "development-runtime-probe",
+    "fixture_path": "benchmarks/postprocessing/fixtures/issue7-de-audiobook-whisper.json",
+    "result_path": "benchmarks/postprocessing/runs/phase9.gemma-4-26b-a4b-it-4bit-mlx-reference.issue7-de-audiobook-whisper-1.json",
+    "result_required": false
+  },
+  "artifacts": [
+    {
+      "path": "chat_template.jinja",
+      "bytes": 17466,
+      "sha256": "36e3a42e5cf14cd0020e72d92e1fdd9970f59b82170e421f0cbe1bb42bead3f0"
+    },
+    {
+      "path": "config.json",
+      "bytes": 12180,
+      "sha256": "419e13a27ec359654c1ce7dd06d1a87149fd07d0c8af9f770494185e62e1b2ba"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 208,
+      "sha256": "d4226bbe3117d2d253ba4609720ba82c6c4ce4627a9a6ae05387c78983ac03de"
+    },
+    {
+      "path": "model-00001-of-00003.safetensors",
+      "bytes": 5320218487,
+      "sha256": "683f420ee09550b8027bf0335c4202e196b37eb520b60a4bcbe8690b9e388c07"
+    },
+    {
+      "path": "model-00002-of-00003.safetensors",
+      "bytes": 5363328422,
+      "sha256": "feab2873c2976fb7ed666f8462549564a29409364388e0c8f6b015729d165e15"
+    },
+    {
+      "path": "model-00003-of-00003.safetensors",
+      "bytes": 4657658867,
+      "sha256": "bc607486deb1de5bc7e459932fda5c776a4f816b368feaa661bab8cfbb47e567"
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "bytes": 176940,
+      "sha256": "bf198c9f5ea6462addca1966e5dd669c407537a876e82cf06db9084c5c850b13"
+    },
+    {
+      "path": "processor_config.json",
+      "bytes": 1316,
+      "sha256": "de3e580aebdc98272d4c4547daffe6525fcbae18a83a0e0bcf0d7444d4ee6f37"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 32169626,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 2740,
+      "sha256": "080d9e1aff284e2f6043889cd05367966f7c7b80e025fbc0b06745e218158656"
+    }
+  ]
+}
