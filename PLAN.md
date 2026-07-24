@@ -127,6 +127,23 @@ Exit criteria:
 
 **Purpose:** validate the complete product path with the best Apple-local foundation selected by the Phase 0 bakeoff.
 
+### Current checkpoint
+
+The private Apple Speech crate now builds its repository-owned Swift C ABI as a
+static archive on macOS 26 arm64 and exposes a safe Rust-owned session
+lifecycle. The final binary uses Apple's system Swift runtime and needs no
+separate adapter library. Restricted process sandboxes expose an empty Speech
+locale inventory for both static and dynamic forms; the same static binary
+works with normal macOS system-service access.
+
+The first real product-adapter smoke streamed the pinned 10.56-second FLEURS
+PCM fixture through Rust, reproduced the spike's 27 volatile replacements plus
+one final update, and retained all 19 final time/confidence segments. A separate
+cancel path joined and destroyed the native session cleanly. These system
+service smokes must run outside restricted sandboxes; unit and callback
+contract tests remain hermetic. The next slice maps the adapter values into the
+public reducer/result types and exposes the Rust one-shot PCM path.
+
 Scope:
 
 - Selected model and runtime lifecycle with immutable model revision.

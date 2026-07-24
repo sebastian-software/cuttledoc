@@ -1,0 +1,6 @@
+# Statically linked Swift objects still load the macOS-provided Swift
+# concurrency runtime. Cargo does not propagate a dependency build script's
+# linker arguments to final binaries, so every Apple Silicon workspace
+# artifact needs the system Swift runtime search path.
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-rpath,/usr/lib/swift"]

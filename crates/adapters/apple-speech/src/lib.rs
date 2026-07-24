@@ -4,6 +4,13 @@
 //! implementation will remain owned here when the Phase 2 vertical slice is
 //! added.
 
+mod session;
+
+pub use session::{
+    AdapterError, AdapterErrorKind, NativeSegment, NativeStability, NativeTimeRange,
+    NativeTranscriptionUpdate, NativeUpdateKind, PushOutcome, SpeechSession,
+};
+
 pub const BACKEND_ID: &str = "apple-speech";
 pub const ABI_VERSION: u32 = 1;
 

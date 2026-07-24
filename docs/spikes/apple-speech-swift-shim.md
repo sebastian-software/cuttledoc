@@ -122,3 +122,30 @@ Clean-host cold start, relative energy, repeated-run variance, and a
 multi-language quality set remain for the broader #4 decision. Those omissions
 keep the benchmark record `partial`; they do not block the #11 boundary
 disposition.
+
+## Phase 2 productization update
+
+**Evidence date:** 2026-07-24.
+
+The first product adapter preserves the Swift C ABI behind a safe Rust session
+that owns callback memory, copies strings and segments immediately, validates
+finite PCM before the Swift Float-to-Int16 conversion, exposes bounded queue
+backpressure, and makes finish, cancel, and close explicit. The internal
+callback transport now uses primitive C fields rather than JSON, avoiding a
+JSON parser in the native boundary while preserving update semantics.
+
+The product adapter compiles the Swift module into a static archive, so the
+final CLI or Node artifact does not need a separate adapter library. The linked
+binary still uses the Swift concurrency runtime supplied by macOS and carries
+`/usr/lib/swift` as its runtime search path. This keeps the adapter a build-time
+ownership boundary rather than a user-visible plugin.
+
+The product Rust smoke reproduced all 28 FLEURS updates from the Phase 0
+record: 27 volatile full-range replacements followed by the same final text
+and 19 final word ranges/confidence values. A separate real cancellation run
+returned through cancel and destroy without hanging. Restricted process
+sandboxes exposed an empty Speech locale inventory for both the original
+dynamic spike and the statically linked product form; running the same static
+binary with normal macOS system-service access succeeded. Hermetic CI therefore
+checks build, link, ownership, and typed callback semantics, while the real
+Speech smoke is an explicit host-level gate.
