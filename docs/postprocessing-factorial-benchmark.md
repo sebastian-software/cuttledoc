@@ -782,3 +782,55 @@ The practical shortlist from this extension is therefore:
 Enhancement remains optional, the raw transcript remains authoritative
 fallback evidence, and neither candidate becomes an unconditional default from
 this synthetic development slice.
+
+### DeepSeek V4 Pro partial diagnostic
+
+DeepSeek V4 Pro was added as a bounded challenger on the identical frozen
+targets and prompt. The full precommitted run could not be completed on a
+single acceptable route: CoreWeave FP8 stopped after 49 valid requests through
+persistent explicit unbilled rate limits, Novita FP8 could not satisfy the
+required strict JSON schema, and DeepInfra FP4 stopped accepting new requests
+after 47 valid requests despite cooldown and request pacing. Provider outputs
+were never combined into a nominal full run.
+
+The resulting
+[partial diagnostic](../benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-partial-diagnostic.json)
+uses the 41 repeat-one targets captured by both Pro providers and scores the
+existing Flash and Sol outputs on exactly that intersection:
+
+| Candidate | Raw → post word errors | Relative reduction | Improved / regressed |
+| --- | ---: | ---: | ---: |
+| DeepSeek V4 Pro, CoreWeave FP8 | 412 → 317 | 23.1% | 21 / 3 |
+| DeepSeek V4 Pro, DeepInfra FP4 | 412 → 321 | 22.1% | 22 / 2 |
+| DeepSeek V4 Flash, Parasail FP8 | 412 → 326 | 20.9% | 24 / 3 |
+| GPT-5.6 Sol, Azure EU | 412 → 269 | 34.7% | 27 / 4 |
+
+V4 Pro is therefore a modest quality improvement over Flash on this paired
+slice, not a new quality tier. The two Pro providers produced different text
+on 16 of the 41 common targets, which keeps provider and quantization identity
+material. DeepInfra's three numeric regressions include one material French
+hallucination and two minor Spanish/Portuguese changes.
+
+The product shortlist does not change: Flash remains the primary value
+candidate and Sol the quality ceiling. Pro should be rerun only when one pinned
+structured-output ZDR route can finish both repeats reliably.
+
+## Larger local-model follow-up
+
+The completed local work rejects the tested 4-bit Qwen 3.5 0.8B, SmolLM3 3B,
+and Gemma 4 E2B configurations; it does not exhaust local MLX quality. The
+[upscale challenger plan](../benchmarks/postprocessing/local-llm-upscale-challenger-plan.json)
+therefore freezes three materially stronger candidates that fit individually
+on the 64 GiB Apple Silicon host:
+
+| Candidate | 4-bit snapshot | Model class |
+| --- | ---: | --- |
+| Gemma 4 26B A4B | 15.4 GB | sparse, 4B active |
+| Qwen 3.5 35B A3B | 20.4 GB | sparse, 3B active |
+| Qwen 3.5 27B | 16.1 GB | dense |
+
+They first receive one technical load and contract probe, then one frozen
+60-target repeat. Only quality survivors receive repeat two; only the best
+two-repeat survivor may receive a 4-bit versus 8-bit comparison. This tests the
+open model-capacity and quantization questions without reopening the rejected
+small-model prompt matrix.

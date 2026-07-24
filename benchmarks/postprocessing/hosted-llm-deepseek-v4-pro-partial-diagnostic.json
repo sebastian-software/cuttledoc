@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-deepseek-v4-pro-partial-diagnostic-1",
+  "plan": {
+    "path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-plan.json",
+    "sha256": "4e2af9e400b78c0e42b7d1432552351f8662998aea42de5f4196a1a56782fd39"
+  },
+  "screen": {
+    "path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-screen.json",
+    "sha256": "1ac09a816567d76cfaffc29011e0f94d1f460201d13e016922f0162ea7541a59"
+  },
+  "comparison_evidence": {
+    "path": "benchmarks/postprocessing/hosted-llm-pragmatic-extension-results.json",
+    "sha256": "466bffc8566b45d254783dcb302d9fec3f83e6c66ed889625a4d9febeee3cacd"
+  },
+  "captured_at": "2026-07-24T06:24:07.898Z",
+  "evidence_source_revision": "c961e37d5d4655923e33d8c0820272d840064a15",
+  "status": "operationally-partial-diagnostic",
+  "provider_attempts": [
+    {
+      "candidate": "deepseek-v4-pro-openrouter-coreweave-fp8",
+      "quantization": "fp8",
+      "completed_requests": 49,
+      "mechanically_accepted_requests": 49,
+      "invalid_requests": 0,
+      "macro_mean_raw_wer": 0.062290103038127355,
+      "macro_mean_post_wer": 0.047257071833798354,
+      "relative_wer_reduction": 0.24133900043683315,
+      "improved_targets": 25,
+      "regressed_targets": 4,
+      "correct_inputs_changed_to_error": 1,
+      "provider_reported_cost_usd": 0.19931068000000002,
+      "successful_response_429_deferrals": 7,
+      "disposition": "Operationally incomplete after repeated explicit unbilled HTTP 429 sequences persisted across a cooldown."
+    },
+    {
+      "candidate": "deepseek-v4-pro-openrouter-novita-fp8",
+      "quantization": "fp8",
+      "completed_requests": 0,
+      "mechanically_accepted_requests": 0,
+      "invalid_requests": 0,
+      "provider_reported_cost_usd": 0,
+      "disposition": "Rejected before inference: the endpoint could not satisfy the required strict JSON-schema parameters with require_parameters enabled."
+    },
+    {
+      "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
+      "quantization": "fp4",
+      "completed_requests": 47,
+      "mechanically_accepted_requests": 47,
+      "invalid_requests": 0,
+      "macro_mean_raw_wer": 0.06721977439994146,
+      "macro_mean_post_wer": 0.05201129895544851,
+      "relative_wer_reduction": 0.22625002211412062,
+      "improved_targets": 25,
+      "regressed_targets": 3,
+      "correct_inputs_changed_to_error": 0,
+      "provider_reported_cost_usd": 0.14465799999999998,
+      "successful_response_429_deferrals": 23,
+      "disposition": "Operationally incomplete after the endpoint stopped accepting new requests despite cooldown and request pacing."
+    }
+  ],
+  "common_target_comparison": {
+    "method": "Intersect the repeat-one document and target identities captured by both DeepSeek V4 Pro providers, then score the existing DeepSeek V4 Flash and GPT-5.6 Sol repeat-one outputs on exactly the same target identities. Aggregate word-error counts are micro totals over this fixed intersection.",
+    "targets": 41,
+    "raw_word_errors": 412,
+    "candidates": [
+      {
+        "candidate": "deepseek-v4-pro-openrouter-coreweave-fp8",
+        "postprocessed_word_errors": 317,
+        "relative_word_error_reduction": 0.23058252427184467,
+        "improved_targets": 21,
+        "regressed_targets": 3,
+        "correct_inputs_changed_to_error": 0
+      },
+      {
+        "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
+        "postprocessed_word_errors": 321,
+        "relative_word_error_reduction": 0.220873786407767,
+        "improved_targets": 22,
+        "regressed_targets": 2,
+        "correct_inputs_changed_to_error": 0
+      },
+      {
+        "candidate": "deepseek-v4-flash-openrouter-parasail-fp8",
+        "postprocessed_word_errors": 326,
+        "relative_word_error_reduction": 0.2087378640776699,
+        "improved_targets": 24,
+        "regressed_targets": 3,
+        "correct_inputs_changed_to_error": 0
+      },
+      {
+        "candidate": "gpt-5.6-sol-openrouter-azure-eu",
+        "postprocessed_word_errors": 269,
+        "relative_word_error_reduction": 0.3470873786407767,
+        "improved_targets": 27,
+        "regressed_targets": 4,
+        "correct_inputs_changed_to_error": 0
+      }
+    ],
+    "pro_provider_output_difference": {
+      "different_complete_outputs": 16,
+      "common_targets": 41
+    }
+  },
+  "semantic_review": {
+    "scope": "All three numerically regressed DeepInfra FP4 targets among the 47 captured requests.",
+    "post_hoc": true,
+    "summary": {
+      "material": 1,
+      "minor": 2,
+      "none": 0
+    },
+    "cases": [
+      {
+        "document_id": "document--es-419--voxtral-es-male--seed-0-repeat-1--parakeet-tdt-0.6b-v3-coreml",
+        "target_index": 2,
+        "locale": "es-419",
+        "severity": "minor",
+        "rationale": "The model repairs several obvious recognizer errors but changes a plural construction to singular and reconstructs one damaged commercial-audiobook phrase less faithfully than the reference."
+      },
+      {
+        "document_id": "document--fr-FR--apple-fr-b--repeat-1--parakeet-tdt-0.6b-v3-coreml",
+        "target_index": 5,
+        "locale": "fr-FR",
+        "severity": "material",
+        "rationale": "The model turns a severely garbled dialogue fragment into the unsupported statement “L’IA, qu’est-ce que c’est ?”, adding content absent from the source."
+      },
+      {
+        "document_id": "document--pt-BR--voxtral-pt-female--seed-1-repeat-1--whisper-large-v3-turbo-coreml-whispercpp",
+        "target_index": 5,
+        "locale": "pt-BR",
+        "severity": "minor",
+        "rationale": "The model mostly adds dialogue punctuation but moves an inferred discourse marker across the speaker attribution, slightly changing the dialogue structure."
+      }
+    ]
+  },
+  "decision": {
+    "product_shortlist_change": "none",
+    "rationale": "On the fair 41-target intersection, DeepSeek V4 Pro is only 1.2 to 2.2 percentage points better than DeepSeek V4 Flash in relative word-error reduction and remains far behind GPT-5.6 Sol. Its regression count is similar rather than decisively lower, and one selected-provider regression is materially hallucinatory.",
+    "hosted_disposition": "Retain DeepSeek V4 Flash as the primary value candidate and GPT-5.6 Sol as the quality ceiling. Re-run V4 Pro only when one pinned structured-output ZDR route can complete the frozen two-repeat contract reliably.",
+    "local_disposition": "The hosted V4 Pro result is not local evidence. Continue with the separately pinned larger local MLX screen."
+  },
+  "limitations": [
+    "Neither V4 Pro provider completed the precommitted 60-request first repeat, so this artifact is a paired partial diagnostic rather than a promotion decision.",
+    "The provider comparison also changes hosted quantization and serving implementation; it does not isolate model weights alone.",
+    "The common-target slice is selected synthetic development evidence and is too small for a robust claim that V4 Pro produces fewer regressions than V4 Flash.",
+    "The semantic review is post-hoc and covers only the selected DeepInfra FP4 regressions."
+  ]
+}
