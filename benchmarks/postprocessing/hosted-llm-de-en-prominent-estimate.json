@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-de-en-prominent-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-de-en-prominent-plan-1",
-  "plan_sha256": "285b953a78555099bd77a16967dc0bec4cd29e121f1a73329f6d616fb6c2b5db",
+  "plan_sha256": "576087979ea8698954343e604b803ccf183f25275489202f443229d929019b08",
   "screen_id": "postprocessing-factorial-hosted-de-en-prominent-1",
-  "screen_sha256": "c9525e9aea77c3859d40e11a98f43237ef2e2053d5c2eeb92b345898f634a5d4",
-  "captured_at": "2026-07-24T20:13:42.374Z",
+  "screen_sha256": "4826fe955b7584e524dee5536dc080314187ec71a230db5a5d9e9fe34d59f3c4",
+  "captured_at": "2026-07-24T20:18:08.954Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",
@@ -17,7 +17,7 @@
     "documents": 4,
     "targets_per_document": 6,
     "requests_per_candidate_per_repeat": 24,
-    "candidates": 4,
+    "candidates": 3,
     "maximum_repeats": 2
   },
   "rendered_inputs": {
@@ -46,9 +46,9 @@
       "recommended_runner_budget_per_repeat_usd": 0.55
     },
     {
-      "candidate": "claude-opus-5-openrouter-azure-us-east-2",
+      "candidate": "claude-opus-5-openrouter-bedrock",
       "requested_model": "anthropic/claude-opus-5",
-      "provider_slug": "azure/us-east-2",
+      "provider_slug": "amazon-bedrock",
       "pricing_snapshot_usd_per_token": {
         "prompt": "0.000005",
         "completion": "0.000025"
@@ -80,32 +80,14 @@
       "likely_cost_per_repeat_usd": 0.143652,
       "conservative_planning_envelope_per_repeat_usd": 0.690744,
       "recommended_runner_budget_per_repeat_usd": 0.7
-    },
-    {
-      "candidate": "mistral-medium-3.5-openrouter-mistral",
-      "requested_model": "mistralai/mistral-medium-3-5",
-      "provider_slug": "mistral",
-      "pricing_snapshot_usd_per_token": {
-        "prompt": "0.0000015",
-        "completion": "0.0000075"
-      },
-      "requests_per_repeat": 24,
-      "rendered_prompt_code_points_per_repeat": 197916,
-      "likely_input_tokens_per_repeat": 49479,
-      "maximum_configured_completion_tokens_per_repeat": 49152,
-      "likely_reasoning_tokens_per_request": 0,
-      "likely_output_tokens_per_repeat": 7449,
-      "likely_cost_per_repeat_usd": 0.130086,
-      "conservative_planning_envelope_per_repeat_usd": 0.665514,
-      "recommended_runner_budget_per_repeat_usd": 0.67
     }
   ],
   "aggregate": {
-    "likely_cost_repeat_1_all_candidates_usd": 1.2717483,
-    "conservative_planning_envelope_repeat_1_all_candidates_usd": 4.116748800000001,
-    "conservative_planning_envelope_two_repeats_all_candidates_usd": 8.233497600000002,
-    "recommended_runner_budget_repeat_1_all_candidates_usd": 4.140000000000001,
-    "recommended_runner_budget_two_repeats_all_candidates_usd": 8.280000000000001
+    "likely_cost_repeat_1_all_candidates_usd": 1.1416623000000001,
+    "conservative_planning_envelope_repeat_1_all_candidates_usd": 3.4512348000000004,
+    "conservative_planning_envelope_two_repeats_all_candidates_usd": 6.902469600000001,
+    "recommended_runner_budget_repeat_1_all_candidates_usd": 3.4700000000000006,
+    "recommended_runner_budget_two_repeats_all_candidates_usd": 6.940000000000001
   },
   "authorization_boundary": "The estimate does not authorize requests. The runner additionally requires an explicit per-invocation USD budget."
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "id": "claude-opus-5-openrouter-azure-us-east-2",
+  "id": "claude-opus-5-openrouter-bedrock",
   "task": "text-generation",
   "candidate_role": "frontier-quality-control",
   "model": {
@@ -15,33 +15,31 @@
     "weights": "proprietary",
     "license": "Hosted commercial service",
     "context_tokens": 1000000,
-    "identity_limit": "The model and serving implementation are proprietary; the dated Azure API identity is the strongest artifact boundary available to this probe."
+    "identity_limit": "The model and serving implementation are proprietary; the dated Amazon Bedrock API identity is the strongest artifact boundary available to this probe."
   },
   "gateway": {
     "name": "OpenRouter",
     "endpoint": "https://openrouter.ai/api/v1/chat/completions",
     "catalog_captured_at": "2026-07-24",
-    "provider_slug": "azure/us-east-2",
-    "provider_name": "Azure",
-    "endpoint_tag": "azure/us-east-2",
-    "endpoint_identity": "Azure US East 2 | anthropic/claude-opus-5-20260723",
+    "provider_slug": "amazon-bedrock",
+    "provider_name": "Amazon Bedrock",
+    "endpoint_tag": "amazon-bedrock",
+    "endpoint_identity": "Amazon Bedrock | anthropic/claude-opus-5-20260723",
     "supported_parameters": [
       "reasoning",
       "include_reasoning",
-      "structured_outputs",
       "max_tokens",
-      "temperature",
-      "max_completion_tokens",
+      "stop",
       "tools",
       "tool_choice",
       "response_format",
       "verbosity",
-      "stop",
+      "structured_outputs",
       "reasoning_effort"
     ],
     "request_policy": {
       "only": [
-        "azure/us-east-2"
+        "amazon-bedrock"
       ],
       "allow_fallbacks": false,
       "require_parameters": true,
@@ -55,7 +53,7 @@
     }
   },
   "request_defaults": {
-    "token_limit_field": "max_completion_tokens",
+    "token_limit_field": "max_tokens",
     "json_schema_numeric_bounds": false,
     "temperature": null,
     "seed": null,

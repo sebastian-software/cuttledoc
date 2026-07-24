@@ -6,7 +6,7 @@
   "screen_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-screen.json",
   "summary_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-results.json",
   "decision_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-decision.json",
-  "purpose": "Run a bounded German and English preflight for newly prominent hosted models before expanding any survivor to the full multilingual challenge.",
+  "purpose": "Run a bounded German and English preflight for newly prominent ZDR-capable hosted models before expanding any survivor to the full multilingual challenge.",
   "selection": {
     "disposition": "frozen-de-en-subset-of-challenging-development-slice",
     "languages": [
@@ -28,23 +28,29 @@
   },
   "candidates": [
     "gpt-5.6-luna-openrouter-azure-eu",
-    "claude-opus-5-openrouter-azure-us-east-2",
-    "grok-4.5-openrouter-xai-zdr",
-    "mistral-medium-3.5-openrouter-mistral"
+    "claude-opus-5-openrouter-bedrock",
+    "grok-4.5-openrouter-xai-zdr"
+  ],
+  "preflight_exclusions": [
+    {
+      "candidate": "mistral-medium-3.5-openrouter-mistral",
+      "reason": "No endpoint for this model appeared in OpenRouter's authenticated ZDR endpoint list.",
+      "record": "spikes/text-generation-openrouter-reference/blocked/mistral-medium-3.5-no-zdr.json"
+    }
   ],
   "stages": [
     {
       "id": "repeat-1",
       "repetition": 1,
-      "candidate_scope": "all-four",
-      "maximum_requests": 96,
+      "candidate_scope": "all-three",
+      "maximum_requests": 72,
       "decision": "Complete one 24-target pass per candidate unless the response contract becomes unreachable, a token limit is reached, or an accepted output exceeds the 30 percent normalized word-edit boundary."
     },
     {
       "id": "repeat-2",
       "repetition": 2,
       "candidate_scope": "repeat-1-survivors-only",
-      "maximum_requests": 96,
+      "maximum_requests": 72,
       "decision": "Repeat only a model that is competitive with Gemini 3.6 Flash overall or exposes a credible German- or English-specific advantage."
     }
   ],

@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "id": "mistral-medium-3.5-openrouter-no-zdr",
+  "captured_at": "2026-07-24",
+  "status": "blocked",
+  "requested_model": {
+    "id": "mistralai/mistral-medium-3-5",
+    "catalog_identity": "mistralai/mistral-medium-3.5-20260430",
+    "name": "Mistral: Mistral Medium 3.5",
+    "context_tokens": 262144
+  },
+  "available_endpoint": {
+    "provider_slug": "mistral",
+    "provider_name": "Mistral",
+    "tag": "mistral",
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "max_tokens",
+      "temperature",
+      "top_p",
+      "stop",
+      "frequency_penalty",
+      "presence_penalty",
+      "seed",
+      "response_format",
+      "structured_outputs",
+      "tools",
+      "tool_choice",
+      "reasoning_effort"
+    ]
+  },
+  "policy_check": {
+    "catalog_endpoint": "https://openrouter.ai/api/v1/models/mistralai/mistral-medium-3-5/endpoints",
+    "zdr_endpoint": "https://openrouter.ai/api/v1/endpoints/zdr",
+    "listed_as_zdr": false,
+    "current_runner_requires_zdr": true,
+    "data_collection_would_remain": "deny"
+  },
+  "blocker": "The first-party Mistral endpoint is absent from OpenRouter's authenticated dynamic ZDR endpoint list. The repository will not silently weaken the established per-request ZDR requirement for this quick screen.",
+  "unblock_condition": "Reconsider only if the endpoint becomes ZDR-capable or the repository owner explicitly authorizes a new, separately bounded exception for public synthetic benchmark data."
+}
