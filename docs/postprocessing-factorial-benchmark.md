@@ -845,37 +845,68 @@ Enhancement remains optional, the raw transcript remains authoritative
 fallback evidence, and neither candidate becomes an unconditional default from
 this synthetic development slice.
 
-### DeepSeek V4 Pro partial diagnostic
+### DeepSeek V4 Pro completion
 
 DeepSeek V4 Pro was added as a bounded challenger on the identical frozen
-targets and prompt. The full precommitted run could not be completed on a
-single acceptable route: CoreWeave FP8 stopped after 49 valid requests through
+targets and prompt. CoreWeave FP8 first stopped after 49 valid requests through
 persistent explicit unbilled rate limits, Novita FP8 could not satisfy the
-required strict JSON schema, and DeepInfra FP4 stopped accepting new requests
-after 47 valid requests despite cooldown and request pacing. Provider outputs
-were never combined into a nominal full run.
+required strict JSON schema, and DeepInfra FP4 initially paused after 47 valid
+requests. A later resumable invocation completed the remaining 13 DeepInfra
+requests without mixing provider outputs.
 
-The resulting
-[partial diagnostic](../benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-partial-diagnostic.json)
-uses the 41 repeat-one targets captured by both Pro providers and scores the
-existing Flash and Sol outputs on exactly that intersection:
+The completed
+[report](../benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-results.json)
+and [decision](../benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-decision.json)
+contain 60/60 valid repeat-one responses. DeepInfra V4 Pro reduces aggregate
+macro WER from 6.56% to 5.10%, a 22.2% relative reduction, with 33 improved and
+4 regressed sections at `$0.183120`. Its language reductions are 26.1% DE,
+2.0% EN, 12.6% ES, 22.1% FR, and 29.9% PT. The basic pragmatic gate passes,
+but the later DE/EN control comparison does not authorize repeat two.
 
-| Candidate | Raw → post word errors | Relative reduction | Improved / regressed |
-| --- | ---: | ---: | ---: |
-| DeepSeek V4 Pro, CoreWeave FP8 | 412 → 317 | 23.1% | 21 / 3 |
-| DeepSeek V4 Pro, DeepInfra FP4 | 412 → 321 | 22.1% | 22 / 2 |
-| DeepSeek V4 Flash, Parasail FP8 | 412 → 326 | 20.9% | 24 / 3 |
-| GPT-5.6 Sol, Azure EU | 412 → 269 | 34.7% | 27 / 4 |
+The original
+[paired partial diagnostic](../benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-partial-diagnostic.json)
+remains useful provider evidence: CoreWeave and DeepInfra produced different
+text on 16 of 41 shared targets, so provider and quantization identity remain
+material.
 
-V4 Pro is therefore a modest quality improvement over Flash on this paired
-slice, not a new quality tier. The two Pro providers produced different text
-on 16 of the 41 common targets, which keeps provider and quantization identity
-material. DeepInfra's three numeric regressions include one material French
-hallucination and two minor Spanish/Portuguese changes.
+### Prominent hosted-model DE/EN check
 
-The product shortlist does not change: Flash remains the primary value
-candidate and Sol the quality ceiling. Pro should be rerun only when one pinned
-structured-output ZDR route can finish both repeats reliably.
+The quick
+[plan](../benchmarks/postprocessing/hosted-llm-de-en-prominent-plan.json)
+reuses the two German and two English documents from the frozen challenge.
+Each candidate receives the unchanged target-complete prompt for 24
+single-section requests. Gemini 3.6 Flash repeat one is the existing control;
+DeepSeek V4 Pro is sliced from its completed run. This avoids paying to rerun
+identical model, prompt, and document tuples.
+
+| Candidate | Post WER | Relative reduction | DE reduction | EN reduction | Improved / regressed | Correct-input regressions | Compared cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Gemini 3.6 Flash | 5.80% | 32.9% | 37.7% | 13.0% | 15 / 0 | 0 | `$0.188804` |
+| Grok 4.5 | 6.14% | 28.9% | 33.6% | 9.9% | 15 / 2 | 0 | `$0.192481` |
+| Claude Opus 5 | 6.58% | 23.8% | 27.2% | 10.0% | 15 / 1 | 1 | `$0.705970` |
+| DeepSeek V4 Pro | 6.79% | 21.4% | 26.1% | 2.0% | 15 / 1 | 1 | `$0.068487` |
+| GPT-5.6 Luna | 7.03% | 18.7% | 20.4% | 11.6% | 12 / 6 | 1 | `$0.078428` |
+
+All four challengers pass the coarse expected-utility gate, but none beats
+Gemini overall, in German, or in English. Gemini also has the narrowest
+numeric regression surface. The machine-readable
+[comparison](../benchmarks/postprocessing/hosted-llm-de-en-prominent-comparison.json)
+therefore authorizes no repeat-two candidate and adds no model to the product
+shortlist. Grok is the best new challenger, but costs slightly more than Gemini
+on these requests and has no language-specific quality advantage.
+
+The route preflight also matters operationally. Mistral Medium 3.5 has no
+OpenRouter ZDR endpoint and was excluded before inference. Opus 5 is ZDR via
+Amazon Bedrock, but that route rejects strict JSON-schema translation and
+requires JSON-object transport with exact local shape validation. Grok's xAI
+ZDR route requires at least low reasoning effort. The three completed new
+candidate runs cost `$0.976879`; finishing the prior DeepSeek run added
+`$0.038462`. Failed pre-inference route checks were unbilled.
+
+This quick decision does not replace the five-language hosted evidence or
+held-out human professional-audio validation. It answers the narrower question:
+none of these prominent additions justifies more benchmark spend for the
+current German/English transcript-correction shortlist.
 
 ## Larger local-model follow-up
 

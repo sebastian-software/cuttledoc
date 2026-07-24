@@ -1,0 +1,200 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-de-en-prominent-comparison-1",
+  "captured_at": "2026-07-24T20:36:58Z",
+  "status": "complete",
+  "scope": {
+    "locales": [
+      "de-DE",
+      "en-US"
+    ],
+    "documents_per_locale": 2,
+    "sections_per_document": 6,
+    "observations_per_candidate": 24,
+    "repetition": 1,
+    "raw_macro_wer": 0.0864301212506305,
+    "comparison_rule": "Use only repetition-one observations from the identical frozen documents, section targets, prompt, and locally derived WER calculation."
+  },
+  "sources": [
+    {
+      "role": "new-prominent-candidates",
+      "path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-results.json",
+      "sha256": "7ff8c5619e2950e6a82e33e7d8a7de9cf798168e43a33f798aa97cabf7ae6326"
+    },
+    {
+      "role": "deepseek-v4-pro-completed-challenger",
+      "path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-results.json",
+      "sha256": "2489fa5d97ac1573f6eefcabaaaa0353cf8678ce6cbad58fb48bff538ba61770"
+    },
+    {
+      "role": "gemini-control",
+      "path": "benchmarks/postprocessing/hosted-llm-target-complete-results.json",
+      "sha256": "6c01d3edee7f788e49ebc4b28bc721266857bc29e728c53e9f19d8899215861b"
+    }
+  ],
+  "candidates": [
+    {
+      "candidate": "gemini-3.6-flash-openrouter-google-vertex-global",
+      "role": "existing-control",
+      "post_macro_wer": 0.05802828390295898,
+      "relative_error_change": -0.3286104073059406,
+      "improved_sections": 15,
+      "regressed_sections": 0,
+      "changed_correct_input_to_error": 0,
+      "cost_usd_for_compared_requests": 0.18880350000000007,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.08667673140842495,
+          "relative_error_change": -0.3769095542160691,
+          "improved_sections": 12,
+          "regressed_sections": 0
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.029379836397492975,
+          "relative_error_change": -0.12954972554099975,
+          "improved_sections": 3,
+          "regressed_sections": 0
+        }
+      ],
+      "disposition": "retain-primary-control"
+    },
+    {
+      "candidate": "grok-4.5-openrouter-xai-zdr",
+      "role": "best-new-challenger",
+      "post_macro_wer": 0.061414973597754906,
+      "relative_error_change": -0.2894262705051234,
+      "improved_sections": 15,
+      "regressed_sections": 2,
+      "changed_correct_input_to_error": 0,
+      "cost_usd_for_compared_requests": 0.19248079999999998,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.09242917356694823,
+          "relative_error_change": -0.3355571440517865,
+          "improved_sections": 11,
+          "regressed_sections": 0
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.030400773628561546,
+          "relative_error_change": -0.09930193651434334,
+          "improved_sections": 4,
+          "regressed_sections": 2
+        }
+      ],
+      "disposition": "stop-after-repeat-1"
+    },
+    {
+      "candidate": "claude-opus-5-openrouter-bedrock",
+      "role": "frontier-quality-control",
+      "post_macro_wer": 0.06581741582413202,
+      "relative_error_change": -0.2384898358145959,
+      "improved_sections": 15,
+      "regressed_sections": 1,
+      "changed_correct_input_to_error": 1,
+      "cost_usd_for_compared_requests": 0.70597,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.10126880195688542,
+          "relative_error_change": -0.27201196987929926,
+          "improved_sections": 12,
+          "regressed_sections": 0
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.030366029691378582,
+          "relative_error_change": -0.10033131153357515,
+          "improved_sections": 3,
+          "regressed_sections": 1
+        }
+      ],
+      "disposition": "stop-after-repeat-1"
+    },
+    {
+      "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
+      "role": "open-weight-hosted-challenger",
+      "post_macro_wer": 0.06794456068266375,
+      "relative_error_change": -0.21387868373298047,
+      "improved_sections": 15,
+      "regressed_sections": 1,
+      "changed_correct_input_to_error": 1,
+      "cost_usd_for_compared_requests": 0.06848680000000001,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.10280147516246368,
+          "relative_error_change": -0.26099408750894465,
+          "improved_sections": 12,
+          "regressed_sections": 0
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.03308764620286376,
+          "relative_error_change": -0.019696695079530778,
+          "improved_sections": 3,
+          "regressed_sections": 1
+        }
+      ],
+      "disposition": "stop-after-repeat-1"
+    },
+    {
+      "candidate": "gpt-5.6-luna-openrouter-azure-eu",
+      "role": "frontier-quality-control",
+      "post_macro_wer": 0.07029860025338354,
+      "relative_error_change": -0.18664235065074936,
+      "improved_sections": 12,
+      "regressed_sections": 6,
+      "changed_correct_input_to_error": 1,
+      "cost_usd_for_compared_requests": 0.0784278,
+      "locale_quality": [
+        {
+          "locale": "de-DE",
+          "post_macro_wer": 0.1107737107575532,
+          "relative_error_change": -0.2036843141692913,
+          "improved_sections": 9,
+          "regressed_sections": 3
+        },
+        {
+          "locale": "en-US",
+          "post_macro_wer": 0.029823489749213877,
+          "relative_error_change": -0.1164053983723479,
+          "improved_sections": 3,
+          "regressed_sections": 3
+        }
+      ],
+      "disposition": "stop-after-repeat-1"
+    }
+  ],
+  "operational_findings": [
+    {
+      "candidate": "mistral-medium-3.5-openrouter-mistral",
+      "finding": "Excluded before inference because OpenRouter's authenticated endpoint list exposed no ZDR route.",
+      "record": "spikes/text-generation-openrouter-reference/blocked/mistral-medium-3.5-no-zdr.json"
+    },
+    {
+      "candidate": "claude-opus-5-openrouter-bedrock",
+      "finding": "The ZDR route rejects strict JSON-schema translation and required JSON-object transport plus exact local shape validation."
+    },
+    {
+      "candidate": "grok-4.5-openrouter-xai-zdr",
+      "finding": "The ZDR route requires at least low reasoning effort; hidden reasoning is therefore part of this tuple's cost and latency."
+    }
+  ],
+  "cost": {
+    "new_three_candidate_repeat_1_usd": 0.9768786,
+    "deepseek_v4_pro_completion_increment_usd": 0.0384618,
+    "new_spend_for_this_comparison_usd": 1.0153404,
+    "failed_pre_inference_route_checks_usd": 0
+  },
+  "decision": {
+    "repeat_2_candidates": [],
+    "winner": "gemini-3.6-flash-openrouter-google-vertex-global",
+    "rationale": "Every new challenger passed the basic expected-utility gate, but Gemini retained the lowest overall, German, and English postprocessed macro WER, had no numeric regressions, and was not more expensive than the closest challenger Grok on the compared requests. A second repeat would not satisfy the precommitted requirement that a challenger be competitive overall or expose a language-specific advantage.",
+    "product_effect": "Do not add Luna, Opus, Grok, or DeepSeek V4 Pro to the hosted product shortlist from this screen. Keep the existing Gemini control and prior broader hosted evidence; raw transcripts remain available and enhancement remains optional."
+  },
+  "claim_limit": "This fast screen eliminates candidates that fail to improve on the existing control for German and English synthetic professional-style audio. It does not estimate release quality, replace the five-language evidence, or establish behavior on held-out human podcast and audiobook recordings."
+}

@@ -1,0 +1,166 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1-decision-1",
+  "plan_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1",
+  "plan_sha256": "4e2af9e400b78c0e42b7d1432552351f8662998aea42de5f4196a1a56782fd39",
+  "screen_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-1",
+  "summary_path": "benchmarks/postprocessing/hosted-llm-deepseek-v4-pro-challenger-results.json",
+  "summary_sha256": "2489fa5d97ac1573f6eefcabaaaa0353cf8678ce6cbad58fb48bff538ba61770",
+  "captured_at": "2026-07-24T20:34:56.659Z",
+  "status": "repeat-2-in-progress",
+  "candidates": [
+    {
+      "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
+      "disposition": "advance-to-repeat-2",
+      "rationale": "Repeat 1 passed every precommitted gate.",
+      "repeats": [
+        {
+          "repetition": 1,
+          "completed_requests": 60,
+          "mechanically_accepted_requests": 60,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 1,
+          "improved_sections": 33,
+          "regressed_sections": 4,
+          "macro_mean_raw_wer": 0.06557435980978964,
+          "macro_mean_strict_or_raw_wer": 0.05103811756582362,
+          "relative_error_change": -0.2216757019989373,
+          "locale_quality": [
+            {
+              "locale": "de-DE",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.13910778442345406,
+              "macro_mean_strict_or_raw_wer": 0.10280147516246368,
+              "relative_error_change": -0.26099408750894465,
+              "regressed": false
+            },
+            {
+              "locale": "en-US",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.03375245807780697,
+              "macro_mean_strict_or_raw_wer": 0.03308764620286376,
+              "relative_error_change": -0.019696695079530778,
+              "regressed": false
+            },
+            {
+              "locale": "es-419",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.039326762762187745,
+              "macro_mean_strict_or_raw_wer": 0.03437588269380731,
+              "relative_error_change": -0.1258908621164378,
+              "regressed": false
+            },
+            {
+              "locale": "fr-FR",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.04857978699475532,
+              "macro_mean_strict_or_raw_wer": 0.03786538280164371,
+              "relative_error_change": -0.220552720708066,
+              "regressed": false
+            },
+            {
+              "locale": "pt-BR",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.06710500679074409,
+              "macro_mean_strict_or_raw_wer": 0.04706020096833957,
+              "relative_error_change": -0.2987080514708976,
+              "regressed": false
+            }
+          ]
+        },
+        {
+          "repetition": 2,
+          "completed_requests": 0,
+          "mechanically_accepted_requests": 0,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 0,
+          "improved_sections": 0,
+          "regressed_sections": 0,
+          "macro_mean_raw_wer": null,
+          "macro_mean_strict_or_raw_wer": null,
+          "relative_error_change": null,
+          "locale_quality": []
+        }
+      ],
+      "combined": {
+        "completed_requests": 60,
+        "mechanically_accepted_requests": 60,
+        "invalid_requests": 0,
+        "token_limit_failures": 0,
+        "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+        "locale_macro_wer_regressions": 0,
+        "changed_correct_input_to_error": 1,
+        "improved_sections": 33,
+        "regressed_sections": 4,
+        "macro_mean_raw_wer": 0.06557435980978964,
+        "macro_mean_strict_or_raw_wer": 0.05103811756582362,
+        "relative_error_change": -0.2216757019989373,
+        "locale_quality": [
+          {
+            "locale": "de-DE",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.13910778442345406,
+            "macro_mean_strict_or_raw_wer": 0.10280147516246368,
+            "relative_error_change": -0.26099408750894465,
+            "regressed": false
+          },
+          {
+            "locale": "en-US",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.03375245807780697,
+            "macro_mean_strict_or_raw_wer": 0.03308764620286376,
+            "relative_error_change": -0.019696695079530778,
+            "regressed": false
+          },
+          {
+            "locale": "es-419",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.039326762762187745,
+            "macro_mean_strict_or_raw_wer": 0.03437588269380731,
+            "relative_error_change": -0.1258908621164378,
+            "regressed": false
+          },
+          {
+            "locale": "fr-FR",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.04857978699475532,
+            "macro_mean_strict_or_raw_wer": 0.03786538280164371,
+            "relative_error_change": -0.220552720708066,
+            "regressed": false
+          },
+          {
+            "locale": "pt-BR",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.06710500679074409,
+            "macro_mean_strict_or_raw_wer": 0.04706020096833957,
+            "relative_error_change": -0.2987080514708976,
+            "regressed": false
+          }
+        ]
+      },
+      "repeat_stability": {
+        "complete_pairs": 0,
+        "byte_identical_raw_output_pairs": 0,
+        "non_identical_raw_output_pairs": 0,
+        "requirement": "observation-only-for-remote-services"
+      },
+      "observed": {
+        "total_cost_usd": 0.18311980000000005,
+        "served_models": [
+          "deepseek/deepseek-v4-pro"
+        ],
+        "served_providers": [
+          "DeepInfra"
+        ],
+        "explicit_unbilled_429_deferrals": 23
+      }
+    }
+  ],
+  "decision_boundary": "A promoted development survivor may enter the broader factorial or held-out evaluation; it is not a product-quality selection."
+}
