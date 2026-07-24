@@ -146,6 +146,10 @@ async function validateContract(screen, plan, ledger) {
     screen.expected_counts.target_model_pairs !== targetModelPairs ||
     screen.expected_counts.requests !== requestCount ||
     screen.expected_counts.section_outputs !== requestCount ||
+    !Number.isInteger(
+      screen.execution_policy.minimum_delay_between_requests_ms ?? 0,
+    ) ||
+    (screen.execution_policy.minimum_delay_between_requests_ms ?? 0) < 0 ||
     JSON.stringify(plan.candidates) !==
       JSON.stringify(screen.candidates.map((candidate) => candidate.id))
   ) {
@@ -571,6 +575,11 @@ async function runStage() {
         `parser=${parsed.valid ? 'ok' : 'invalid'} ` +
         `cost=$${formatUsd(response.costUsd ?? response.estimatedCostUsd)}\n`,
       );
+      const minimumDelay =
+        screen.execution_policy.minimum_delay_between_requests_ms ?? 0;
+      if (minimumDelay > 0) {
+        await delay(minimumDelay);
+      }
     }
   }
   process.stdout.write(

@@ -4,8 +4,8 @@
   "plan_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1",
   "plan_sha256": "4e2af9e400b78c0e42b7d1432552351f8662998aea42de5f4196a1a56782fd39",
   "screen_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-1",
-  "screen_sha256": "380db54630428a31b0b64b34acd0986185c7b65a558d0b9b2e8ce2db68389781",
-  "captured_at": "2026-07-24T06:19:11.149Z",
+  "screen_sha256": "1ac09a816567d76cfaffc29011e0f94d1f460201d13e016922f0162ea7541a59",
+  "captured_at": "2026-07-24T06:25:18.756Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",

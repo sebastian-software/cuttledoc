@@ -91,7 +91,8 @@
     "data_collection": "deny",
     "zdr_required": true,
     "automatic_paid_or_ambiguous_request_retry": false,
-    "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5
+    "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
+    "minimum_delay_between_requests_ms": 10000
   },
   "operational_note": "The initially pinned CoreWeave FP8 route produced 49 mechanically valid diagnostic responses, then remained rate-limited across a cooldown despite reporting healthy status. Novita FP8 rejected the required strict JSON schema before inference. Those attempts are retained as operational diagnostics and are not mixed with the complete DeepInfra FP4 challenger.",
   "claim_limit": "The direct comparison is valid only against candidates run on the same frozen documents and prompt. This selected synthetic development slice cannot estimate release quality or replace held-out professional-audio evidence."
