@@ -86,7 +86,7 @@
       "conversion": {
         "repository": "mlx-community/Qwen3.5-27B-4bit",
         "revision": "45797d2985a12c55e6473686e9ea91b95e959553",
-        "snapshot_bytes": 16081494361,
+        "snapshot_bytes": 16081492155,
         "quantization_bits": 4
       }
     }
