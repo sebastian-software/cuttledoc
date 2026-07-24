@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "id": "claude-opus-5-openrouter-azure-us-east-2",
+  "task": "text-generation",
+  "candidate_role": "frontier-quality-control",
+  "model": {
+    "requested_id": "anthropic/claude-opus-5",
+    "allowed_response_ids": [
+      "anthropic/claude-opus-5",
+      "anthropic/claude-opus-5-20260723"
+    ],
+    "upstream_identity": "Anthropic Claude Opus 5",
+    "provider_model_identity": "anthropic/claude-opus-5-20260723",
+    "release": "2026-07-23",
+    "weights": "proprietary",
+    "license": "Hosted commercial service",
+    "context_tokens": 1000000,
+    "identity_limit": "The model and serving implementation are proprietary; the dated Azure API identity is the strongest artifact boundary available to this probe."
+  },
+  "gateway": {
+    "name": "OpenRouter",
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "catalog_captured_at": "2026-07-24",
+    "provider_slug": "azure/us-east-2",
+    "provider_name": "Azure",
+    "endpoint_tag": "azure/us-east-2",
+    "endpoint_identity": "Azure US East 2 | anthropic/claude-opus-5-20260723",
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "structured_outputs",
+      "max_tokens",
+      "temperature",
+      "max_completion_tokens",
+      "tools",
+      "tool_choice",
+      "response_format",
+      "verbosity",
+      "stop",
+      "reasoning_effort"
+    ],
+    "request_policy": {
+      "only": [
+        "azure/us-east-2"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true,
+      "data_collection": "deny",
+      "zdr": true
+    },
+    "pricing_snapshot_usd_per_token": {
+      "prompt": "0.000005",
+      "completion": "0.000025",
+      "input_cache_read": "0.0000005"
+    }
+  },
+  "request_defaults": {
+    "token_limit_field": "max_completion_tokens",
+    "json_schema_numeric_bounds": false,
+    "temperature": null,
+    "seed": null,
+    "reasoning": {
+      "effort": "low",
+      "exclude": true
+    },
+    "response_format": {
+      "type": "json_schema",
+      "schema_id": "bounded-transcript-correction-v1",
+      "strict": true
+    }
+  },
+  "claim_limit": "Remote frontier quality control only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default."
+}

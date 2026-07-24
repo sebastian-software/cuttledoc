@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-de-en-prominent-plan-1",
+  "plan_id": "postprocessing-factorial-primary-languages-v1",
+  "plan_revision": "postprocessing-factorial-plan-6",
+  "screen_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-screen.json",
+  "summary_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-results.json",
+  "decision_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-decision.json",
+  "purpose": "Run a bounded German and English preflight for newly prominent hosted models before expanding any survivor to the full multilingual challenge.",
+  "selection": {
+    "disposition": "frozen-de-en-subset-of-challenging-development-slice",
+    "languages": [
+      "de-DE",
+      "en-US"
+    ],
+    "documents_per_language": 2,
+    "documents": 4,
+    "target_sections_per_document": 6,
+    "target_sections": 24,
+    "source_plan": {
+      "path": "benchmarks/postprocessing/local-llm-gemma-target-ab-plan.json",
+      "sha256": "a8c7c4a2b034456316ceac71bc25bc3159ce5bc8c5ad754f06ad17e06e9cc8a8"
+    },
+    "source_decision": {
+      "path": "benchmarks/postprocessing/local-llm-gemma-target-ab-results.json",
+      "sha256": "43bbf7eee3119a8572c63a9e9ee93f161e39678b1a7cb30bf3a081c017e42bae"
+    }
+  },
+  "candidates": [
+    "gpt-5.6-luna-openrouter-azure-eu",
+    "claude-opus-5-openrouter-azure-us-east-2",
+    "grok-4.5-openrouter-xai-zdr",
+    "mistral-medium-3.5-openrouter-mistral"
+  ],
+  "stages": [
+    {
+      "id": "repeat-1",
+      "repetition": 1,
+      "candidate_scope": "all-four",
+      "maximum_requests": 96,
+      "decision": "Complete one 24-target pass per candidate unless the response contract becomes unreachable, a token limit is reached, or an accepted output exceeds the 30 percent normalized word-edit boundary."
+    },
+    {
+      "id": "repeat-2",
+      "repetition": 2,
+      "candidate_scope": "repeat-1-survivors-only",
+      "maximum_requests": 96,
+      "decision": "Repeat only a model that is competitive with Gemini 3.6 Flash overall or exposes a credible German- or English-specific advantage."
+    }
+  ],
+  "evaluation_policy": {
+    "mode": "pragmatic-expected-utility",
+    "minimum_overall_relative_wer_reduction": 0.05,
+    "correct_input_regressions": "record-and-semantic-review",
+    "locale_macro_wer_regressions": "report-separately-without-global-rejection",
+    "semantic_review_required_before_product_shortlist": true,
+    "comparison_controls": [
+      "gemini-3.6-flash-openrouter-google-vertex-global",
+      "deepseek-v4-pro-openrouter-deepinfra-fp4"
+    ],
+    "rationale": "The raw transcript remains available and enhancement is optional. A fast screen should identify credible challengers without paying to repeat models that trail the existing control in both target languages."
+  },
+  "first_repeat_gates": {
+    "completed_requests_required": 24,
+    "mechanically_accepted_requests_minimum": 23,
+    "token_limit_failures_maximum": 0,
+    "accepted_sections_above_30_percent_input_output_word_edit_rate_maximum": 0,
+    "section_regressions_must_not_exceed_improvements": true,
+    "overall_relative_error_change_maximum": -0.05
+  },
+  "two_repeat_gates": {
+    "completed_requests_required": 48,
+    "mechanically_accepted_requests_minimum": 46,
+    "token_limit_failures_maximum": 0,
+    "accepted_sections_above_30_percent_input_output_word_edit_rate_maximum": 0,
+    "section_regressions_must_not_exceed_improvements": true,
+    "overall_relative_error_change_maximum": -0.05,
+    "repeat_equality": "observation-only-for-remote-services"
+  },
+  "irreversible_early_stop": {
+    "mechanical": "Stop once accepted requests plus every remaining request in the active gate cannot reach its minimum.",
+    "token_limit": "Stop after the first token-limit failure.",
+    "gross_edit": "Stop after the first mechanically accepted target above the 30 percent normalized word-edit boundary.",
+    "correct_input_regression": "Record and continue; inspect severity after the full repeat."
+  },
+  "routing_policy": {
+    "provider_pinned": true,
+    "provider_fallback": false,
+    "require_parameters": true,
+    "data_collection": "deny",
+    "zdr_required": true,
+    "non_zdr_exception_required": false
+  },
+  "cost_policy": {
+    "currency": "USD",
+    "estimate_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-estimate.json",
+    "estimate_required_before_execution": true,
+    "runner_budget_required": true,
+    "automatic_paid_or_ambiguous_request_retry": false,
+    "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
+    "maximum_configured_completion_tokens_per_request": 2048,
+    "conservative_input_accounting": "Count each rendered Unicode code point as one input token for the hard planning envelope; this deliberately overstates normal tokenizer usage."
+  },
+  "decision_rule": "Run repeat two only for a candidate that passes the basic quality and safety gates and is competitive with the frozen Gemini 3.6 Flash German/English control overall or in at least one target language. Expand to all five languages only after repeat stability establishes a credible advantage.",
+  "claim_limit": "This is a selected synthetic German and English development challenge. It can eliminate weak candidates quickly but cannot establish a multilingual product default."
+}

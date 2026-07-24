@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "id": "grok-4.5-openrouter-xai-zdr",
+  "task": "text-generation",
+  "candidate_role": "prominent-hosted-challenger",
+  "model": {
+    "requested_id": "x-ai/grok-4.5",
+    "allowed_response_ids": [
+      "x-ai/grok-4.5",
+      "x-ai/grok-4.5-20260708"
+    ],
+    "upstream_identity": "xAI Grok 4.5",
+    "provider_model_identity": "x-ai/grok-4.5-20260708",
+    "release": "2026-07-08",
+    "weights": "proprietary",
+    "license": "Hosted commercial service",
+    "context_tokens": 500000,
+    "identity_limit": "The model and serving implementation are proprietary; the dated xAI API identity and dedicated ZDR route are the strongest artifact boundary available to this probe."
+  },
+  "gateway": {
+    "name": "OpenRouter",
+    "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "catalog_captured_at": "2026-07-24",
+    "provider_slug": "xai/zdr",
+    "provider_name": "xAI",
+    "endpoint_tag": "xai/zdr",
+    "endpoint_identity": "xAI ZDR | x-ai/grok-4.5-20260708",
+    "supported_parameters": [
+      "reasoning",
+      "include_reasoning",
+      "structured_outputs",
+      "response_format",
+      "max_tokens",
+      "temperature",
+      "top_p",
+      "seed",
+      "logprobs",
+      "top_logprobs",
+      "stop",
+      "frequency_penalty",
+      "presence_penalty",
+      "tools",
+      "tool_choice",
+      "reasoning_effort"
+    ],
+    "request_policy": {
+      "only": [
+        "xai/zdr"
+      ],
+      "allow_fallbacks": false,
+      "require_parameters": true,
+      "data_collection": "deny",
+      "zdr": true
+    },
+    "pricing_snapshot_usd_per_token": {
+      "prompt": "0.000002",
+      "completion": "0.000006",
+      "input_cache_read": "0.0000003"
+    }
+  },
+  "request_defaults": {
+    "token_limit_field": "max_tokens",
+    "json_schema_numeric_bounds": true,
+    "temperature": 0,
+    "seed": 0,
+    "reasoning": {
+      "effort": "none",
+      "exclude": true
+    },
+    "response_format": {
+      "type": "json_schema",
+      "schema_id": "bounded-transcript-correction-v1",
+      "strict": true
+    }
+  },
+  "claim_limit": "Remote prominent-model challenger only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default."
+}

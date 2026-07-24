@@ -131,10 +131,11 @@ async function validateContract(screen, plan, ledger) {
     plan.plan_revision !== screen.plan_revision ||
     plan.screen_path !== repositoryPath(paths.screen) ||
     screen.scope.request_mode !== 'single-target-section' ||
-    screen.scope.document_count !== 10 ||
+    !Number.isInteger(screen.scope.document_count) ||
+    screen.scope.document_count < 1 ||
     screen.scope.sections_per_document !== 6 ||
-    screen.scope.document_ids.length !== 10 ||
-    new Set(screen.scope.document_ids).size !== 10 ||
+    screen.scope.document_ids.length !== screen.scope.document_count ||
+    new Set(screen.scope.document_ids).size !== screen.scope.document_count ||
     candidateCount < 1 ||
     new Set(screen.candidates.map((candidate) => candidate.id)).size !==
       candidateCount ||
@@ -178,17 +179,29 @@ async function validateContract(screen, plan, ledger) {
     ),
     'utf8',
   ));
-  if (
-    JSON.stringify(screen.scope.document_ids) !==
-      JSON.stringify(sourceScreen.scope.document_ids)
-  ) {
-    throw new Error('hosted challenge selection differs from frozen Gemma slice');
+  const sourceDocumentIds = new Set(sourceScreen.scope.document_ids);
+  if (screen.scope.document_ids.some((id) => !sourceDocumentIds.has(id))) {
+    throw new Error(
+      'hosted challenge selection is not a subset of the frozen Gemma slice',
+    );
   }
   const ledgerDocuments = new Map(
     ledger.llm_documents.map((document) => [document.id, document]),
   );
   if (screen.scope.document_ids.some((id) => !ledgerDocuments.has(id))) {
     throw new Error('hosted challenge document is absent from the factorial ledger');
+  }
+  const selectedLocales = [...new Set(screen.scope.document_ids.map((id) =>
+    ledgerDocuments.get(id).locale))].sort();
+  if (
+    JSON.stringify([...(plan.selection.languages ?? [])].sort()) !==
+      JSON.stringify(selectedLocales) ||
+    plan.selection.documents !== screen.scope.document_count ||
+    plan.selection.target_sections_per_document !==
+      screen.scope.sections_per_document ||
+    plan.selection.target_sections !== targetCount
+  ) {
+    throw new Error('hosted plan selection differs from the frozen screen subset');
   }
   for (const candidate of screen.candidates) {
     const manifestBytes = await readFile(join(
@@ -1597,6 +1610,10 @@ async function selfTest() {
   const { screen, plan, screenBytes, planBytes } = await loadContract();
   const requestsPerRepeat =
     screen.scope.document_count * screen.scope.sections_per_document;
+  const completedRequests =
+    plan.first_repeat_gates.completed_requests_required;
+  const acceptedRequests =
+    plan.first_repeat_gates.mechanically_accepted_requests_minimum;
   if (
     parseTargetOutput('{"text":"ok"}').text !== 'ok' ||
     parseTargetOutput('```json\n{"text":"ok"}\n```').transportEnvelope !==
@@ -1605,8 +1622,8 @@ async function selfTest() {
     normalizedWords('Über—Test').join('|') !== 'über|test' ||
     editDistance(['one', 'two'], ['one', 'too']) !== 1 ||
     gateFailures({
-      completed_requests: 60,
-      mechanically_accepted_requests: 59,
+      completed_requests: completedRequests,
+      mechanically_accepted_requests: acceptedRequests,
       token_limit_failures: 0,
       accepted_sections_above_30_percent_input_output_word_edit_rate: 0,
       locale_macro_wer_regressions: 0,
