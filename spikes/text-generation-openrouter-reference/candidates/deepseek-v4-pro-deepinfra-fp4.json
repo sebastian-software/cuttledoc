@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "id": "deepseek-v4-pro-openrouter-novita-fp8",
+  "id": "deepseek-v4-pro-openrouter-deepinfra-fp4",
   "task": "text-generation",
   "candidate_role": "hosted-quality-challenger",
   "model": {
@@ -17,16 +17,16 @@
     "total_parameters": 1600000000000,
     "activated_parameters": 49000000000,
     "context_tokens": 1048576,
-    "identity_limit": "Novita exposes the named upstream model through an FP8 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
+    "identity_limit": "DeepInfra exposes the named upstream model through an FP4 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
   },
   "gateway": {
     "name": "OpenRouter",
     "endpoint": "https://openrouter.ai/api/v1/chat/completions",
     "catalog_captured_at": "2026-07-24",
-    "provider_slug": "novita",
-    "provider_name": "Novita",
-    "endpoint_tag": "novita/fp8",
-    "endpoint_identity": "Novita FP8 | deepseek/deepseek-v4-pro-20260423",
+    "provider_slug": "deepinfra",
+    "provider_name": "DeepInfra",
+    "endpoint_tag": "deepinfra/fp4",
+    "endpoint_identity": "DeepInfra FP4 | deepseek/deepseek-v4-pro-20260423",
     "supported_parameters": [
       "reasoning",
       "include_reasoning",
@@ -36,19 +36,21 @@
       "stop",
       "frequency_penalty",
       "presence_penalty",
-      "seed",
-      "top_k",
       "repetition_penalty",
+      "top_k",
+      "seed",
+      "min_p",
       "response_format",
+      "logit_bias",
       "tools",
       "tool_choice",
+      "structured_outputs",
       "logprobs",
-      "top_logprobs",
       "reasoning_effort"
     ],
     "request_policy": {
       "only": [
-        "novita"
+        "deepinfra"
       ],
       "allow_fallbacks": false,
       "require_parameters": true,
@@ -56,9 +58,9 @@
       "zdr": true
     },
     "pricing_snapshot_usd_per_token": {
-      "prompt": "0.000001168",
-      "completion": "0.000002336",
-      "input_cache_read": "0.00000009855"
+      "prompt": "0.0000013",
+      "completion": "0.0000026",
+      "input_cache_read": "0.0000001"
     }
   },
   "request_defaults": {
@@ -76,5 +78,5 @@
       "strict": true
     }
   },
-  "claim_limit": "Hosted open-weight quality challenger only. This FP8 provider result is not local-runtime evidence and must be compared on the same frozen target slice and prompt as the existing DeepSeek V4 Flash and GPT-5.6 Sol results."
+  "claim_limit": "Hosted open-weight quality challenger only. This FP4 provider result is not local-runtime evidence and must be compared on the same frozen target slice and prompt as the existing DeepSeek V4 Flash and GPT-5.6 Sol results. Provider and quantization remain explicit comparison dimensions."
 }

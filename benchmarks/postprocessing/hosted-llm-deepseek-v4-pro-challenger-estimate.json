@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-plan-1",
-  "plan_sha256": "23da0ec4ffab3b9e66ea1709d9dd3d1323688b989a602c12cad647a062d38a87",
+  "plan_sha256": "4e2af9e400b78c0e42b7d1432552351f8662998aea42de5f4196a1a56782fd39",
   "screen_id": "postprocessing-factorial-hosted-deepseek-v4-pro-challenger-1",
-  "screen_sha256": "d8a06da29279f790493984d2ba29702d2925494733a96de47ef279ffd9014183",
-  "captured_at": "2026-07-24T06:17:29.865Z",
+  "screen_sha256": "380db54630428a31b0b64b34acd0986185c7b65a558d0b9b2e8ce2db68389781",
+  "captured_at": "2026-07-24T06:19:11.149Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",
@@ -28,12 +28,12 @@
   },
   "candidates": [
     {
-      "candidate": "deepseek-v4-pro-openrouter-novita-fp8",
+      "candidate": "deepseek-v4-pro-openrouter-deepinfra-fp4",
       "requested_model": "deepseek/deepseek-v4-pro",
-      "provider_slug": "novita",
+      "provider_slug": "deepinfra",
       "pricing_snapshot_usd_per_token": {
-        "prompt": "0.000001168",
-        "completion": "0.000002336"
+        "prompt": "0.0000013",
+        "completion": "0.0000026"
       },
       "requests_per_repeat": 60,
       "rendered_prompt_code_points_per_repeat": 502182,
@@ -41,17 +41,17 @@
       "maximum_configured_completion_tokens_per_repeat": 122880,
       "likely_reasoning_tokens_per_request": 0,
       "likely_output_tokens_per_repeat": 19022,
-      "likely_cost_per_repeat_usd": 0.19107312000000004,
-      "conservative_planning_envelope_per_repeat_usd": 0.873596256,
-      "recommended_runner_budget_per_repeat_usd": 0.88
+      "likely_cost_per_repeat_usd": 0.21266700000000002,
+      "conservative_planning_envelope_per_repeat_usd": 0.9723246,
+      "recommended_runner_budget_per_repeat_usd": 0.98
     }
   ],
   "aggregate": {
-    "likely_cost_repeat_1_all_candidates_usd": 0.19107312000000004,
-    "conservative_planning_envelope_repeat_1_all_candidates_usd": 0.873596256,
-    "conservative_planning_envelope_two_repeats_all_candidates_usd": 1.747192512,
-    "recommended_runner_budget_repeat_1_all_candidates_usd": 0.88,
-    "recommended_runner_budget_two_repeats_all_candidates_usd": 1.76
+    "likely_cost_repeat_1_all_candidates_usd": 0.21266700000000002,
+    "conservative_planning_envelope_repeat_1_all_candidates_usd": 0.9723246,
+    "conservative_planning_envelope_two_repeats_all_candidates_usd": 1.9446492,
+    "recommended_runner_budget_repeat_1_all_candidates_usd": 0.98,
+    "recommended_runner_budget_two_repeats_all_candidates_usd": 1.96
   },
   "authorization_boundary": "The estimate does not authorize requests. The runner additionally requires an explicit per-invocation USD budget."
 }

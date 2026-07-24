@@ -30,7 +30,7 @@
     }
   },
   "candidates": [
-    "deepseek-v4-pro-openrouter-novita-fp8"
+    "deepseek-v4-pro-openrouter-deepinfra-fp4"
   ],
   "stages": [
     {
@@ -94,8 +94,11 @@
   "route_revision": {
     "initial_provider": "CoreWeave FP8",
     "initial_completed_diagnostic_requests": 49,
-    "reason": "The route entered repeated explicit unbilled HTTP 429 sequences and remained unavailable after a cooldown. The complete evidence run therefore restarts on Novita FP8; provider results are never combined.",
-    "selected_provider": "Novita FP8"
+    "initial_reason": "The route entered repeated explicit unbilled HTTP 429 sequences and remained unavailable after a cooldown.",
+    "second_provider": "Novita FP8",
+    "second_provider_result": "OpenRouter rejected the required strict JSON-schema parameters before inference because this endpoint does not advertise structured_outputs.",
+    "selected_provider": "DeepInfra FP4",
+    "selection_reason": "This ZDR route advertises strict structured outputs and was healthy when pinned. The complete evidence run restarts from zero; provider results are never combined."
   },
   "cost_policy": {
     "currency": "USD",
