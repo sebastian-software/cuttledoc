@@ -1,0 +1,12 @@
+[package]
+name = "cuttledoc-apple-speech"
+description = "Private Apple Speech interop boundary for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true

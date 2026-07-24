@@ -1,0 +1,38 @@
+name: Rust workspace
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    name: Portable workspace / Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Lint all targets
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Test the workspace
+        run: cargo test --workspace --locked
+      - name: Check dependency admission
+        run: bash scripts/check-dependency-policy.sh
+
+  apple-silicon:
+    name: Apple boundary / macOS 26 arm64
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Check the workspace
+        run: cargo check --workspace --all-targets --locked
+      - name: Test the workspace
+        run: cargo test --workspace --locked

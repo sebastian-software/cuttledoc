@@ -1,0 +1,19 @@
+[package]
+name = "cuttledoc-cli"
+description = "Native command-line interface for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "cuttledoc"
+path = "src/main.rs"
+
+[dependencies]
+cuttledoc = { path = "../cuttledoc", version = "=0.1.0" }
+
+[lints]
+workspace = true

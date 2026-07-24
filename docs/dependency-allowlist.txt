@@ -1,8 +1,8 @@
 # Direct Cargo dependencies accepted by the dependency policy.
 #
-# This repository has no Cargo workspace yet. Add a package here only in the
-# same reviewed change that adds its inventory row, pin, scope, and replacement
-# plan. Keep the list sorted.
+# Add a package here only in the same reviewed change that adds its inventory
+# row, pin, scope, and replacement plan. Keep the list sorted. Workspace path
+# dependencies are product-owned and therefore do not need separate admission.
 napi
 napi-build
 napi-derive

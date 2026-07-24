@@ -1,0 +1,16 @@
+[package]
+name = "cuttledoc"
+description = "Rust-first speech and text processing for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+cuttledoc-apple-speech = { path = "../adapters/apple-speech", version = "=0.1.0" }
+cuttledoc-models = { path = "../cuttledoc-models", version = "=0.1.0" }
+
+[lints]
+workspace = true

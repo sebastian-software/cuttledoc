@@ -97,6 +97,16 @@ workspace.
 
 **Purpose:** create only the structure justified by the spike.
 
+### Current checkpoint
+
+The initial workspace now contains the public `cuttledoc` domain contracts,
+model identity/provisioning types, native CLI, thin Node-API binding, and the
+private Apple Speech platform boundary. The proven transcription-update
+vectors have moved from spike-only evidence into product tests. Linux verifies
+the portable workspace; macOS 26 arm64 verifies the selected Apple boundary.
+The adapter truthfully remains unavailable until the Phase 2 Swift
+implementation is linked.
+
 Deliverables:
 
 - Cargo workspace and pinned stable Rust toolchain.

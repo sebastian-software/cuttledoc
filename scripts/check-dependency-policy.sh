@@ -25,7 +25,7 @@ fi
 dependencies=$(
   while IFS= read -r manifest; do
     cargo metadata --manifest-path "$manifest" --no-deps --format-version=1 \
-      | jq -r '.packages[].dependencies[].name'
+      | jq -r '.packages[].dependencies[] | select(.source != null) | .name'
   done <<< "$manifests" | LC_ALL=C sort -u
 )
 

@@ -481,10 +481,11 @@ Rules:
 - Input sources are files and caller-provided PCM feeds. The library does not capture microphone or system audio.
 - Result updates are distinct from progress events; progress remains observational.
 
-These rules are executable in the dependency-free
-[`spikes/stream-contract`](../spikes/stream-contract/) reducer. Rust and Node
-consume the same checked-in vectors for finals-only, volatile replacement,
-revocation, immutable-final overlap, sequence gaps, and invalid ranges.
+These rules are executable in the dependency-free `cuttledoc` reducer. Its
+workspace tests consume the same checked-in vectors as the completed
+[`spikes/stream-contract`](../spikes/stream-contract/) proof for finals-only,
+volatile replacement, revocation, immutable-final overlap, sequence gaps, and
+invalid ranges.
 
 Rust domain types are authoritative. `cuttledoc-node` generates or
 mechanically checks its TypeScript declarations from the Rust binding surface

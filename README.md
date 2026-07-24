@@ -63,34 +63,33 @@ podcasts or audiobooks. See the
 [local-first decision](docs/adr/0014-local-first-transcript-enhancement-defaults.md)
 for the full evidence and limitations.
 
-## Planned workspace
+## Workspace
 
 ```text
 crates/
-├── cuttledoc/           # public Rust API and orchestration
-├── cuttledoc-audio/     # decoding, resampling, normalization
-├── cuttledoc-models/    # manifests, downloads, validation, cache migration
-├── cuttledoc-openai/    # cloud transcription backend
-├── adapters/            # only accepted runtime/toolchain-specific private crates
-│   ├── coreml/          # objc2 ownership boundary, if selected
-│   ├── apple-speech/    # Swift C ABI, if selected
-│   ├── mlx/             # official MLX C++ task ABI, if selected
-│   └── whisper/         # whisper.cpp boundary, if selected
+├── adapters/
+│   └── apple-speech/    # private Swift C ABI boundary
+├── cuttledoc/           # public Rust contracts and orchestration
+├── cuttledoc-models/    # model identity and provisioning
 ├── cuttledoc-cli/       # native CLI
 └── cuttledoc-node/      # thin napi-rs adapter
-npm/
-└── cuttledoc/           # user-facing npm package and TypeScript facade
-docs/
-├── adr/
-├── architecture.md
-├── compatibility-matrix.md
-├── migration-inventory.md
-└── public-api.md
 ```
 
 Runtime adapters are split by foreign toolchain and ownership boundary rather
 than collected in one broad Apple crate. Candidate crates enter the workspace
-only after the bakeoff accepts their production role.
+only after the bakeoff accepts their production role. The first foundation
+therefore includes Apple Speech only; Whisper, MLX text generation, audio
+decoding, OpenAI, and the npm facade arrive with their product vertical slices.
+
+The workspace uses the pinned Rust 1.88 toolchain. Its local verification gate
+is:
+
+```sh
+cargo fmt --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+bash scripts/check-dependency-policy.sh
+```
 
 ## First proof
 

@@ -1,0 +1,23 @@
+[package]
+name = "cuttledoc-node"
+description = "Thin Node-API binding for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cuttledoc = { path = "../cuttledoc", version = "=0.1.0" }
+napi = { version = "=3.10.3", features = ["napi8"] }
+napi-derive = "=3.5.9"
+
+[build-dependencies]
+napi-build = "=2.3.2"
+
+[lints]
+workspace = true
