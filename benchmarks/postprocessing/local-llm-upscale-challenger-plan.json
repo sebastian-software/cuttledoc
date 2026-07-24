@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-local-llm-upscale-challenger-plan-1",
+  "plan_id": "postprocessing-factorial-primary-languages-v1",
+  "plan_revision": "postprocessing-factorial-plan-6",
+  "purpose": "Determine whether materially stronger local MLX model classes can approach the hosted correction shortlist without reopening the rejected small-model prompt matrix.",
+  "motivation": {
+    "completed_local_scope": "The completed screen covered Qwen 3.5 0.8B, SmolLM3 3B, and Gemma 4 E2B as 4-bit MLX models. Deterministic repeats and targeted Gemma contract variants reject those exact candidates but do not reject larger local models.",
+    "primary_open_axis": "Model capacity is the largest untested local quality axis. Prompt transport and section isolation already received bounded follow-up work, while all completed local repeats were deterministic.",
+    "hardware": {
+      "architecture": "Apple Silicon arm64",
+      "unified_memory_bytes": 68719476736,
+      "selection_rule": "Run one model at a time and retain sufficient headroom for MLX execution, the prompt, KV cache, and scoring."
+    }
+  },
+  "frozen_evaluation": {
+    "source_plan": {
+      "path": "benchmarks/postprocessing/local-llm-gemma-target-ab-plan.json",
+      "sha256": "a8c7c4a2b034456316ceac71bc25bc3159ce5bc8c5ad754f06ad17e06e9cc8a8"
+    },
+    "documents": 10,
+    "languages": [
+      "de-DE",
+      "en-US",
+      "es-419",
+      "fr-FR",
+      "pt-BR"
+    ],
+    "targets_per_document": 6,
+    "targets_per_candidate_per_repeat": 60,
+    "prompt": {
+      "path": "benchmarks/postprocessing/prompts/conservative-target-complete-v5.txt",
+      "sha256": "bb135e4a70be705daf94e25a96ac6170916e397fdd2b7751f4fbdd87e1730585"
+    },
+    "request_mode": "single-target-section-with-read-only-context",
+    "hidden_reference_visible_to_model": false,
+    "temperature": 0,
+    "seed": 0,
+    "max_tokens": 2048,
+    "repetitions": 2
+  },
+  "candidates": [
+    {
+      "id": "gemma-4-26b-a4b-it-4bit-mlx",
+      "role": "sparse-quality-candidate",
+      "upstream": {
+        "repository": "google/gemma-4-26B-A4B-it",
+        "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+        "license": "Apache-2.0",
+        "total_parameters": 25805936206,
+        "advertised_active_parameters": 4000000000
+      },
+      "conversion": {
+        "repository": "mlx-community/gemma-4-26b-a4b-it-4bit",
+        "revision": "0d77464eeb233a2da68ebf9d7dc4edaac7db956d",
+        "snapshot_bytes": 15373588575,
+        "quantization_bits": 4
+      }
+    },
+    {
+      "id": "qwen3.5-35b-a3b-4bit-mlx",
+      "role": "sparse-efficiency-challenger",
+      "upstream": {
+        "repository": "Qwen/Qwen3.5-35B-A3B",
+        "revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+        "license": "Apache-2.0",
+        "total_parameters": 35951822704,
+        "advertised_active_parameters": 3000000000
+      },
+      "conversion": {
+        "repository": "mlx-community/Qwen3.5-35B-A3B-4bit",
+        "revision": "1e20fd8d42056f870933bf98ca6211024744f7ec",
+        "snapshot_bytes": 20418624545,
+        "quantization_bits": 4
+      }
+    },
+    {
+      "id": "qwen3.5-27b-4bit-mlx",
+      "role": "dense-quality-challenger",
+      "upstream": {
+        "repository": "Qwen/Qwen3.5-27B",
+        "revision": "fc05daec18b0a78c049392ed2e771dde82bdf654",
+        "license": "Apache-2.0",
+        "total_parameters": 27781427952
+      },
+      "conversion": {
+        "repository": "mlx-community/Qwen3.5-27B-4bit",
+        "revision": "45797d2985a12c55e6473686e9ea91b95e959553",
+        "snapshot_bytes": 16081494361,
+        "quantization_bits": 4
+      }
+    }
+  ],
+  "stages": [
+    {
+      "id": "technical-probe",
+      "scope": "One short request per candidate.",
+      "gate": "Load successfully within unified-memory headroom, render the intended chat template, emit a mechanically parseable response, and release memory before the next candidate."
+    },
+    {
+      "id": "frozen-repeat-1",
+      "scope": "All 60 frozen targets for each technical survivor.",
+      "gate": "At least 59 mechanically accepted requests, no token cap or gross edit above 30 percent, at least five percent relative aggregate WER reduction, and no more regressions than improvements."
+    },
+    {
+      "id": "frozen-repeat-2",
+      "scope": "Only repeat-one quality survivors.",
+      "gate": "Apply the same quality gates over repeat two independently and both repeats together; record deterministic equality rather than requiring it as a quality claim."
+    },
+    {
+      "id": "quantization-ab",
+      "scope": "Only the best two-repeat survivor, and only if a pinned 8-bit MLX artifact still fits the 64 GiB execution envelope.",
+      "gate": "Run the same frozen targets to measure whether 8-bit materially improves semantic regressions or WER. Do not multiply quantizations for candidates already far behind the hosted shortlist."
+    }
+  ],
+  "decision_policy": {
+    "hosted_controls": [
+      "deepseek-v4-flash-openrouter-parasail-fp8",
+      "gpt-5.6-sol-openrouter-azure-eu"
+    ],
+    "promotion": "A local candidate is product-interesting if it passes both repeats, survives semantic regression review, and offers a useful privacy, latency, or cost tradeoff even if it does not beat the hosted quality ceiling.",
+    "rejection": "Do not spend further prompt or quantization matrix budget on a candidate that fails the frozen first repeat materially.",
+    "runtime_boundary": "mlx-lm and the community conversions remain pinned evaluation references over official Apple MLX. Product adoption still requires the repository-owned narrow adapter and model-delivery decision."
+  },
+  "claim_limit": "This selected synthetic development slice can reject weak local candidates and compare them with identically prompted hosted controls. It cannot establish release quality on human professional podcasts or audiobooks."
+}
