@@ -1,0 +1,326 @@
+{
+  "schema_version": "1.0.0",
+  "id": "postprocessing-factorial-hosted-de-en-prominent-plan-1-decision-1",
+  "plan_id": "postprocessing-factorial-hosted-de-en-prominent-plan-1",
+  "plan_sha256": "f87f2c14b49152c6449951c5b53ba4bf7b0416898354f1f691cc8dacb4a2f800",
+  "screen_id": "postprocessing-factorial-hosted-de-en-prominent-1",
+  "summary_path": "benchmarks/postprocessing/hosted-llm-de-en-prominent-results.json",
+  "summary_sha256": "7ff8c5619e2950e6a82e33e7d8a7de9cf798168e43a33f798aa97cabf7ae6326",
+  "captured_at": "2026-07-24T20:30:15.318Z",
+  "status": "repeat-2-in-progress",
+  "candidates": [
+    {
+      "candidate": "gpt-5.6-luna-openrouter-azure-eu",
+      "disposition": "advance-to-repeat-2",
+      "rationale": "Repeat 1 passed every precommitted gate.",
+      "repeats": [
+        {
+          "repetition": 1,
+          "completed_requests": 24,
+          "mechanically_accepted_requests": 24,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 1,
+          "improved_sections": 12,
+          "regressed_sections": 6,
+          "macro_mean_raw_wer": 0.0864301212506305,
+          "macro_mean_strict_or_raw_wer": 0.07029860025338354,
+          "relative_error_change": -0.18664235065074936,
+          "locale_quality": [
+            {
+              "locale": "de-DE",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.13910778442345406,
+              "macro_mean_strict_or_raw_wer": 0.1107737107575532,
+              "relative_error_change": -0.2036843141692913,
+              "regressed": false
+            },
+            {
+              "locale": "en-US",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.03375245807780697,
+              "macro_mean_strict_or_raw_wer": 0.029823489749213877,
+              "relative_error_change": -0.1164053983723479,
+              "regressed": false
+            }
+          ]
+        },
+        {
+          "repetition": 2,
+          "completed_requests": 0,
+          "mechanically_accepted_requests": 0,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 0,
+          "improved_sections": 0,
+          "regressed_sections": 0,
+          "macro_mean_raw_wer": null,
+          "macro_mean_strict_or_raw_wer": null,
+          "relative_error_change": null,
+          "locale_quality": []
+        }
+      ],
+      "combined": {
+        "completed_requests": 24,
+        "mechanically_accepted_requests": 24,
+        "invalid_requests": 0,
+        "token_limit_failures": 0,
+        "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+        "locale_macro_wer_regressions": 0,
+        "changed_correct_input_to_error": 1,
+        "improved_sections": 12,
+        "regressed_sections": 6,
+        "macro_mean_raw_wer": 0.0864301212506305,
+        "macro_mean_strict_or_raw_wer": 0.07029860025338354,
+        "relative_error_change": -0.18664235065074936,
+        "locale_quality": [
+          {
+            "locale": "de-DE",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.13910778442345406,
+            "macro_mean_strict_or_raw_wer": 0.1107737107575532,
+            "relative_error_change": -0.2036843141692913,
+            "regressed": false
+          },
+          {
+            "locale": "en-US",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.03375245807780697,
+            "macro_mean_strict_or_raw_wer": 0.029823489749213877,
+            "relative_error_change": -0.1164053983723479,
+            "regressed": false
+          }
+        ]
+      },
+      "repeat_stability": {
+        "complete_pairs": 0,
+        "byte_identical_raw_output_pairs": 0,
+        "non_identical_raw_output_pairs": 0,
+        "requirement": "observation-only-for-remote-services"
+      },
+      "observed": {
+        "total_cost_usd": 0.0784278,
+        "served_models": [
+          "openai/gpt-5.6-luna"
+        ],
+        "served_providers": [
+          "Azure"
+        ],
+        "explicit_unbilled_429_deferrals": 0
+      }
+    },
+    {
+      "candidate": "claude-opus-5-openrouter-bedrock",
+      "disposition": "advance-to-repeat-2",
+      "rationale": "Repeat 1 passed every precommitted gate.",
+      "repeats": [
+        {
+          "repetition": 1,
+          "completed_requests": 24,
+          "mechanically_accepted_requests": 24,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 1,
+          "improved_sections": 15,
+          "regressed_sections": 1,
+          "macro_mean_raw_wer": 0.0864301212506305,
+          "macro_mean_strict_or_raw_wer": 0.06581741582413202,
+          "relative_error_change": -0.2384898358145959,
+          "locale_quality": [
+            {
+              "locale": "de-DE",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.13910778442345406,
+              "macro_mean_strict_or_raw_wer": 0.10126880195688542,
+              "relative_error_change": -0.27201196987929926,
+              "regressed": false
+            },
+            {
+              "locale": "en-US",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.03375245807780697,
+              "macro_mean_strict_or_raw_wer": 0.030366029691378582,
+              "relative_error_change": -0.10033131153357515,
+              "regressed": false
+            }
+          ]
+        },
+        {
+          "repetition": 2,
+          "completed_requests": 0,
+          "mechanically_accepted_requests": 0,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 0,
+          "improved_sections": 0,
+          "regressed_sections": 0,
+          "macro_mean_raw_wer": null,
+          "macro_mean_strict_or_raw_wer": null,
+          "relative_error_change": null,
+          "locale_quality": []
+        }
+      ],
+      "combined": {
+        "completed_requests": 24,
+        "mechanically_accepted_requests": 24,
+        "invalid_requests": 0,
+        "token_limit_failures": 0,
+        "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+        "locale_macro_wer_regressions": 0,
+        "changed_correct_input_to_error": 1,
+        "improved_sections": 15,
+        "regressed_sections": 1,
+        "macro_mean_raw_wer": 0.0864301212506305,
+        "macro_mean_strict_or_raw_wer": 0.06581741582413202,
+        "relative_error_change": -0.2384898358145959,
+        "locale_quality": [
+          {
+            "locale": "de-DE",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.13910778442345406,
+            "macro_mean_strict_or_raw_wer": 0.10126880195688542,
+            "relative_error_change": -0.27201196987929926,
+            "regressed": false
+          },
+          {
+            "locale": "en-US",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.03375245807780697,
+            "macro_mean_strict_or_raw_wer": 0.030366029691378582,
+            "relative_error_change": -0.10033131153357515,
+            "regressed": false
+          }
+        ]
+      },
+      "repeat_stability": {
+        "complete_pairs": 0,
+        "byte_identical_raw_output_pairs": 0,
+        "non_identical_raw_output_pairs": 0,
+        "requirement": "observation-only-for-remote-services"
+      },
+      "observed": {
+        "total_cost_usd": 0.70597,
+        "served_models": [
+          "anthropic/claude-opus-5"
+        ],
+        "served_providers": [
+          "Amazon Bedrock"
+        ],
+        "explicit_unbilled_429_deferrals": 0
+      }
+    },
+    {
+      "candidate": "grok-4.5-openrouter-xai-zdr",
+      "disposition": "advance-to-repeat-2",
+      "rationale": "Repeat 1 passed every precommitted gate.",
+      "repeats": [
+        {
+          "repetition": 1,
+          "completed_requests": 24,
+          "mechanically_accepted_requests": 24,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 0,
+          "improved_sections": 15,
+          "regressed_sections": 2,
+          "macro_mean_raw_wer": 0.0864301212506305,
+          "macro_mean_strict_or_raw_wer": 0.061414973597754906,
+          "relative_error_change": -0.2894262705051234,
+          "locale_quality": [
+            {
+              "locale": "de-DE",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.13910778442345406,
+              "macro_mean_strict_or_raw_wer": 0.09242917356694823,
+              "relative_error_change": -0.3355571440517865,
+              "regressed": false
+            },
+            {
+              "locale": "en-US",
+              "observations": 12,
+              "macro_mean_raw_wer": 0.03375245807780697,
+              "macro_mean_strict_or_raw_wer": 0.030400773628561546,
+              "relative_error_change": -0.09930193651434334,
+              "regressed": false
+            }
+          ]
+        },
+        {
+          "repetition": 2,
+          "completed_requests": 0,
+          "mechanically_accepted_requests": 0,
+          "invalid_requests": 0,
+          "token_limit_failures": 0,
+          "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+          "locale_macro_wer_regressions": 0,
+          "changed_correct_input_to_error": 0,
+          "improved_sections": 0,
+          "regressed_sections": 0,
+          "macro_mean_raw_wer": null,
+          "macro_mean_strict_or_raw_wer": null,
+          "relative_error_change": null,
+          "locale_quality": []
+        }
+      ],
+      "combined": {
+        "completed_requests": 24,
+        "mechanically_accepted_requests": 24,
+        "invalid_requests": 0,
+        "token_limit_failures": 0,
+        "accepted_sections_above_30_percent_input_output_word_edit_rate": 0,
+        "locale_macro_wer_regressions": 0,
+        "changed_correct_input_to_error": 0,
+        "improved_sections": 15,
+        "regressed_sections": 2,
+        "macro_mean_raw_wer": 0.0864301212506305,
+        "macro_mean_strict_or_raw_wer": 0.061414973597754906,
+        "relative_error_change": -0.2894262705051234,
+        "locale_quality": [
+          {
+            "locale": "de-DE",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.13910778442345406,
+            "macro_mean_strict_or_raw_wer": 0.09242917356694823,
+            "relative_error_change": -0.3355571440517865,
+            "regressed": false
+          },
+          {
+            "locale": "en-US",
+            "observations": 12,
+            "macro_mean_raw_wer": 0.03375245807780697,
+            "macro_mean_strict_or_raw_wer": 0.030400773628561546,
+            "relative_error_change": -0.09930193651434334,
+            "regressed": false
+          }
+        ]
+      },
+      "repeat_stability": {
+        "complete_pairs": 0,
+        "byte_identical_raw_output_pairs": 0,
+        "non_identical_raw_output_pairs": 0,
+        "requirement": "observation-only-for-remote-services"
+      },
+      "observed": {
+        "total_cost_usd": 0.19248079999999998,
+        "served_models": [
+          "x-ai/grok-4.5"
+        ],
+        "served_providers": [
+          "xAI"
+        ],
+        "explicit_unbilled_429_deferrals": 0
+      }
+    }
+  ],
+  "decision_boundary": "A promoted development survivor may enter the broader factorial or held-out evaluation; it is not a product-quality selection."
+}
