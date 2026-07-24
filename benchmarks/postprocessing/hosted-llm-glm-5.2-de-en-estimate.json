@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-glm-5.2-de-en-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-glm-5.2-de-en-plan-1",
-  "plan_sha256": "8d0fa4044fc4e6b668ec36a8dfdc44dd32233dee91a0b9bbc3dc6eaf7552d22c",
+  "plan_sha256": "33ef4881169962854d760ff9784291101250502b1b05a881377c8637588a23e6",
   "screen_id": "postprocessing-factorial-hosted-glm-5.2-de-en-1",
-  "screen_sha256": "73cf39a1c4dfb9c46a4feb297c1c38a721a220ebfff17dee49ba611c54679c57",
-  "captured_at": "2026-07-24T20:44:32.985Z",
+  "screen_sha256": "dcdad3740431b8f8857f4397ca54298f063741ad275d2cc20b5a6154b5d5d36c",
+  "captured_at": "2026-07-24T20:46:55.681Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",
@@ -28,9 +28,9 @@
   },
   "candidates": [
     {
-      "candidate": "glm-5.2-openrouter-baseten-fp8",
+      "candidate": "glm-5.2-openrouter-fireworks",
       "requested_model": "z-ai/glm-5.2",
-      "provider_slug": "baseten/fp8",
+      "provider_slug": "fireworks",
       "pricing_snapshot_usd_per_token": {
         "prompt": "0.0000014",
         "completion": "0.0000044"

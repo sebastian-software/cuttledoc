@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "id": "glm-5.2-openrouter-baseten-fp8",
+  "id": "glm-5.2-openrouter-fireworks",
   "task": "text-generation",
   "candidate_role": "open-weight-multilingual-hosted-challenger",
   "model": {
@@ -16,16 +16,16 @@
     "license": "MIT",
     "total_parameters": 753000000000,
     "context_tokens": 1048576,
-    "identity_limit": "BaseTen exposes the named open-weight model through an FP8 endpoint, but the exact hosted artifact and serving implementation remain opaque to this repository."
+    "identity_limit": "Fireworks exposes the named open-weight model, but the hosted quantization, exact artifact, and serving implementation remain opaque to this repository."
   },
   "gateway": {
     "name": "OpenRouter",
     "endpoint": "https://openrouter.ai/api/v1/chat/completions",
     "catalog_captured_at": "2026-07-24",
-    "provider_slug": "baseten/fp8",
-    "provider_name": "BaseTen",
-    "endpoint_tag": "baseten/fp8",
-    "endpoint_identity": "BaseTen FP8 | z-ai/glm-5.2-20260616",
+    "provider_slug": "fireworks",
+    "provider_name": "Fireworks",
+    "endpoint_tag": "fireworks",
+    "endpoint_identity": "Fireworks | z-ai/glm-5.2-20260616",
     "supported_parameters": [
       "reasoning",
       "include_reasoning",
@@ -37,13 +37,18 @@
       "stop",
       "frequency_penalty",
       "presence_penalty",
+      "top_k",
+      "repetition_penalty",
+      "logit_bias",
+      "logprobs",
+      "top_logprobs",
       "tools",
       "tool_choice",
       "reasoning_effort"
     ],
     "request_policy": {
       "only": [
-        "baseten/fp8"
+        "fireworks"
       ],
       "allow_fallbacks": false,
       "require_parameters": true,
@@ -71,5 +76,5 @@
       "strict": true
     }
   },
-  "claim_limit": "Hosted open-weight multilingual challenger only. This FP8 provider result is not local-runtime evidence, and the German/English development slice cannot establish general multilingual or product quality."
+  "claim_limit": "Hosted open-weight multilingual challenger only. The provider does not disclose quantization for this route, this is not local-runtime evidence, and the German/English development slice cannot establish general multilingual or product quality."
 }

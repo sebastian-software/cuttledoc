@@ -27,15 +27,21 @@
     }
   },
   "candidates": [
-    "glm-5.2-openrouter-baseten-fp8"
+    "glm-5.2-openrouter-fireworks"
   ],
   "route_revisions": [
     {
       "candidate": "glm-5.2-openrouter-baseten-fp8",
       "initial_minimum_delay_between_requests_ms": 1000,
-      "initial_result": "The strict output contract succeeded for one request, but BaseTen repeatedly returned explicit unbilled HTTP 429 responses at the initial pace.",
-      "selected_minimum_delay_between_requests_ms": 10000,
-      "continuation": "Resume the identical pinned route and existing valid result; do not combine providers."
+      "paced_minimum_delay_between_requests_ms": 10000,
+      "result": "The strict output contract succeeded for four requests, but BaseTen repeatedly returned explicit unbilled HTTP 429 responses at both paces.",
+      "disposition": "Operational diagnostic only; do not mix these four responses into candidate-quality evidence."
+    },
+    {
+      "candidate": "glm-5.2-openrouter-fireworks",
+      "selected_minimum_delay_between_requests_ms": 1000,
+      "selection": "Fireworks appears in OpenRouter's authenticated ZDR list, advertises strict structured outputs, uses the same price snapshot, and had high current availability.",
+      "continuation": "Restart repeat one from zero on the new pinned provider."
     }
   ],
   "stages": [

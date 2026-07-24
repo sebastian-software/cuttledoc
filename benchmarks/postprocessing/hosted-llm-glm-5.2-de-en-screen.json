@@ -35,10 +35,10 @@
   },
   "candidates": [
     {
-      "id": "glm-5.2-openrouter-baseten-fp8",
+      "id": "glm-5.2-openrouter-fireworks",
       "role": "open-weight-multilingual-hosted-challenger",
-      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/glm-5.2-baseten-fp8.json",
-      "model_manifest_sha256": "ac7c7fcef80f88e76a70edf93837173402acf9227757a0e4559c88772e105092"
+      "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/glm-5.2-fireworks.json",
+      "model_manifest_sha256": "91c795b7b3b508fed0e3a8bc508ea225185afb884152bf5b0bf6c0cf77880354"
     }
   ],
   "generation": {
@@ -86,7 +86,7 @@
     "zdr_required": true,
     "automatic_paid_or_ambiguous_request_retry": false,
     "maximum_explicit_unbilled_429_deferrals_per_logical_request": 5,
-    "minimum_delay_between_requests_ms": 10000
+    "minimum_delay_between_requests_ms": 1000
   },
   "claim_limit": "This selected synthetic German and English development slice is a fast challenger screen. It cannot estimate release quality, establish behavior in other languages, or replace held-out professional-audio evidence."
 }
