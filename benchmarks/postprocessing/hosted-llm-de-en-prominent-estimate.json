@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "id": "postprocessing-factorial-hosted-de-en-prominent-plan-1-cost-estimate-1",
   "plan_id": "postprocessing-factorial-hosted-de-en-prominent-plan-1",
-  "plan_sha256": "576087979ea8698954343e604b803ccf183f25275489202f443229d929019b08",
+  "plan_sha256": "35294995b6b841947b4b9b8f811bb364e27f5cb1f119b19946c0ca4b961f2b62",
   "screen_id": "postprocessing-factorial-hosted-de-en-prominent-1",
-  "screen_sha256": "4826fe955b7584e524dee5536dc080314187ec71a230db5a5d9e9fe34d59f3c4",
-  "captured_at": "2026-07-24T20:18:08.954Z",
+  "screen_sha256": "62b424cbd32e2a1b64dc6b20352494dd2962865345fdd07c8348cc82e064fdd3",
+  "captured_at": "2026-07-24T20:20:00.859Z",
   "method": {
     "hard_input_envelope": "One input token per rendered Unicode code point.",
     "likely_input_estimate": "One input token per four rendered Unicode code points.",

@@ -44,7 +44,7 @@
       "id": "claude-opus-5-openrouter-bedrock",
       "role": "frontier-quality-control",
       "model_manifest_path": "spikes/text-generation-openrouter-reference/candidates/claude-opus-5-bedrock.json",
-      "model_manifest_sha256": "fc4f1573361384840e433641b37c7a0757940e105ec3c4e78d7101e71b7c8407"
+      "model_manifest_sha256": "2556280116a532b88996a7d61f218787ee01ec037566083609e81c5c8d6c4c4e"
     },
     {
       "id": "grok-4.5-openrouter-xai-zdr",

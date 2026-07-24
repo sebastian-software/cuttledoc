@@ -62,10 +62,10 @@
       "exclude": true
     },
     "response_format": {
-      "type": "json_schema",
+      "type": "json_object",
       "schema_id": "bounded-transcript-correction-v1",
-      "strict": true
+      "strict": false
     }
   },
-  "claim_limit": "Remote frontier quality control only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default."
+  "claim_limit": "Remote frontier quality control only; it is not an embedded-runtime candidate or evidence that a paid API should become the product default. Bedrock rejects OpenRouter's strict JSON-schema translation for this model, so JSON-object transport is paired with the same prompt and exact local output-shape parser."
 }

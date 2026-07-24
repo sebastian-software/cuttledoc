@@ -38,6 +38,15 @@
       "record": "spikes/text-generation-openrouter-reference/blocked/mistral-medium-3.5-no-zdr.json"
     }
   ],
+  "transport_revisions": [
+    {
+      "candidate": "claude-opus-5-openrouter-bedrock",
+      "initial_transport": "OpenRouter strict JSON schema",
+      "initial_result": "Amazon Bedrock rejected output_config.format before inference; the request was unbilled and produced no result.",
+      "selected_transport": "OpenRouter JSON object with the unchanged target-complete prompt and exact local one-field parser",
+      "comparison_limit": "Correction quality remains directly comparable, while strict server-side schema compliance is a separate operational disadvantage for this route."
+    }
+  ],
   "stages": [
     {
       "id": "repeat-1",

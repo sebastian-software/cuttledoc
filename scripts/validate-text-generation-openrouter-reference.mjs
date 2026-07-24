@@ -263,10 +263,13 @@ function validateCandidateShape(candidate) {
       typeof defaults?.json_schema_numeric_bounds !== 'boolean' ||
       ![0, null].includes(defaults?.temperature) ||
       ![0, null].includes(defaults?.seed) || !reasoningValid ||
-      defaults?.response_format?.type !== 'json_schema' ||
+      !['json_schema', 'json_object'].includes(
+        defaults?.response_format?.type,
+      ) ||
       defaults?.response_format?.schema_id !==
         'bounded-transcript-correction-v1' ||
-      defaults?.response_format?.strict !== true) {
+      defaults?.response_format?.strict !==
+        (defaults?.response_format?.type === 'json_schema')) {
     errors.push('request defaults are not conservative or strictly structured');
   }
   if (!(candidate.claim_limit?.length > 0) || containsSecret(candidate)) {

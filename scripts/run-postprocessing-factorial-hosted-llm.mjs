@@ -603,17 +603,20 @@ async function runStage() {
 async function requestCorrection(manifest, screen, prompt, apiKey) {
   const policy = manifest.gateway.request_policy;
   const defaults = manifest.request_defaults;
+  const responseFormat = defaults.response_format.type === 'json_object'
+    ? { type: 'json_object' }
+    : {
+        type: 'json_schema',
+        json_schema: {
+          name: screen.generation.output_contract.replaceAll('-', '_'),
+          strict: true,
+          schema: screen.generation.structured_output.schema,
+        },
+      };
   const body = {
     model: manifest.model.requested_id,
     messages: [{ role: 'user', content: prompt }],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: screen.generation.output_contract.replaceAll('-', '_'),
-        strict: true,
-        schema: screen.generation.structured_output.schema,
-      },
-    },
+    response_format: responseFormat,
     provider: {
       only: policy.only,
       allow_fallbacks: false,
