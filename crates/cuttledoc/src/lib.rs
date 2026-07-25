@@ -14,8 +14,8 @@ pub use audio::{AudioFormat, PcmBuffer, SampleFormat};
 pub use backend::{BackendId, BackendSelection, known_backend_ids};
 pub use cancellation::CancellationToken;
 pub use capability::{
-    Availability, AvailabilityReason, CancellationBoundary, RecognitionCapabilities,
-    recognition_capabilities,
+    Availability, AvailabilityReason, CancellationBoundary, RecognitionAssetInventory,
+    RecognitionCapabilities, recognition_asset_inventory, recognition_capabilities,
 };
 pub use cuttledoc_models::{
     ManifestId, ModelDescriptor, ModelId, ModelOperations, ModelProvisioning, ModelState,

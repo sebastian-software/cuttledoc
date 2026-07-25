@@ -1,4 +1,4 @@
-use crate::{BackendId, ModelId};
+use crate::{BackendId, CuttledocError, ErrorCode, ModelId, Result};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AvailabilityReason {
@@ -70,6 +70,7 @@ pub struct RecognitionCapabilities {
     pub streaming_pcm_input: bool,
     pub dynamic_locales: bool,
     pub languages: Vec<String>,
+    pub locales: Vec<String>,
     pub segment_timestamps: bool,
     pub word_timestamps: bool,
     pub confidence: bool,
@@ -79,20 +80,84 @@ pub struct RecognitionCapabilities {
     pub cancellation_boundary: CancellationBoundary,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecognitionAssetInventory {
+    pub backend: BackendId,
+    pub supported_locales: Vec<String>,
+    pub installed_locales: Vec<String>,
+    pub reserved_locales: Vec<String>,
+    pub maximum_reserved_locales: u32,
+}
+
 pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
     vec![apple_speech_capabilities()]
+}
+
+pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
+    if backend != &BackendId::apple_speech() {
+        return Err(CuttledocError::new(
+            ErrorCode::BackendUnavailable,
+            format!("recognition backend {backend} is not implemented"),
+        )
+        .with_backend(backend.clone()));
+    }
+    let inventory = cuttledoc_apple_speech::locale_inventory().map_err(CuttledocError::from)?;
+    Ok(RecognitionAssetInventory {
+        backend: backend.clone(),
+        supported_locales: inventory.supported,
+        installed_locales: inventory.installed,
+        reserved_locales: inventory.reserved,
+        maximum_reserved_locales: inventory.maximum_reserved,
+    })
 }
 
 fn apple_speech_capabilities() -> RecognitionCapabilities {
     use cuttledoc_apple_speech::BuildSupport;
 
-    let availability = match cuttledoc_apple_speech::build_support() {
-        BuildSupport::SupportedHost => Availability::Available,
-        BuildSupport::UnsupportedHost => Availability::Unavailable {
-            reason: AvailabilityReason::UnsupportedPlatform,
-            detail: "Apple Speech requires macOS 26 or newer on Apple Silicon".to_owned(),
-            remediation: None,
-        },
+    let (availability, languages, locales) = match cuttledoc_apple_speech::build_support() {
+        BuildSupport::SupportedHost => {
+            match recognition_asset_inventory(&BackendId::apple_speech()) {
+                Ok(inventory) if !inventory.supported_locales.is_empty() => (
+                    Availability::Available,
+                    language_identifiers(&inventory.supported_locales),
+                    inventory.supported_locales,
+                ),
+                Ok(_) => (
+                    Availability::Unavailable {
+                        reason: AvailabilityReason::SystemAssetUnavailable,
+                        detail: "Apple Speech reported no supported locales for this process"
+                            .to_owned(),
+                        remediation: Some(
+                            "verify macOS Speech assets and unrestricted system-service access"
+                                .to_owned(),
+                        ),
+                    },
+                    Vec::new(),
+                    Vec::new(),
+                ),
+                Err(error) => (
+                    Availability::Unavailable {
+                        reason: AvailabilityReason::NativeLoadFailed,
+                        detail: error.message,
+                        remediation: Some(
+                            "verify the installed macOS version and Speech framework access"
+                                .to_owned(),
+                        ),
+                    },
+                    Vec::new(),
+                    Vec::new(),
+                ),
+            }
+        }
+        BuildSupport::UnsupportedHost => (
+            Availability::Unavailable {
+                reason: AvailabilityReason::UnsupportedPlatform,
+                detail: "Apple Speech requires macOS 26 or newer on Apple Silicon".to_owned(),
+                remediation: None,
+            },
+            Vec::new(),
+            Vec::new(),
+        ),
     };
 
     RecognitionCapabilities {
@@ -103,7 +168,8 @@ fn apple_speech_capabilities() -> RecognitionCapabilities {
         bounded_pcm_input: true,
         streaming_pcm_input: true,
         dynamic_locales: true,
-        languages: Vec::new(),
+        languages,
+        locales,
         segment_timestamps: true,
         word_timestamps: true,
         confidence: true,
@@ -114,25 +180,55 @@ fn apple_speech_capabilities() -> RecognitionCapabilities {
     }
 }
 
+fn language_identifiers(locales: &[String]) -> Vec<String> {
+    let mut languages = locales
+        .iter()
+        .filter_map(|locale| locale.split(['_', '-']).next())
+        .filter(|language| !language.is_empty())
+        .map(str::to_lowercase)
+        .collect::<Vec<_>>();
+    languages.sort_unstable();
+    languages.dedup();
+    languages
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn unavailable_state_has_a_machine_readable_reason() {
+    fn capability_state_matches_the_runtime_inventory() {
         let apple = recognition_capabilities()
             .into_iter()
             .find(|capability| capability.backend.as_str() == "apple-speech")
             .expect("Apple Speech is a known backend");
 
-        if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
-            assert!(apple.availability.is_available());
-        } else {
+        if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
             assert!(!apple.availability.is_available());
             assert_eq!(
                 apple.availability.reason(),
                 Some(AvailabilityReason::UnsupportedPlatform)
             );
+        } else if apple.availability.is_available() {
+            assert!(!apple.languages.is_empty());
+            assert!(!apple.locales.is_empty());
+        } else {
+            assert!(!apple.availability.is_available());
+            assert!(matches!(
+                apple.availability.reason(),
+                Some(
+                    AvailabilityReason::SystemAssetUnavailable
+                        | AvailabilityReason::NativeLoadFailed
+                )
+            ));
         }
+    }
+
+    #[test]
+    fn language_identifiers_are_unique_and_normalized() {
+        assert_eq!(
+            language_identifiers(&["en_US".to_owned(), "de-DE".to_owned(), "en_GB".to_owned()]),
+            vec!["de", "en"]
+        );
     }
 }

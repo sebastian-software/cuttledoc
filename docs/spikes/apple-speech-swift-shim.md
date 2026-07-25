@@ -158,3 +158,15 @@ whole-audio volatile range to the 0–8,940 ms speech range. The product bridge
 therefore expands only the reducer's technical affected range to retire the
 preceding volatile hypothesis; the returned segment and word timestamps remain
 the native Apple values.
+
+The product boundary also exposes the live `SpeechTranscriber` and
+`AssetInventory` locale sets through typed callbacks: supported, installed,
+reserved, and the maximum reservation count. Public capability reporting now
+uses this inventory. A binary compiled for macOS 26 arm64 is no longer reported
+as operational merely because the Swift archive linked; an empty or failed
+system inventory becomes an actionable unavailable state.
+
+With normal system-service access on the evidence host, the public capability
+path reported 10 language identifiers, 30 supported locale variants, 12
+installed locales, zero currently reserved locales, and a reservation limit of
+five. These counts are a runtime snapshot, not a hardcoded coverage promise.

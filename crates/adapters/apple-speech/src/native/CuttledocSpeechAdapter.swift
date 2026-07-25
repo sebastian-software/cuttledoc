@@ -24,7 +24,16 @@ public typealias CuttledocSpeechUpdateCallback = @convention(c) (
     UnsafePointer<CChar>?
 ) -> Void
 
-private let cuttledocSpeechABIVersion: UInt32 = 1
+public typealias CuttledocSpeechLocaleCallback = @convention(c) (
+    UnsafeMutableRawPointer?,
+    Int32,
+    UnsafePointer<CChar>?
+) -> Void
+
+private let cuttledocSpeechABIVersion: UInt32 = 2
+private let localeSupported: Int32 = 1
+private let localeInstalled: Int32 = 2
+private let localeReserved: Int32 = 3
 private let updateReplace: Int32 = 1
 private let updateRevoke: Int32 = 2
 private let stabilityNone: Int32 = 0
@@ -353,6 +362,57 @@ public func cuttledocSpeechABIVersionValue() -> UInt32 {
     cuttledocSpeechABIVersion
 }
 
+@_cdecl("cuttledoc_speech_locale_inventory")
+public func cuttledocSpeechLocaleInventory(
+    _ callback: CuttledocSpeechLocaleCallback,
+    _ callbackContext: UnsafeMutableRawPointer?,
+    _ maximumReservedLocales: UnsafeMutablePointer<UInt32>,
+    _ errorOutput: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>
+) -> Int32 {
+    maximumReservedLocales.pointee = 0
+    errorOutput.pointee = nil
+    let result: Result<([String], [String], [String], UInt32), Error> = blocking {
+        async let supported = SpeechTranscriber.supportedLocales
+        async let installed = SpeechTranscriber.installedLocales
+        async let reserved = AssetInventory.reservedLocales
+        guard let maximum = UInt32(exactly: AssetInventory.maximumReservedLocales) else {
+            throw speechError(17, "maximum reserved locale count exceeds UInt32")
+        }
+        return await (
+            supported.map(\.identifier).sorted(),
+            installed.map(\.identifier).sorted(),
+            reserved.map(\.identifier).sorted(),
+            maximum
+        )
+    }
+    switch result {
+    case let .success((supported, installed, reserved, maximum)):
+        maximumReservedLocales.pointee = maximum
+        emitLocales(
+            supported,
+            kind: localeSupported,
+            context: callbackContext,
+            callback: callback
+        )
+        emitLocales(
+            installed,
+            kind: localeInstalled,
+            context: callbackContext,
+            callback: callback
+        )
+        emitLocales(
+            reserved,
+            kind: localeReserved,
+            context: callbackContext,
+            callback: callback
+        )
+        return 0
+    case let .failure(error):
+        errorOutput.pointee = strdup(String(describing: error))
+        return 1
+    }
+}
+
 @_cdecl("cuttledoc_speech_session_create")
 public func cuttledocSpeechSessionCreate(
     _ locale: UnsafePointer<CChar>,
@@ -490,6 +550,19 @@ private func emitSegments(
                 confidence == nil ? 0 : 1,
                 confidence ?? 0
             )
+        }
+    }
+}
+
+private func emitLocales(
+    _ locales: [String],
+    kind: Int32,
+    context: UnsafeMutableRawPointer?,
+    callback: CuttledocSpeechLocaleCallback
+) {
+    for locale in locales {
+        locale.withCString { pointer in
+            callback(context, kind, pointer)
         }
     }
 }

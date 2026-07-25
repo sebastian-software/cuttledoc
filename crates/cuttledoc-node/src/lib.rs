@@ -42,13 +42,20 @@ mod tests {
     #[test]
     fn node_boundary_uses_the_rust_capability_source() {
         assert_eq!(version(), env!("CARGO_PKG_VERSION"));
+        let capability = recognition_capabilities()
+            .into_iter()
+            .find(|capability| capability.backend.as_str() == "apple-speech")
+            .expect("Apple Speech is a known backend");
+        let (available, unavailable_reason) = match capability.availability {
+            Availability::Available => (true, None),
+            Availability::Unavailable { reason, .. } => (false, Some(reason.as_str().to_owned())),
+        };
         assert_eq!(
             recognition_backends(),
             vec![BackendCapability {
                 id: "apple-speech".to_owned(),
-                available: cfg!(all(target_os = "macos", target_arch = "aarch64")),
-                unavailable_reason: (!cfg!(all(target_os = "macos", target_arch = "aarch64")))
-                    .then(|| "unsupported_platform".to_owned()),
+                available,
+                unavailable_reason,
             }]
         );
     }

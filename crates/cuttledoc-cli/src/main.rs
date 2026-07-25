@@ -1,7 +1,7 @@
 use std::env;
 use std::process::ExitCode;
 
-use cuttledoc::{Availability, recognition_capabilities};
+use cuttledoc::{Availability, recognition_asset_inventory, recognition_capabilities};
 
 const HELP: &str = "\
 Cuttledoc speech and text processing
@@ -53,7 +53,21 @@ fn run(command: Command) {
             for capability in recognition_capabilities() {
                 match capability.availability {
                     Availability::Available => {
-                        println!("{}\tavailable", capability.backend);
+                        match recognition_asset_inventory(&capability.backend) {
+                            Ok(inventory) => println!(
+                                "{}\tavailable\tlanguages={}\tlocales={}\tinstalled={}\treserved={}\treservation_limit={}",
+                                capability.backend,
+                                capability.languages.len(),
+                                inventory.supported_locales.len(),
+                                inventory.installed_locales.len(),
+                                inventory.reserved_locales.len(),
+                                inventory.maximum_reserved_locales
+                            ),
+                            Err(error) => println!(
+                                "{}\tavailable\tinventory_error={}",
+                                capability.backend, error
+                            ),
+                        }
                     }
                     Availability::Unavailable { reason, detail, .. } => {
                         println!(

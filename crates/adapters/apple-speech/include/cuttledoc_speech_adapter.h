@@ -7,7 +7,11 @@
 extern "C" {
 #endif
 
-#define CUTTLEDOC_SPEECH_ABI_VERSION 1
+#define CUTTLEDOC_SPEECH_ABI_VERSION 2
+
+#define CUTTLEDOC_SPEECH_LOCALE_SUPPORTED 1
+#define CUTTLEDOC_SPEECH_LOCALE_INSTALLED 2
+#define CUTTLEDOC_SPEECH_LOCALE_RESERVED 3
 
 #define CUTTLEDOC_SPEECH_UPDATE_REPLACE 1
 #define CUTTLEDOC_SPEECH_UPDATE_REVOKE 2
@@ -42,7 +46,20 @@ typedef void (*cuttledoc_speech_update_callback)(
     const char *text
 );
 
+typedef void (*cuttledoc_speech_locale_callback)(
+    void *context,
+    int32_t kind,
+    const char *locale
+);
+
 uint32_t cuttledoc_speech_abi_version(void);
+
+int32_t cuttledoc_speech_locale_inventory(
+    cuttledoc_speech_locale_callback callback,
+    void *callback_context,
+    uint32_t *maximum_reserved_locales,
+    char **error_output
+);
 
 void *cuttledoc_speech_session_create(
     const char *locale,

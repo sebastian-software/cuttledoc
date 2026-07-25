@@ -53,6 +53,7 @@ pub enum PushOutcome {
 pub enum AdapterErrorKind {
     UnsupportedPlatform,
     InvalidInput,
+    InventoryFailed,
     SessionCreateFailed,
     NativeFailure,
     SessionClosed,
@@ -66,7 +67,7 @@ pub struct AdapterError {
 }
 
 impl AdapterError {
-    fn new(kind: AdapterErrorKind, message: impl Into<String>) -> Self {
+    pub(crate) fn new(kind: AdapterErrorKind, message: impl Into<String>) -> Self {
         Self {
             kind,
             message: message.into(),

@@ -91,6 +91,23 @@ impl From<ContractError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_apple_speech::AdapterError> for CuttledocError {
+    fn from(error: cuttledoc_apple_speech::AdapterError) -> Self {
+        use cuttledoc_apple_speech::AdapterErrorKind;
+
+        let code = match error.kind {
+            AdapterErrorKind::UnsupportedPlatform => ErrorCode::UnsupportedPlatform,
+            AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AdapterErrorKind::InventoryFailed => ErrorCode::BackendUnavailable,
+            AdapterErrorKind::SessionCreateFailed => ErrorCode::EngineLoadFailed,
+            AdapterErrorKind::NativeFailure => ErrorCode::TranscriptionFailed,
+            AdapterErrorKind::SessionClosed => ErrorCode::EngineClosed,
+            AdapterErrorKind::CallbackViolation => ErrorCode::BackendContractViolation,
+        };
+        Self::new(code, error.message).with_backend(BackendId::apple_speech())
+    }
+}
+
 pub type Result<T> = std::result::Result<T, CuttledocError>;
 
 #[cfg(test)]

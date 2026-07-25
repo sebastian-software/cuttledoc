@@ -2,8 +2,8 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use cuttledoc_apple_speech::{
-    AdapterError, AdapterErrorKind, NativeSegment, NativeStability, NativeTimeRange,
-    NativeTranscriptionUpdate, NativeUpdateKind, PushOutcome, SpeechSession,
+    NativeSegment, NativeStability, NativeTimeRange, NativeTranscriptionUpdate, NativeUpdateKind,
+    PushOutcome, SpeechSession,
 };
 
 use crate::{
@@ -37,7 +37,7 @@ pub fn transcribe_pcm_with_cancellation(
         .as_deref()
         .expect("request validation requires an explicit language");
     let mut session = SpeechSession::create(requested_locale, input.format.sample_rate)
-        .map_err(|error| map_adapter_error(error, &backend))?;
+        .map_err(CuttledocError::from)?;
     let resolved_locale = session.resolved_locale().map(str::to_owned);
     let mut accumulator = UpdateAccumulator::default();
     let chunk_size = input_chunk_size(input.format.sample_rate);
@@ -48,18 +48,13 @@ pub fn transcribe_pcm_with_cancellation(
                 session.cancel();
                 return Err(cancelled_error(&backend));
             }
-            match session
-                .push(chunk)
-                .map_err(|error| map_adapter_error(error, &backend))?
-            {
+            match session.push(chunk).map_err(CuttledocError::from)? {
                 PushOutcome::Accepted => break,
                 PushOutcome::WouldBlock => thread::sleep(BACKPRESSURE_RETRY_DELAY),
             }
         }
         accumulator.apply(
-            session
-                .take_updates()
-                .map_err(|error| map_adapter_error(error, &backend))?,
+            session.take_updates().map_err(CuttledocError::from)?,
             &backend,
         )?;
     }
@@ -68,12 +63,7 @@ pub fn transcribe_pcm_with_cancellation(
         session.cancel();
         return Err(cancelled_error(&backend));
     }
-    accumulator.apply(
-        session
-            .finish()
-            .map_err(|error| map_adapter_error(error, &backend))?,
-        &backend,
-    )?;
+    accumulator.apply(session.finish().map_err(CuttledocError::from)?, &backend)?;
     session.close();
 
     if accumulator.saw_replace && !accumulator.saw_final {
@@ -293,18 +283,6 @@ fn map_range(range: NativeTimeRange) -> TimeRange {
 
 fn contract_error(backend: &BackendId, message: &str) -> CuttledocError {
     CuttledocError::new(ErrorCode::BackendContractViolation, message).with_backend(backend.clone())
-}
-
-fn map_adapter_error(error: AdapterError, backend: &BackendId) -> CuttledocError {
-    let code = match error.kind {
-        AdapterErrorKind::UnsupportedPlatform => ErrorCode::UnsupportedPlatform,
-        AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
-        AdapterErrorKind::SessionCreateFailed => ErrorCode::EngineLoadFailed,
-        AdapterErrorKind::NativeFailure => ErrorCode::TranscriptionFailed,
-        AdapterErrorKind::SessionClosed => ErrorCode::EngineClosed,
-        AdapterErrorKind::CallbackViolation => ErrorCode::BackendContractViolation,
-    };
-    CuttledocError::new(code, error.message).with_backend(backend.clone())
 }
 
 #[cfg(test)]

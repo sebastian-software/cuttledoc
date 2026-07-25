@@ -149,8 +149,16 @@ whole-audio volatile hypothesis. This keeps native timing evidence intact and
 passes every update through the shared reducer contract. A separate cancel path
 joined and destroyed the native session cleanly. These system-service smokes
 must run outside restricted sandboxes; unit and callback contract tests remain
-hermetic. The next slice exposes dynamic locale/asset capabilities and a CLI
-development entry point before crossing the Node boundary.
+hermetic.
+
+The adapter now also reports supported, installed, and reserved locales plus
+the system reservation limit through a typed C callback. Public recognition
+capabilities derive their availability, language identifiers, and locale list
+from that live inventory instead of treating every matching build as usable.
+Restricted test sandboxes therefore report `system_asset_unavailable`, while a
+normal host process reports the installed Apple Speech inventory. The next
+slice adds the CLI development transcription entry point before crossing the
+Node boundary.
 
 Scope:
 
