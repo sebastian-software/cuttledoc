@@ -91,6 +91,23 @@ cargo test --workspace --locked
 bash scripts/check-dependency-policy.sh
 ```
 
+## Development CLI
+
+The first complete local transcription path is intentionally limited to raw
+mono little-endian `f32` PCM. This validates the public Rust API, Apple Speech
+adapter, reducer, errors, and CLI before the general FFmpeg-backed decoder is
+added:
+
+```sh
+ffmpeg -i input.ogg -ar 16000 -ac 1 -f f32le -acodec pcm_f32le /tmp/input.f32le
+cargo run --locked -p cuttledoc-cli -- \
+  transcribe-pcm /tmp/input.f32le --language en-US
+```
+
+`backends list` reports the live Apple Speech capability and system-managed
+locale inventory. These development commands require Apple Silicon with macOS
+26 or newer and normal access to the macOS Speech service.
+
 ## First proof
 
 The first implementation milestone is deliberately narrow:

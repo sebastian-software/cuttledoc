@@ -156,9 +156,13 @@ the system reservation limit through a typed C callback. Public recognition
 capabilities derive their availability, language identifiers, and locale list
 from that live inventory instead of treating every matching build as usable.
 Restricted test sandboxes therefore report `system_asset_unavailable`, while a
-normal host process reports the installed Apple Speech inventory. The next
-slice adds the CLI development transcription entry point before crossing the
-Node boundary.
+normal host process reports the installed Apple Speech inventory.
+
+The native CLI now accepts validated mono little-endian `f32` PCM, an explicit
+BCP 47 language tag, and an optional sample rate. The pinned FLEURS fixture
+completes through this command and prints the same final text as the Phase 0
+oracle. General media decoding remains deliberately outside this slice. The
+next slice crosses the thin Node boundary.
 
 Scope:
 

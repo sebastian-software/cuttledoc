@@ -23,14 +23,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let bytes = fs::read(path)?;
-    if bytes.is_empty() || bytes.len() % size_of::<f32>() != 0 {
-        return Err("PCM input must contain complete little-endian f32 samples".into());
-    }
-    let samples = bytes
-        .chunks_exact(size_of::<f32>())
-        .map(|chunk| f32::from_le_bytes(chunk.try_into().expect("four-byte chunk")))
-        .collect::<Vec<_>>();
-    let input = PcmBuffer::new(AudioFormat::new(16_000, 1)?, samples)?;
+    let input = PcmBuffer::from_f32le_bytes(AudioFormat::new(16_000, 1)?, &bytes)?;
     let result = transcribe_pcm(
         &input,
         &TranscribeOptions {

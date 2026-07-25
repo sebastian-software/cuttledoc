@@ -170,3 +170,9 @@ With normal system-service access on the evidence host, the public capability
 path reported 10 language identifiers, 30 supported locale variants, 12
 installed locales, zero currently reserved locales, and a reservation limit of
 five. These counts are a runtime snapshot, not a hardcoded coverage promise.
+
+The native development CLI now consumes validated mono little-endian `f32` PCM
+and an explicit BCP 47 language tag through the public Rust API. Running the
+pinned 10.56-second fixture with `transcribe-pcm` produced the unchanged final
+oracle text on stdout. General compressed-media decoding remains a later,
+backend-independent slice.
