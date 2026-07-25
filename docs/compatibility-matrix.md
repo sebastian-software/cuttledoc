@@ -118,6 +118,12 @@ Recognition gate:
 
 Golden audio vectors should compare sample count, duration, channel fold-down, resampling tolerance, and normalized output.
 
+The first long-form memory control decodes a continuously re-encoded one-hour
+Ogg/Opus input to exactly 230.4 MB of mono 16 kHz `f32` PCM in 5.6 seconds. The
+current complete-buffer handoff peaks at 471.5 MB RSS. This keeps a one-hour
+file practical on the 16 GB baseline while preserving chunked decoding as the
+review trigger for multi-hour inputs rather than an unmeasured release blocker.
+
 ## Model management
 
 | Capability           | Baseline                       | v3 target                                | Status   |

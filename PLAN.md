@@ -256,6 +256,15 @@ Rust. A roughly 390 KB npm tarball installed into clean ESM and CommonJS
 applications and reproduced the same Ogg/Opus transcript through the exported
 file API. The ESM run also cancelled a second active file operation.
 
+A decoder-only long-form control continuously re-encoded the clean FLEURS
+speech into a one-hour, 55 MB Ogg/Opus file. The release build decoded and
+wrapped exactly 3,600 seconds / 230.4 MB of mono 16 kHz PCM in 5.6 seconds.
+Maximum RSS was 471.5 MB and macOS reported a 464.2 MB peak footprint. The
+roughly two-times-PCM peak comes from the first implementation moving the
+decoder `Vec` into the public `Arc<[f32]>` buffer. This is acceptable for the
+first 16 GB file slice; multi-hour and streaming measurements remain the
+trigger for chunked decoding.
+
 Scope:
 
 - Audio/video probing and decode to normalized 16 kHz mono `f32` samples.
