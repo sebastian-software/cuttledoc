@@ -164,6 +164,14 @@ completes through this command and prints the same final text as the Phase 0
 oracle. General media decoding remains deliberately outside this slice. The
 next slice crosses the thin Node boundary.
 
+The thin Node-API binding now copies caller PCM into Rust ownership, performs
+the blocking Apple work on a libuv worker, maps `AbortSignal` to the shared Rust
+cancellation token, and returns the structured result without duplicating
+orchestration. A Node 24 host-level smoke reproduced the final text, locale,
+10,560 ms duration, one segment, and 19 words through the native addon. A
+running-task abort returned the stable `CANCELLED` error. The remaining slice is
+the ESM/CommonJS facade and packed npm artifact.
+
 Scope:
 
 - Selected model and runtime lifecycle with immutable model revision.

@@ -176,3 +176,10 @@ and an explicit BCP 47 language tag through the public Rust API. Running the
 pinned 10.56-second fixture with `transcribe-pcm` produced the unchanged final
 oracle text on stdout. General compressed-media decoding remains a later,
 backend-independent slice.
+
+The same public Rust operation now crosses the thin Node-API boundary as an
+asynchronous libuv task. The binding copies input bytes before returning to
+JavaScript, maps `AbortSignal` to the Rust cancellation token, and returns only
+plain result objects. A Node 24 host-level smoke reproduced the exact text,
+`en_US`, 10,560 ms media duration, one segment, and 19 word records. Cancelling
+an active task rejected with the stable `CANCELLED` error.
