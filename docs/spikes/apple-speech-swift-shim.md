@@ -183,3 +183,16 @@ JavaScript, maps `AbortSignal` to the Rust cancellation token, and returns only
 plain result objects. A Node 24 host-level smoke reproduced the exact text,
 `en_US`, 10,560 ms media duration, one segment, and 19 word records. Cancelling
 an active task rejected with the stable `CANCELLED` error.
+
+The product JavaScript facade is deliberately smaller than the original Node
+packaging spike: it validates and owns input bytes, handles an already-aborted
+signal before entering native code, and forwards everything else to the Rust
+operation. ESM and CommonJS load the same prebuilt macOS arm64 Node-API binary.
+The packed artifact contains no Rust source, Cargo manifests, native build
+scripts, or install lifecycle hooks.
+
+The final host-level package check built a roughly 342 KB npm tarball,
+installed it into clean applications, and ran the FLEURS fixture through the
+installed ESM entry point. It reproduced the native result and also cancelled
+a second in-flight run. CommonJS loaded the same binary, and removing that
+binary produced the facade's actionable missing-artifact error.

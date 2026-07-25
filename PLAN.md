@@ -172,6 +172,16 @@ orchestration. A Node 24 host-level smoke reproduced the final text, locale,
 running-task abort returned the stable `CANCELLED` error. The remaining slice is
 the ESM/CommonJS facade and packed npm artifact.
 
+The product npm facade now provides the same typed API to ESM and CommonJS,
+rejects already-aborted work before entering native code, and ships only the
+prebuilt macOS arm64 Node-API library plus JavaScript and declarations. Its
+artifact harness builds, packs, checks the archive for native build inputs or
+lifecycle scripts, installs with compilers replaced by failure guards, and
+loads the package in clean Node 22 and Node 24 applications. A real packed
+artifact installed into a clean Node 24 application reproduced the same
+FLEURS text, locale, 10,560 ms duration, one segment, and 19 words. Cancelling
+another run after it entered the native worker returned `CANCELLED`.
+
 Scope:
 
 - Selected model and runtime lifecycle with immutable model revision.

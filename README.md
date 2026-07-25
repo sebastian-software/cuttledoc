@@ -108,6 +108,32 @@ cargo run --locked -p cuttledoc-cli -- \
 locale inventory. These development commands require Apple Silicon with macOS
 26 or newer and normal access to the macOS Speech service.
 
+## Development Node API
+
+The first Node.js surface accepts the same raw mono little-endian `f32` PCM and
+returns the structured Rust result without a second orchestration layer:
+
+```js
+import { readFile } from 'node:fs/promises';
+import { transcribePcm } from 'cuttledoc';
+
+const pcm = await readFile('/tmp/input.f32le');
+const result = await transcribePcm(pcm, {
+  language: 'en-US',
+  sampleRate: 16_000,
+});
+console.log(result.text);
+```
+
+`AbortSignal` cancels work through the shared Rust cancellation token. The
+current package contains only a prebuilt macOS arm64 artifact and requires Node
+22 or newer; installation does not run Cargo, Xcode, CMake, or `node-gyp`.
+Build and exercise the exact npm tarball through both ESM and CommonJS with:
+
+```sh
+bash scripts/test-cuttledoc-node-package.sh
+```
+
 ## First proof
 
 The first implementation milestone is deliberately narrow:

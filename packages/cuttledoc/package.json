@@ -1,0 +1,42 @@
+{
+  "name": "cuttledoc",
+  "version": "0.1.0",
+  "description": "Local-first speech transcription for Apple Silicon",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastian-software/cuttledoc-rs.git",
+    "directory": "packages/cuttledoc"
+  },
+  "bugs": {
+    "url": "https://github.com/sebastian-software/cuttledoc-rs/issues"
+  },
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "files": [
+    "cuttledoc.darwin-arm64.node",
+    "index.cjs",
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "preferUnplugged": true
+}
