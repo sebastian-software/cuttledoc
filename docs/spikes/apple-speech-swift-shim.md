@@ -196,3 +196,15 @@ installed it into clean applications, and ran the FLEURS fixture through the
 installed ESM entry point. It reproduced the native result and also cancelled
 a second in-flight run. CommonJS loaded the same binary, and removing that
 binary produced the facade's actionable missing-artifact error.
+
+The public Rust smoke also has a repeat mode for lifecycle validation. It
+reuses the same owned PCM buffer across newly created sessions, requires every
+final transcript to match the first run, and fails if the system reservation
+inventory differs after the final session.
+
+On the evidence host, ten consecutive sessions reproduced the exact final
+text, 19 word ranges, and confidence values. Processing time ranged from 1.31
+to 1.43 seconds per 10.56-second fixture, the reservation set was unchanged,
+maximum RSS was 22,986,752 bytes, and `time -l` reported a 9,061,024-byte peak
+memory footprint. This is a bounded lifecycle regression check, not a
+long-duration leak claim.

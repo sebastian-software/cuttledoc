@@ -182,6 +182,17 @@ artifact installed into a clean Node 24 application reproduced the same
 FLEURS text, locale, 10,560 ms duration, one segment, and 19 words. Cancelling
 another run after it entered the native worker returned `CANCELLED`.
 
+The final lifecycle gate runs the public Rust operation repeatedly in one
+process, requires every transcript to remain identical, and compares the live
+Apple reservation inventory before and after all sessions. This turns repeated
+creation/disposal and reservation cleanup into executable host-level evidence
+rather than a manual observation.
+
+Ten consecutive FLEURS runs passed this gate with identical text, locale,
+segment, word timing, and confidence output. Per-run processing time stayed
+between 1.31 and 1.43 seconds, reservations were unchanged, maximum process RSS
+was 23.0 MB, and the reported peak memory footprint was 9.1 MB.
+
 Scope:
 
 - Selected model and runtime lifecycle with immutable model revision.
