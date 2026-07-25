@@ -19,7 +19,7 @@ export interface TranscriptSegment {
   words: TranscriptWord[];
 }
 
-export interface PcmTranscriptionResult {
+export interface TranscriptionResult {
   text: string;
   language?: string;
   backend: string;
@@ -29,6 +29,9 @@ export interface PcmTranscriptionResult {
   segments: TranscriptSegment[];
 }
 
+/** @deprecated Use `TranscriptionResult`. */
+export type PcmTranscriptionResult = TranscriptionResult;
+
 export interface PcmTranscriptionOptions {
   /** Explicit BCP 47 language tag, such as `en-US` or `de-DE`. */
   language: string;
@@ -37,9 +40,28 @@ export interface PcmTranscriptionOptions {
   signal?: AbortSignal;
 }
 
+export interface FileTranscriptionOptions {
+  /** Explicit BCP 47 language tag, such as `en-US` or `de-DE`. */
+  language: string;
+  /**
+   * FFmpeg executable override. Resolution otherwise checks `FFMPEG_PATH` and
+   * then the process `PATH`.
+   */
+  ffmpegPath?: string;
+  signal?: AbortSignal;
+}
+
 export declare function version(): string;
 
 export declare function recognitionBackends(): BackendCapability[];
+
+/**
+ * Decode and transcribe a media file through the Rust-owned audio pipeline.
+ */
+export declare function transcribeFile(
+  path: string,
+  options: FileTranscriptionOptions,
+): Promise<TranscriptionResult>;
 
 /**
  * Transcribe mono little-endian f32 PCM through the selected local backend.
@@ -49,10 +71,11 @@ export declare function recognitionBackends(): BackendCapability[];
 export declare function transcribePcm(
   pcm: Uint8Array,
   options: PcmTranscriptionOptions,
-): Promise<PcmTranscriptionResult>;
+): Promise<TranscriptionResult>;
 
 declare const api: {
   recognitionBackends: typeof recognitionBackends;
+  transcribeFile: typeof transcribeFile;
   transcribePcm: typeof transcribePcm;
   version: typeof version;
 };

@@ -24,16 +24,33 @@ function recognitionBackends() {
   return native.recognitionBackends();
 }
 
-function transcribePcm(pcm, options) {
-  if (!(pcm instanceof Uint8Array)) {
-    throw new TypeError('pcm must be a Uint8Array containing little-endian f32 samples');
-  }
+function validateOptions(options) {
   if (options === null || typeof options !== 'object') {
     throw new TypeError('options must be an object');
   }
   if (typeof options.language !== 'string' || options.language.trim() === '') {
     throw new TypeError('options.language must be a non-empty BCP 47 language tag');
   }
+  if (
+    options.signal !== undefined &&
+    !(options.signal instanceof AbortSignal)
+  ) {
+    throw new TypeError('options.signal must be an AbortSignal');
+  }
+}
+
+function cancelledPromise() {
+  const error = new Error('CANCELLED: transcription was cancelled');
+  error.name = 'AbortError';
+  error.code = 'CANCELLED';
+  return Promise.reject(error);
+}
+
+function transcribePcm(pcm, options) {
+  if (!(pcm instanceof Uint8Array)) {
+    throw new TypeError('pcm must be a Uint8Array containing little-endian f32 samples');
+  }
+  validateOptions(options);
   if (
     options.sampleRate !== undefined &&
     (!Number.isInteger(options.sampleRate) ||
@@ -42,18 +59,9 @@ function transcribePcm(pcm, options) {
   ) {
     throw new TypeError('options.sampleRate must be a positive 32-bit integer');
   }
-  if (
-    options.signal !== undefined &&
-    !(options.signal instanceof AbortSignal)
-  ) {
-    throw new TypeError('options.signal must be an AbortSignal');
-  }
 
   if (options.signal?.aborted) {
-    const error = new Error('CANCELLED: transcription was cancelled');
-    error.name = 'AbortError';
-    error.code = 'CANCELLED';
-    return Promise.reject(error);
+    return cancelledPromise();
   }
 
   const ownedPcm = Buffer.from(pcm);
@@ -67,4 +75,35 @@ function transcribePcm(pcm, options) {
   );
 }
 
-module.exports = { recognitionBackends, transcribePcm, version };
+function transcribeFile(path, options) {
+  if (typeof path !== 'string' || path.trim() === '') {
+    throw new TypeError('path must be a non-empty file path');
+  }
+  validateOptions(options);
+  if (
+    options.ffmpegPath !== undefined &&
+    (typeof options.ffmpegPath !== 'string' ||
+      options.ffmpegPath.trim() === '')
+  ) {
+    throw new TypeError('options.ffmpegPath must be a non-empty executable path');
+  }
+  if (options.signal?.aborted) {
+    return cancelledPromise();
+  }
+
+  return native.transcribeFile(
+    path,
+    {
+      language: options.language,
+      ffmpegPath: options.ffmpegPath,
+    },
+    options.signal,
+  );
+}
+
+module.exports = {
+  recognitionBackends,
+  transcribeFile,
+  transcribePcm,
+  version,
+};

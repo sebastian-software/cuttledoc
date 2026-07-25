@@ -249,6 +249,13 @@ Ogg/Opus FLEURS fixture plus WAV, 192 kbit/s MP3, and 192 kbit/s M4A/AAC
 variants all reproduced the same final Apple transcript. The next checkpoint
 crosses this operation through the thin Node package.
 
+The Node binding and ESM/CommonJS facade now expose the same asynchronous file
+operation. JavaScript validates paths and already-aborted signals only; FFmpeg
+resolution, decoding, cancellation, PCM ownership, and transcription remain in
+Rust. A roughly 390 KB npm tarball installed into clean ESM and CommonJS
+applications and reproduced the same Ogg/Opus transcript through the exported
+file API. The ESM run also cancelled a second active file operation.
+
 Scope:
 
 - Audio/video probing and decode to normalized 16 kHz mono `f32` samples.

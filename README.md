@@ -115,22 +115,20 @@ locale inventory. These development commands require Apple Silicon with macOS
 
 ## Development Node API
 
-The first Node.js surface accepts the same raw mono little-endian `f32` PCM and
+The Node.js surface accepts media files through the same Rust-owned decoder and
 returns the structured Rust result without a second orchestration layer:
 
 ```js
-import { readFile } from 'node:fs/promises';
-import { transcribePcm } from 'cuttledoc';
+import { transcribeFile } from 'cuttledoc';
 
-const pcm = await readFile('/tmp/input.f32le');
-const result = await transcribePcm(pcm, {
+const result = await transcribeFile('/path/to/podcast.m4a', {
   language: 'en-US',
-  sampleRate: 16_000,
 });
 console.log(result.text);
 ```
 
-`AbortSignal` cancels work through the shared Rust cancellation token. The
+`transcribePcm` remains the advanced decoder bypass. `AbortSignal` cancels
+FFmpeg or recognition through the shared Rust cancellation token. The
 current package contains only a prebuilt macOS arm64 artifact and requires Node
 22 or newer; installation does not run Cargo, Xcode, CMake, or `node-gyp`.
 Build and exercise the exact npm tarball through both ESM and CommonJS with:

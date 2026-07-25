@@ -5,22 +5,20 @@ Node.js surface over Cuttledoc's Rust core and currently uses the Apple Speech
 framework on macOS 26 or newer.
 
 ```js
-import { readFile } from 'node:fs/promises';
-import { transcribePcm } from 'cuttledoc';
+import { transcribeFile } from 'cuttledoc';
 
-const pcm = await readFile('/tmp/input.f32le');
-const result = await transcribePcm(pcm, {
+const result = await transcribeFile('/path/to/podcast.m4a', {
   language: 'en-US',
-  sampleRate: 16_000,
 });
 
 console.log(result.text);
 ```
 
-The current input contract is mono little-endian `f32` PCM. Pass an
-`AbortSignal` as `signal` to cancel active work. The package contains a
-prebuilt macOS arm64 Node-API artifact and does not compile code during
-installation.
+File input uses an explicitly configured FFmpeg executable, `FFMPEG_PATH`, or
+`ffmpeg` on `PATH`. `transcribePcm` remains available for mono little-endian
+`f32` PCM. Pass an `AbortSignal` as `signal` to cancel decoding or recognition.
+The package contains a prebuilt macOS arm64 Node-API artifact and does not
+compile code during installation.
 
 This is an implementation-incubator artifact and is not yet the production
 Cuttledoc v3 release. See the

@@ -1,6 +1,9 @@
+use std::path::PathBuf;
+
 use cuttledoc::{
-    AudioFormat, Availability, CancellationToken, ErrorCode, PcmBuffer, TranscribeOptions,
-    TranscriptionResult, recognition_capabilities, transcribe_pcm_with_cancellation,
+    AudioFormat, Availability, CancellationToken, ErrorCode, MediaDecodeOptions, PcmBuffer,
+    TranscribeOptions, TranscriptionResult, recognition_capabilities,
+    transcribe_file_with_cancellation, transcribe_pcm_with_cancellation,
 };
 use napi::bindgen_prelude::{AbortSignal, AsyncTask, Buffer};
 use napi::{Env, Error, Result, Status, Task};
@@ -21,6 +24,14 @@ pub struct PcmTranscriptionOptions {
     pub language: String,
     #[napi(js_name = "sampleRate")]
     pub sample_rate: Option<u32>,
+}
+
+#[napi(object)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FileTranscriptionOptions {
+    pub language: String,
+    #[napi(js_name = "ffmpegPath")]
+    pub ffmpeg_path: Option<String>,
 }
 
 #[napi(object)]
@@ -66,6 +77,12 @@ pub struct PcmTranscriptionTask {
     cancellation: CancellationToken,
 }
 
+pub struct FileTranscriptionTask {
+    path: PathBuf,
+    options: FileTranscriptionOptions,
+    cancellation: CancellationToken,
+}
+
 impl Task for PcmTranscriptionTask {
     type Output = PcmTranscriptionResult;
     type JsValue = PcmTranscriptionResult;
@@ -79,6 +96,31 @@ impl Task for PcmTranscriptionTask {
             &TranscribeOptions {
                 language: Some(self.options.language.clone()),
                 ..TranscribeOptions::default()
+            },
+            &self.cancellation,
+        )
+        .map_err(node_error)?;
+        Ok(map_transcription_result(result))
+    }
+
+    fn resolve(&mut self, _env: Env, output: Self::Output) -> Result<Self::JsValue> {
+        Ok(output)
+    }
+}
+
+impl Task for FileTranscriptionTask {
+    type Output = PcmTranscriptionResult;
+    type JsValue = PcmTranscriptionResult;
+
+    fn compute(&mut self) -> Result<Self::Output> {
+        let result = transcribe_file_with_cancellation(
+            &self.path,
+            &TranscribeOptions {
+                language: Some(self.options.language.clone()),
+                ..TranscribeOptions::default()
+            },
+            &MediaDecodeOptions {
+                ffmpeg_path: self.options.ffmpeg_path.as_deref().map(PathBuf::from),
             },
             &self.cancellation,
         )
@@ -122,11 +164,7 @@ pub fn transcribe_pcm(
     options: PcmTranscriptionOptions,
     signal: Option<AbortSignal>,
 ) -> AsyncTask<PcmTranscriptionTask> {
-    let cancellation = CancellationToken::new();
-    if let Some(abort_signal) = signal.as_ref() {
-        let cancellation_on_abort = cancellation.clone();
-        abort_signal.on_abort(move || cancellation_on_abort.cancel());
-    }
+    let cancellation = cancellation_token(signal.as_ref());
     AsyncTask::with_optional_signal(
         PcmTranscriptionTask {
             pcm: pcm.as_ref().to_vec(),
@@ -135,6 +173,32 @@ pub fn transcribe_pcm(
         },
         signal,
     )
+}
+
+#[napi(js_name = "transcribeFile")]
+pub fn transcribe_file(
+    path: String,
+    options: FileTranscriptionOptions,
+    signal: Option<AbortSignal>,
+) -> AsyncTask<FileTranscriptionTask> {
+    let cancellation = cancellation_token(signal.as_ref());
+    AsyncTask::with_optional_signal(
+        FileTranscriptionTask {
+            path: PathBuf::from(path),
+            options,
+            cancellation,
+        },
+        signal,
+    )
+}
+
+fn cancellation_token(signal: Option<&AbortSignal>) -> CancellationToken {
+    let cancellation = CancellationToken::new();
+    if let Some(abort_signal) = signal {
+        let cancellation_on_abort = cancellation.clone();
+        abort_signal.on_abort(move || cancellation_on_abort.cancel());
+    }
+    cancellation
 }
 
 fn map_transcription_result(result: TranscriptionResult) -> PcmTranscriptionResult {
@@ -246,6 +310,21 @@ mod tests {
             cancellation: CancellationToken::new(),
         };
         let error = task.compute().expect_err("invalid PCM must fail");
+        assert_eq!(error.status, Status::InvalidArg);
+        assert!(error.reason.contains("INVALID_INPUT"));
+    }
+
+    #[test]
+    fn file_task_rejects_missing_media_before_loading_a_backend() {
+        let mut task = FileTranscriptionTask {
+            path: std::env::temp_dir().join("cuttledoc-node-definitely-missing.media"),
+            options: FileTranscriptionOptions {
+                language: "en-US".to_owned(),
+                ffmpeg_path: Some("/definitely/missing/ffmpeg".to_owned()),
+            },
+            cancellation: CancellationToken::new(),
+        };
+        let error = task.compute().expect_err("missing media must fail");
         assert_eq!(error.status, Status::InvalidArg);
         assert!(error.reason.contains("INVALID_INPUT"));
     }
