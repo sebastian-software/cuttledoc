@@ -19,6 +19,7 @@ ADRs capture decisions that materially constrain the implementation. Proposed AD
 | [0013](0013-select-transcript-enhancement-model-before-embedded-runtime.md) | Select the transcript-enhancement model before its embedded runtime | Accepted |
 | [0014](0014-local-first-transcript-enhancement-defaults.md)            | Local-first transcript-enhancement defaults          | Accepted |
 | [0015](0015-apple-speech-first-local-asr-backend.md)                   | Apple Speech as the first local ASR backend           | Accepted |
+| [0016](0016-external-ffmpeg-process-boundary-for-media-decoding.md)     | External FFmpeg process boundary for initial media decoding | Accepted |
 
 Status values: proposed, accepted, superseded, rejected.
 
