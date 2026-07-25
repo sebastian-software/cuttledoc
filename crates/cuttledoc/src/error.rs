@@ -108,6 +108,21 @@ impl From<cuttledoc_apple_speech::AdapterError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_audio::AudioDecodeError> for CuttledocError {
+    fn from(error: cuttledoc_audio::AudioDecodeError) -> Self {
+        use cuttledoc_audio::AudioDecodeErrorKind;
+
+        let code = match error.kind {
+            AudioDecodeErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AudioDecodeErrorKind::Cancelled => ErrorCode::Cancelled,
+            AudioDecodeErrorKind::ExecutableUnavailable
+            | AudioDecodeErrorKind::ProcessFailed
+            | AudioDecodeErrorKind::InvalidOutput => ErrorCode::AudioDecodeFailed,
+        };
+        Self::new(code, error.message)
+    }
+}
+
 pub type Result<T> = std::result::Result<T, CuttledocError>;
 
 #[cfg(test)]

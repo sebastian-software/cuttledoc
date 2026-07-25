@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/adapters/apple-speech",
+  "crates/cuttledoc-audio",
   "crates/cuttledoc",
   "crates/cuttledoc-cli",
   "crates/cuttledoc-models",

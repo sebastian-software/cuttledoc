@@ -34,11 +34,16 @@ name = "cuttledoc"
 version = "0.1.0"
 dependencies = [
  "cuttledoc-apple-speech",
+ "cuttledoc-audio",
  "cuttledoc-models",
 ]
 
 [[package]]
 name = "cuttledoc-apple-speech"
+version = "0.1.0"
+
+[[package]]
+name = "cuttledoc-audio"
 version = "0.1.0"
 
 [[package]]

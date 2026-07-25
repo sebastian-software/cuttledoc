@@ -69,6 +69,7 @@ for the full evidence and limitations.
 crates/
 ├── adapters/
 │   └── apple-speech/    # private Swift C ABI boundary
+├── cuttledoc-audio/     # owned external media-decoding boundary
 ├── cuttledoc/           # public Rust contracts and orchestration
 ├── cuttledoc-models/    # model identity and provisioning
 ├── cuttledoc-cli/       # native CLI
@@ -93,16 +94,20 @@ bash scripts/check-dependency-policy.sh
 
 ## Development CLI
 
-The first complete local transcription path is intentionally limited to raw
-mono little-endian `f32` PCM. This validates the public Rust API, Apple Speech
-adapter, reducer, errors, and CLI before the general FFmpeg-backed decoder is
-added:
+The native CLI accepts ordinary audio or video through an explicitly configured
+or system FFmpeg executable. The owned Rust boundary selects the first audio
+stream, downmixes it, and resamples it to mono 16 kHz `f32` without hidden
+filters:
 
 ```sh
-ffmpeg -i input.ogg -ar 16000 -ac 1 -f f32le -acodec pcm_f32le /tmp/input.f32le
 cargo run --locked -p cuttledoc-cli -- \
-  transcribe-pcm /tmp/input.f32le --language en-US
+  transcribe input.ogg --language en-US
 ```
+
+Use `--ffmpeg-path /absolute/path/to/ffmpeg` or `FFMPEG_PATH` when FFmpeg is
+not available on `PATH`. Advanced callers can bypass media decoding with
+`transcribe-pcm`, which accepts mono little-endian `f32` PCM and an explicit
+sample rate.
 
 `backends list` reports the live Apple Speech capability and system-managed
 locale inventory. These development commands require Apple Silicon with macOS

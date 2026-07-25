@@ -6,6 +6,7 @@ mod cancellation;
 mod capability;
 mod error;
 mod lifecycle;
+mod media;
 mod progress;
 mod recognition;
 mod transcript;
@@ -23,6 +24,7 @@ pub use cuttledoc_models::{
 };
 pub use error::{CuttledocError, ErrorCode, Result};
 pub use lifecycle::{EngineState, QueuePolicy};
+pub use media::{MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation};
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use recognition::{transcribe_pcm, transcribe_pcm_with_cancellation};
 pub use transcript::{

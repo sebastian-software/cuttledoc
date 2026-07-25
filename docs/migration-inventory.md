@@ -67,7 +67,11 @@ Current `@cuttledoc/ffmpeg` behavior:
 - normalizes speech samples before local inference;
 - currently downloads the binary in a postinstall script.
 
-Target behavior keeps codec compatibility but removes mandatory package lifecycle downloads. A release-managed binary, explicit first-use install, system FFmpeg, or a layered Rust decoder/FFmpeg fallback must be selected during Phase 4.
+ADR-0016 selects the first target boundary: Rust directly invokes an explicit,
+`FFMPEG_PATH`, or process-`PATH` executable with no shell, lifecycle download,
+or implicit filters. A managed release binary remains a separate distribution
+decision requiring its exact build, license, source, digest, security-update,
+signing, and rollback evidence.
 
 ### OpenAI transcription
 

@@ -234,6 +234,21 @@ Exit criteria:
 
 **Purpose:** make the Rust core a usable replacement for Cuttledoc 2.
 
+### Current checkpoint
+
+ADR-0016 accepts an external FFmpeg process as the first general-media
+compatibility boundary while deferring any bundled binary. The new
+dependency-free `cuttledoc-audio` crate owns executable resolution, exact
+non-shell arguments, first-stream selection, conservative downmix/resampling,
+incremental `f32le` parsing, a 64 KiB stderr tail, child cancellation/reaping,
+and decoder errors.
+
+The public Rust file operation and `cuttledoc transcribe` CLI command reuse the
+existing PCM and Apple Speech path. On the evidence host, the original
+Ogg/Opus FLEURS fixture plus WAV, 192 kbit/s MP3, and 192 kbit/s M4A/AAC
+variants all reproduced the same final Apple transcript. The next checkpoint
+crosses this operation through the thin Node package.
+
 Scope:
 
 - Audio/video probing and decode to normalized 16 kHz mono `f32` samples.

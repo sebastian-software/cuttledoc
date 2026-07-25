@@ -109,12 +109,12 @@ Recognition gate:
 
 | Capability                 | Baseline                             | v3 target                                                 | Status   |
 | -------------------------- | ------------------------------------ | --------------------------------------------------------- | -------- |
-| Common audio/video formats | FFmpeg 8.0                           | Equivalent through managed/system FFmpeg initially        | Required |
+| Common audio/video formats | FFmpeg 8.0                           | Owned external-process FFmpeg path; managed binary pending | In progress |
 | Sample format              | signed 16-bit PCM converted to `f32` | Equivalent numerical conversion                           | Required |
-| Speech normalization       | Cuttledoc utility                    | Golden-vector parity or benchmarked replacement           | Required |
-| Custom FFmpeg path         | `FFMPEG_PATH`                        | Config/environment equivalent                             | Required |
+| Speech normalization       | Cuttledoc utility                    | Conservative unfiltered default; optional profiles measured separately | Deliberate replacement |
+| Custom FFmpeg path         | `FFMPEG_PATH`                        | Explicit API/CLI path, then environment, then process `PATH` | Implemented |
 | Managed binary             | npm postinstall download             | release/first-use strategy, never implicit broken install | Redesign |
-| Temporary cleanup          | Explicit helper                      | RAII cleanup, failure-tested                              | Required |
+| Temporary cleanup          | Explicit helper                      | Direct stdout stream; child cleanup is failure-tested     | Implemented |
 
 Golden audio vectors should compare sample count, duration, channel fold-down, resampling tolerance, and normalized output.
 

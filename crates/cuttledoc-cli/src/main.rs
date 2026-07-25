@@ -4,8 +4,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use cuttledoc::{
-    AudioFormat, Availability, PcmBuffer, TranscribeOptions, recognition_asset_inventory,
-    recognition_capabilities, transcribe_pcm,
+    AudioFormat, Availability, MediaDecodeOptions, PcmBuffer, TranscribeOptions,
+    recognition_asset_inventory, recognition_capabilities, transcribe_file, transcribe_pcm,
 };
 
 const HELP: &str = "\
@@ -15,10 +15,12 @@ Usage:
   cuttledoc --help
   cuttledoc --version
   cuttledoc backends list
+  cuttledoc transcribe <path> --language <tag> [--ffmpeg-path <path>]
   cuttledoc transcribe-pcm <path> --language <tag> [--sample-rate <hz>]
 
-transcribe-pcm accepts mono little-endian f32 PCM. The sample rate defaults to
-16000 Hz. General audio and video decoding arrives in a later phase.
+transcribe accepts media supported by the configured or system FFmpeg and
+decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
+decoding and accepts mono little-endian f32 PCM.
 ";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -26,6 +28,11 @@ enum Command {
     Help,
     Version,
     ListBackends,
+    Transcribe {
+        path: PathBuf,
+        language: String,
+        ffmpeg_path: Option<PathBuf>,
+    },
     TranscribePcm {
         path: PathBuf,
         language: String,
@@ -56,9 +63,49 @@ fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, String>
         [value] if value == "--help" || value == "-h" => Ok(Command::Help),
         [value] if value == "--version" || value == "-V" => Ok(Command::Version),
         [group, action] if group == "backends" && action == "list" => Ok(Command::ListBackends),
+        [command, rest @ ..] if command == "transcribe" => parse_transcribe(rest),
         [command, rest @ ..] if command == "transcribe-pcm" => parse_transcribe_pcm(rest),
         _ => Err(format!("unsupported arguments: {}", arguments.join(" "))),
     }
+}
+
+fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
+    let Some(path) = arguments.first().filter(|value| !value.starts_with('-')) else {
+        return Err("transcribe requires an input path".to_owned());
+    };
+    let mut language = None;
+    let mut ffmpeg_path = None;
+    let mut index = 1;
+    while index < arguments.len() {
+        match arguments[index].as_str() {
+            "--language" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--language requires a BCP 47 language tag")?;
+                if language.replace(value.clone()).is_some() {
+                    return Err("--language may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--ffmpeg-path" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--ffmpeg-path requires an executable path")?;
+                if ffmpeg_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--ffmpeg-path may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            option => return Err(format!("unsupported transcribe option: {option}")),
+        }
+    }
+    Ok(Command::Transcribe {
+        path: PathBuf::from(path),
+        language: language.ok_or("transcribe requires --language <tag>")?,
+        ffmpeg_path,
+    })
 }
 
 fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
@@ -139,6 +186,22 @@ fn run(command: Command) -> Result<(), String> {
                 }
             }
         }
+        Command::Transcribe {
+            path,
+            language,
+            ffmpeg_path,
+        } => {
+            let result = transcribe_file(
+                &path,
+                &TranscribeOptions {
+                    language: Some(language),
+                    ..TranscribeOptions::default()
+                },
+                &MediaDecodeOptions { ffmpeg_path },
+            )
+            .map_err(|error| error.to_string())?;
+            println!("{}", result.text);
+        }
         Command::TranscribePcm {
             path,
             language,
@@ -172,11 +235,26 @@ mod tests {
     }
 
     #[test]
-    fn parser_accepts_the_scaffold_commands() {
+    fn parser_accepts_supported_commands() {
         assert_eq!(parse(arguments(&[])), Ok(Command::Help));
         assert_eq!(
             parse(arguments(&["backends", "list"])),
             Ok(Command::ListBackends)
+        );
+        assert_eq!(
+            parse(arguments(&[
+                "transcribe",
+                "speech.ogg",
+                "--language",
+                "de-DE",
+                "--ffmpeg-path",
+                "/opt/ffmpeg"
+            ])),
+            Ok(Command::Transcribe {
+                path: PathBuf::from("speech.ogg"),
+                language: "de-DE".to_owned(),
+                ffmpeg_path: Some(PathBuf::from("/opt/ffmpeg")),
+            })
         );
         assert_eq!(
             parse(arguments(&[
@@ -209,8 +287,21 @@ mod tests {
     }
 
     #[test]
-    fn parser_rejects_unimplemented_commands() {
+    fn parser_rejects_invalid_commands() {
         assert!(parse(arguments(&["transcribe", "audio.wav"])).is_err());
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--ffmpeg-path",
+                "/one",
+                "--ffmpeg-path",
+                "/two"
+            ]))
+            .is_err()
+        );
         assert!(parse(arguments(&["transcribe-pcm", "speech.f32le"])).is_err());
         assert!(
             parse(arguments(&[
