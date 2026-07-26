@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const {
   recognitionBackends,
+  textGenerationBackends,
   transcribeFile,
   transcribePcm,
   version,
@@ -14,6 +15,10 @@ async function main() {
     recognitionBackends().map(({ id }) => id),
     ['apple-speech', 'whisper'],
   );
+  assert.deepEqual(
+    textGenerationBackends().map(({ id }) => id),
+    ['gemma-mlx', 'openrouter'],
+  );
 
   assert.throws(
     () => transcribePcm(Buffer.alloc(4), { language: 'en-US', sampleRate: 0 }),
@@ -22,6 +27,14 @@ async function main() {
   assert.throws(
     () => transcribeFile('/tmp/input.ogg', { language: '' }),
     /language must be a non-empty/,
+  );
+  assert.throws(
+    () =>
+      transcribeFile('/tmp/input.ogg', {
+        language: 'en-US',
+        enhancement: 'automatic',
+      }),
+    /enhancement must be/,
   );
 
   const controller = new AbortController();
@@ -57,6 +70,7 @@ async function main() {
       result.text,
       'However, due to the slow communication channels, styles in the West could lag behind by 25 to 30 years.',
     );
+    assert.equal(result.rawText, result.text);
     assert.equal(result.language, 'en_US');
     assert.equal(result.backend, 'apple-speech');
     assert.equal(result.mediaDurationMs, 10_560);
@@ -79,6 +93,7 @@ async function main() {
       whisper.text,
       'However, due to the slow communication channels, styles in the West could lag behind by 25-30 years.',
     );
+    assert.equal(whisper.rawText, whisper.text);
     assert.equal(whisper.language, 'en');
     assert.equal(whisper.backend, 'whisper');
     assert.equal(whisper.model, 'whisper-large-v3-turbo');

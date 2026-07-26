@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   recognitionBackends,
+  textGenerationBackends,
   transcribeFile,
   transcribePcm,
   version,
@@ -11,6 +12,10 @@ assert.equal(version(), '0.1.0');
 assert.deepEqual(
   recognitionBackends().map(({ id }) => id),
   ['apple-speech', 'whisper'],
+);
+assert.deepEqual(
+  textGenerationBackends().map(({ id }) => id),
+  ['gemma-mlx', 'openrouter'],
 );
 
 assert.throws(
@@ -48,6 +53,23 @@ assert.throws(
       ffmpegPath: '',
     }),
   /ffmpegPath must be a non-empty/,
+);
+assert.throws(
+  () =>
+    transcribeFile('/tmp/input.ogg', {
+      language: 'en-US',
+      enhancement: 'automatic',
+    }),
+  /enhancement must be/,
+);
+assert.throws(
+  () =>
+    transcribeFile('/tmp/input.ogg', {
+      language: 'en-US',
+      enhancement: 'gemini',
+      enhancementModelPath: '/models/gemma',
+    }),
+  /enhancementModelPath requires/,
 );
 
 const controller = new AbortController();
@@ -89,6 +111,7 @@ if (process.env.CUTTLEDOC_NODE_PCM_FIXTURE) {
     result.text,
     'However, due to the slow communication channels, styles in the West could lag behind by 25 to 30 years.',
   );
+  assert.equal(result.rawText, result.text);
   assert.equal(result.language, 'en_US');
   assert.equal(result.backend, 'apple-speech');
   assert.equal(result.mediaDurationMs, 10_560);
@@ -113,6 +136,7 @@ if (process.env.CUTTLEDOC_NODE_PCM_FIXTURE) {
       whisper.text,
       'However, due to the slow communication channels, styles in the West could lag behind by 25-30 years.',
     );
+    assert.equal(whisper.rawText, whisper.text);
     assert.equal(whisper.language, 'en');
     assert.equal(whisper.backend, 'whisper');
     assert.equal(whisper.model, 'whisper-large-v3-turbo');
@@ -145,6 +169,7 @@ if (process.env.CUTTLEDOC_NODE_MEDIA_FIXTURE) {
     result.text,
     'However, due to the slow communication channels, styles in the West could lag behind by 25 to 30 years.',
   );
+  assert.equal(result.rawText, result.text);
   assert.equal(result.language, 'en_US');
   assert.equal(result.backend, 'apple-speech');
   assert.equal(result.mediaDurationMs, 10_560);

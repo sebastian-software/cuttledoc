@@ -92,14 +92,17 @@ fn transcribe_apple_speech(
         ));
     }
 
+    let text = accumulator.reducer.final_text();
     Ok(TranscriptionResult {
-        text: accumulator.reducer.final_text(),
+        raw_text: text.clone(),
+        text,
         language: resolved_locale,
         backend,
         model: None,
         media_duration: media_duration(input),
         processing_duration: started_at.elapsed(),
         segments: accumulator.reducer.final_segments(),
+        enhancement: None,
     })
 }
 
@@ -170,6 +173,7 @@ fn transcribe_whisper(
         .join(" ");
 
     Ok(TranscriptionResult {
+        raw_text: text.clone(),
         text,
         language: native.language,
         backend,
@@ -177,6 +181,7 @@ fn transcribe_whisper(
         media_duration,
         processing_duration: started_at.elapsed(),
         segments,
+        enhancement: None,
     })
 }
 

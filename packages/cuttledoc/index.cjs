@@ -24,6 +24,10 @@ function recognitionBackends() {
   return native.recognitionBackends();
 }
 
+function textGenerationBackends() {
+  return native.textGenerationBackends();
+}
+
 function validateOptions(options) {
   if (options === null || typeof options !== 'object') {
     throw new TypeError('options must be an object');
@@ -52,6 +56,31 @@ function validateOptions(options) {
     !(options.signal instanceof AbortSignal)
   ) {
     throw new TypeError('options.signal must be an AbortSignal');
+  }
+  if (
+    options.enhancement !== undefined &&
+    !['off', 'local', 'gemini'].includes(options.enhancement)
+  ) {
+    throw new TypeError(
+      'options.enhancement must be off, local, or gemini',
+    );
+  }
+  if (
+    options.enhancementModelPath !== undefined &&
+    (typeof options.enhancementModelPath !== 'string' ||
+      options.enhancementModelPath.trim() === '')
+  ) {
+    throw new TypeError(
+      'options.enhancementModelPath must be a non-empty model directory',
+    );
+  }
+  if (
+    options.enhancementModelPath !== undefined &&
+    options.enhancement !== 'local'
+  ) {
+    throw new TypeError(
+      'options.enhancementModelPath requires enhancement: local',
+    );
   }
 }
 
@@ -88,6 +117,8 @@ function transcribePcm(pcm, options) {
       backend: options.backend,
       modelPath: options.modelPath,
       sampleRate: options.sampleRate,
+      enhancement: options.enhancement,
+      enhancementModelPath: options.enhancementModelPath,
     },
     options.signal,
   );
@@ -116,6 +147,8 @@ function transcribeFile(path, options) {
       backend: options.backend,
       modelPath: options.modelPath,
       ffmpegPath: options.ffmpegPath,
+      enhancement: options.enhancement,
+      enhancementModelPath: options.enhancementModelPath,
     },
     options.signal,
   );
@@ -123,6 +156,7 @@ function transcribeFile(path, options) {
 
 module.exports = {
   recognitionBackends,
+  textGenerationBackends,
   transcribeFile,
   transcribePcm,
   version,

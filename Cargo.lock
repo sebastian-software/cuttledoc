@@ -148,6 +148,7 @@ name = "cuttledoc-cli"
 version = "0.1.0"
 dependencies = [
  "cuttledoc",
+ "serde_json",
 ]
 
 [[package]]

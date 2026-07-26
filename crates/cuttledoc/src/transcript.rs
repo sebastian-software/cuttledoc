@@ -253,6 +253,7 @@ pub struct TranscribeOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TranscriptionResult {
+    pub raw_text: String,
     pub text: String,
     pub language: Option<String>,
     pub backend: BackendId,
@@ -260,6 +261,7 @@ pub struct TranscriptionResult {
     pub media_duration: Duration,
     pub processing_duration: Duration,
     pub segments: Vec<TranscriptionSegment>,
+    pub enhancement: Option<crate::TranscriptEnhancementResult>,
 }
 
 #[cfg(test)]

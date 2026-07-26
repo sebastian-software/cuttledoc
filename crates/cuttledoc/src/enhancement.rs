@@ -175,21 +175,12 @@ pub fn enhance_transcript_with_progress(
             return Err(cancelled_error(&backend, &model));
         }
         Err(error) => {
-            let reason = match error.code {
-                ErrorCode::BackendUnavailable
-                | ErrorCode::UnsupportedPlatform
-                | ErrorCode::ModelMissing
-                | ErrorCode::ModelInvalid
-                | ErrorCode::EngineLoadFailed => EnhancementFallbackReason::BackendUnavailable,
-                ErrorCode::GenerationContractViolation => EnhancementFallbackReason::InvalidOutput,
-                _ => EnhancementFallbackReason::GenerationFailed,
-            };
             return Ok(raw_fallback(
                 raw_text,
                 raw_sections,
                 backend,
                 model,
-                reason,
+                fallback_reason_for_error(&error),
                 error.code.as_str().to_owned(),
                 started_at.elapsed(),
             ));
@@ -513,6 +504,38 @@ fn raw_fallback(
         prompt_sha256: PROMPT_SHA256,
         processing_duration,
         sections,
+    }
+}
+
+pub(crate) fn fallback_from_engine_error(
+    request: &TranscriptEnhancementRequest,
+    backend: BackendId,
+    model: ModelId,
+    error: &CuttledocError,
+) -> Result<TranscriptEnhancementResult> {
+    validate_request(request)?;
+    let sections = raw_section_results(request);
+    let raw_text = join_sections(sections.iter().map(|section| section.raw_text.as_str()));
+    Ok(raw_fallback(
+        raw_text,
+        sections,
+        backend,
+        model,
+        fallback_reason_for_error(error),
+        error.code.as_str().to_owned(),
+        Duration::ZERO,
+    ))
+}
+
+fn fallback_reason_for_error(error: &CuttledocError) -> EnhancementFallbackReason {
+    match error.code {
+        ErrorCode::BackendUnavailable
+        | ErrorCode::UnsupportedPlatform
+        | ErrorCode::ModelMissing
+        | ErrorCode::ModelInvalid
+        | ErrorCode::EngineLoadFailed => EnhancementFallbackReason::BackendUnavailable,
+        ErrorCode::GenerationContractViolation => EnhancementFallbackReason::InvalidOutput,
+        _ => EnhancementFallbackReason::GenerationFailed,
     }
 }
 

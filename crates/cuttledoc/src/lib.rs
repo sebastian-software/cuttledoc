@@ -9,6 +9,7 @@ mod error;
 mod generation;
 mod lifecycle;
 mod media;
+mod pipeline;
 mod progress;
 mod recognition;
 mod transcript;
@@ -39,6 +40,9 @@ pub use generation::{
 };
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation};
+pub use pipeline::{
+    TranscriptEnhancementContext, TranscriptEnhancementMode, apply_transcript_enhancement,
+};
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use recognition::{transcribe_pcm, transcribe_pcm_with_cancellation};
 pub use transcript::{

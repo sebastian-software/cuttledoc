@@ -4,10 +4,13 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use cuttledoc::{
-    AudioFormat, Availability, BackendId, BackendSelection, MediaDecodeOptions, PcmBuffer,
-    TranscribeOptions, recognition_asset_inventory, recognition_capabilities, transcribe_file,
-    transcribe_pcm,
+    AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
+    MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptEnhancementContext,
+    TranscriptEnhancementMode, TranscriptionResult, apply_transcript_enhancement,
+    recognition_asset_inventory, recognition_capabilities, text_generation_capabilities,
+    transcribe_file, transcribe_pcm,
 };
+use serde_json::json;
 
 const HELP: &str = "\
 Cuttledoc speech and text processing
@@ -16,13 +19,30 @@ Usage:
   cuttledoc --help
   cuttledoc --version
   cuttledoc backends list
-  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--ffmpeg-path <path>]
-  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--sample-rate <hz>]
+  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--json]
+  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--json]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
-decoding and accepts mono little-endian f32 PCM.
+decoding and accepts mono little-endian f32 PCM. Enhancement defaults to off
+until the ADR-0014 32 GB host gate is complete. Gemini reads OPENROUTER_API_KEY
+only after transcription has released its recognition runtime.
 ";
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum EnhancementSelection {
+    #[default]
+    Off,
+    Local,
+    Gemini,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct EnhancementArguments {
+    selection: Option<EnhancementSelection>,
+    model_path: Option<PathBuf>,
+    json: bool,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Command {
@@ -35,6 +55,9 @@ enum Command {
         backend: BackendSelection,
         model_path: Option<PathBuf>,
         ffmpeg_path: Option<PathBuf>,
+        enhancement: EnhancementSelection,
+        enhancement_model_path: Option<PathBuf>,
+        json: bool,
     },
     TranscribePcm {
         path: PathBuf,
@@ -42,6 +65,9 @@ enum Command {
         backend: BackendSelection,
         model_path: Option<PathBuf>,
         sample_rate: u32,
+        enhancement: EnhancementSelection,
+        enhancement_model_path: Option<PathBuf>,
+        json: bool,
     },
 }
 
@@ -82,8 +108,15 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
     let mut backend = None;
     let mut model_path = None;
     let mut ffmpeg_path = None;
+    let mut enhancement_arguments = EnhancementArguments::default();
     let mut index = 1;
     while index < arguments.len() {
+        if let Some(next_index) =
+            parse_enhancement_argument(arguments, index, &mut enhancement_arguments)?
+        {
+            index = next_index;
+            continue;
+        }
         match arguments[index].as_str() {
             "--language" => {
                 let value = arguments
@@ -128,12 +161,17 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
             option => return Err(format!("unsupported transcribe option: {option}")),
         }
     }
+    let (enhancement, enhancement_model_path, json) =
+        finish_enhancement_arguments(enhancement_arguments)?;
     Ok(Command::Transcribe {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe requires --language <tag>")?,
         backend: backend.unwrap_or_default(),
         model_path,
         ffmpeg_path,
+        enhancement,
+        enhancement_model_path,
+        json,
     })
 }
 
@@ -145,8 +183,15 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
     let mut backend = None;
     let mut model_path = None;
     let mut sample_rate = None;
+    let mut enhancement_arguments = EnhancementArguments::default();
     let mut index = 1;
     while index < arguments.len() {
+        if let Some(next_index) =
+            parse_enhancement_argument(arguments, index, &mut enhancement_arguments)?
+        {
+            index = next_index;
+            continue;
+        }
         match arguments[index].as_str() {
             "--language" => {
                 let value = arguments
@@ -195,12 +240,17 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
             option => return Err(format!("unsupported transcribe-pcm option: {option}")),
         }
     }
+    let (enhancement, enhancement_model_path, json) =
+        finish_enhancement_arguments(enhancement_arguments)?;
     Ok(Command::TranscribePcm {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe-pcm requires --language <tag>")?,
         backend: backend.unwrap_or_default(),
         model_path,
         sample_rate: sample_rate.unwrap_or(16_000),
+        enhancement,
+        enhancement_model_path,
+        json,
     })
 }
 
@@ -211,6 +261,65 @@ fn parse_backend(value: &str) -> Result<BackendSelection, String> {
     BackendId::new(value)
         .map(BackendSelection::Id)
         .map_err(|error| error.to_string())
+}
+
+fn parse_enhancement(value: &str) -> Result<EnhancementSelection, String> {
+    match value {
+        "off" => Ok(EnhancementSelection::Off),
+        "local" => Ok(EnhancementSelection::Local),
+        "gemini" => Ok(EnhancementSelection::Gemini),
+        _ => Err("--enhance requires off, local, or gemini".to_owned()),
+    }
+}
+
+fn parse_enhancement_argument(
+    arguments: &[String],
+    index: usize,
+    parsed: &mut EnhancementArguments,
+) -> Result<Option<usize>, String> {
+    match arguments[index].as_str() {
+        "--enhance" => {
+            let value = arguments
+                .get(index + 1)
+                .ok_or("--enhance requires off, local, or gemini")?;
+            if parsed
+                .selection
+                .replace(parse_enhancement(value)?)
+                .is_some()
+            {
+                return Err("--enhance may only be specified once".to_owned());
+            }
+            Ok(Some(index + 2))
+        }
+        "--enhancement-model-path" => {
+            let value = arguments
+                .get(index + 1)
+                .filter(|value| !value.is_empty())
+                .ok_or("--enhancement-model-path requires a model directory")?;
+            if parsed.model_path.replace(PathBuf::from(value)).is_some() {
+                return Err("--enhancement-model-path may only be specified once".to_owned());
+            }
+            Ok(Some(index + 2))
+        }
+        "--json" => {
+            if parsed.json {
+                return Err("--json may only be specified once".to_owned());
+            }
+            parsed.json = true;
+            Ok(Some(index + 1))
+        }
+        _ => Ok(None),
+    }
+}
+
+fn finish_enhancement_arguments(
+    parsed: EnhancementArguments,
+) -> Result<(EnhancementSelection, Option<PathBuf>, bool), String> {
+    let selection = parsed.selection.unwrap_or_default();
+    if parsed.model_path.is_some() && selection != EnhancementSelection::Local {
+        return Err("--enhancement-model-path requires --enhance local".to_owned());
+    }
+    Ok((selection, parsed.model_path, parsed.json))
 }
 
 fn run(command: Command) -> Result<(), String> {
@@ -247,6 +356,22 @@ fn run(command: Command) -> Result<(), String> {
                     }
                 }
             }
+            for capability in text_generation_capabilities() {
+                match capability.availability {
+                    Availability::Available => println!(
+                        "{}\tavailable\ttask=text-generation\tmodel={}\tlocal={}",
+                        capability.backend, capability.model, capability.local
+                    ),
+                    Availability::Unavailable { reason, detail, .. } => println!(
+                        "{}\tunavailable\t{}\t{}\ttask=text-generation\tmodel={}\tlocal={}",
+                        capability.backend,
+                        reason.as_str(),
+                        detail,
+                        capability.model,
+                        capability.local
+                    ),
+                }
+            }
         }
         Command::Transcribe {
             path,
@@ -254,19 +379,23 @@ fn run(command: Command) -> Result<(), String> {
             backend,
             model_path,
             ffmpeg_path,
+            enhancement,
+            enhancement_model_path,
+            json,
         } => {
             let result = transcribe_file(
                 &path,
                 &TranscribeOptions {
                     backend,
-                    language: Some(language),
+                    language: Some(language.clone()),
                     model_path,
                     ..TranscribeOptions::default()
                 },
                 &MediaDecodeOptions { ffmpeg_path },
             )
             .map_err(|error| error.to_string())?;
-            println!("{}", result.text);
+            let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
+            print_result(result, json)?;
         }
         Command::TranscribePcm {
             path,
@@ -274,6 +403,9 @@ fn run(command: Command) -> Result<(), String> {
             backend,
             model_path,
             sample_rate,
+            enhancement,
+            enhancement_model_path,
+            json,
         } => {
             let bytes = fs::read(&path)
                 .map_err(|error| format!("could not read {}: {error}", path.display()))?;
@@ -284,15 +416,99 @@ fn run(command: Command) -> Result<(), String> {
                 &input,
                 &TranscribeOptions {
                     backend,
-                    language: Some(language),
+                    language: Some(language.clone()),
                     model_path,
                     ..TranscribeOptions::default()
                 },
             )
             .map_err(|error| error.to_string())?;
-            println!("{}", result.text);
+            let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
+            print_result(result, json)?;
         }
     }
+    Ok(())
+}
+
+fn enhance_result(
+    result: TranscriptionResult,
+    requested_language: &str,
+    selection: EnhancementSelection,
+    model_directory: Option<PathBuf>,
+) -> Result<TranscriptionResult, String> {
+    let mode = match selection {
+        EnhancementSelection::Off => TranscriptEnhancementMode::disabled(),
+        EnhancementSelection::Local => TranscriptEnhancementMode::gemma_mlx(model_directory, None),
+        EnhancementSelection::Gemini => {
+            TranscriptEnhancementMode::gemini_openrouter_from_environment()
+        }
+    };
+    let locale = result
+        .language
+        .clone()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| requested_language.to_owned())
+        .replace('_', "-");
+    let language = locale
+        .split('-')
+        .next()
+        .filter(|value| !value.is_empty() && *value != "auto")
+        .unwrap_or("und");
+    let result = apply_transcript_enhancement(
+        result,
+        mode,
+        &TranscriptEnhancementContext::new(language, &locale),
+        &CancellationToken::new(),
+    )
+    .map_err(|error| error.to_string())?;
+    if let Some(enhancement) = &result.enhancement
+        && let EnhancementOutcome::RawFallback { reason, detail } = &enhancement.outcome
+    {
+        eprintln!(
+            "transcript enhancement used raw fallback: {} ({detail})",
+            reason.as_str()
+        );
+    }
+    Ok(result)
+}
+
+fn print_result(result: TranscriptionResult, as_json: bool) -> Result<(), String> {
+    if !as_json {
+        println!("{}", result.text);
+        return Ok(());
+    }
+    let enhancement = result.enhancement.as_ref().map(|enhancement| {
+        let (outcome, fallback_reason, fallback_detail) = match &enhancement.outcome {
+            EnhancementOutcome::Applied => ("applied", None, None),
+            EnhancementOutcome::RawFallback { reason, detail } => {
+                ("raw_fallback", Some(reason.as_str()), Some(detail.as_str()))
+            }
+        };
+        json!({
+            "backend": enhancement.backend.as_str(),
+            "model": enhancement.model.as_str(),
+            "outcome": outcome,
+            "fallback_reason": fallback_reason,
+            "fallback_detail": fallback_detail,
+            "prompt_id": enhancement.prompt_id,
+            "prompt_sha256": enhancement.prompt_sha256,
+            "processing_duration_ms": enhancement.processing_duration.as_secs_f64() * 1_000.0,
+        })
+    });
+    let output = json!({
+        "raw_text": result.raw_text,
+        "text": result.text,
+        "language": result.language,
+        "backend": result.backend.as_str(),
+        "model": result.model.as_ref().map(|model| model.as_str()),
+        "media_duration_ms": result.media_duration.as_secs_f64() * 1_000.0,
+        "processing_duration_ms": result.processing_duration.as_secs_f64() * 1_000.0,
+        "enhancement": enhancement,
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&output)
+            .map_err(|error| format!("could not encode CLI result: {error}"))?
+    );
     Ok(())
 }
 
@@ -330,6 +546,9 @@ mod tests {
                 backend: BackendSelection::Id(BackendId::whisper()),
                 model_path: Some(PathBuf::from("/models/whisper.bin")),
                 ffmpeg_path: Some(PathBuf::from("/opt/ffmpeg")),
+                enhancement: EnhancementSelection::Off,
+                enhancement_model_path: None,
+                json: false,
             })
         );
         assert_eq!(
@@ -345,6 +564,9 @@ mod tests {
                 backend: BackendSelection::Auto,
                 model_path: None,
                 sample_rate: 16_000,
+                enhancement: EnhancementSelection::Off,
+                enhancement_model_path: None,
+                json: false,
             })
         );
         assert_eq!(
@@ -362,6 +584,32 @@ mod tests {
                 backend: BackendSelection::Auto,
                 model_path: None,
                 sample_rate: 48_000,
+                enhancement: EnhancementSelection::Off,
+                enhancement_model_path: None,
+                json: false,
+            })
+        );
+        assert_eq!(
+            parse(arguments(&[
+                "transcribe",
+                "speech.ogg",
+                "--language",
+                "de-DE",
+                "--enhance",
+                "local",
+                "--enhancement-model-path",
+                "/models/gemma",
+                "--json"
+            ])),
+            Ok(Command::Transcribe {
+                path: PathBuf::from("speech.ogg"),
+                language: "de-DE".to_owned(),
+                backend: BackendSelection::Auto,
+                model_path: None,
+                ffmpeg_path: None,
+                enhancement: EnhancementSelection::Local,
+                enhancement_model_path: Some(PathBuf::from("/models/gemma")),
+                json: true,
             })
         );
     }
@@ -415,6 +663,30 @@ mod tests {
                 "16000",
                 "--sample-rate",
                 "48000"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--enhance",
+                "gemini",
+                "--enhancement-model-path",
+                "/models/gemma"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--enhance",
+                "automatic"
             ]))
             .is_err()
         );

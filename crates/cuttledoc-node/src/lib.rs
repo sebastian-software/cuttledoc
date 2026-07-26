@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
 use cuttledoc::{
-    AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, ErrorCode,
-    MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptionResult,
-    recognition_capabilities, transcribe_file_with_cancellation, transcribe_pcm_with_cancellation,
+    AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
+    ErrorCode, MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptEnhancementContext,
+    TranscriptEnhancementMode, TranscriptionResult, apply_transcript_enhancement,
+    recognition_capabilities, text_generation_capabilities, transcribe_file_with_cancellation,
+    transcribe_pcm_with_cancellation,
 };
 use napi::bindgen_prelude::{AbortSignal, AsyncTask, Buffer};
 use napi::{Env, Error, Result, Status, Task};
@@ -27,6 +29,9 @@ pub struct PcmTranscriptionOptions {
     pub model_path: Option<String>,
     #[napi(js_name = "sampleRate")]
     pub sample_rate: Option<u32>,
+    pub enhancement: Option<String>,
+    #[napi(js_name = "enhancementModelPath")]
+    pub enhancement_model_path: Option<String>,
 }
 
 #[napi(object)]
@@ -38,6 +43,9 @@ pub struct FileTranscriptionOptions {
     pub model_path: Option<String>,
     #[napi(js_name = "ffmpegPath")]
     pub ffmpeg_path: Option<String>,
+    pub enhancement: Option<String>,
+    #[napi(js_name = "enhancementModelPath")]
+    pub enhancement_model_path: Option<String>,
 }
 
 #[napi(object)]
@@ -66,6 +74,8 @@ pub struct TranscriptSegment {
 #[napi(object)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct PcmTranscriptionResult {
+    #[napi(js_name = "rawText")]
+    pub raw_text: String,
     pub text: String,
     pub language: Option<String>,
     pub backend: String,
@@ -75,6 +85,25 @@ pub struct PcmTranscriptionResult {
     #[napi(js_name = "processingDurationMs")]
     pub processing_duration_ms: f64,
     pub segments: Vec<TranscriptSegment>,
+    pub enhancement: Option<TranscriptEnhancement>,
+}
+
+#[napi(object)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct TranscriptEnhancement {
+    pub backend: String,
+    pub model: String,
+    pub outcome: String,
+    #[napi(js_name = "fallbackReason")]
+    pub fallback_reason: Option<String>,
+    #[napi(js_name = "fallbackDetail")]
+    pub fallback_detail: Option<String>,
+    #[napi(js_name = "promptId")]
+    pub prompt_id: String,
+    #[napi(js_name = "promptSha256")]
+    pub prompt_sha256: String,
+    #[napi(js_name = "processingDurationMs")]
+    pub processing_duration_ms: f64,
 }
 
 pub struct PcmTranscriptionTask {
@@ -104,6 +133,13 @@ impl Task for PcmTranscriptionTask {
         )?;
         let result = transcribe_pcm_with_cancellation(&input, &options, &self.cancellation)
             .map_err(node_error)?;
+        let result = apply_enhancement_to_result(
+            result,
+            &self.options.language,
+            self.options.enhancement.as_deref(),
+            self.options.enhancement_model_path.as_deref(),
+            &self.cancellation,
+        )?;
         Ok(map_transcription_result(result))
     }
 
@@ -131,6 +167,13 @@ impl Task for FileTranscriptionTask {
             &self.cancellation,
         )
         .map_err(node_error)?;
+        let result = apply_enhancement_to_result(
+            result,
+            &self.options.language,
+            self.options.enhancement.as_deref(),
+            self.options.enhancement_model_path.as_deref(),
+            &self.cancellation,
+        )?;
         Ok(map_transcription_result(result))
     }
 
@@ -159,6 +202,52 @@ fn transcribe_options(
     })
 }
 
+fn apply_enhancement_to_result(
+    result: TranscriptionResult,
+    requested_language: &str,
+    selection: Option<&str>,
+    model_directory: Option<&str>,
+    cancellation: &CancellationToken,
+) -> Result<TranscriptionResult> {
+    let mode = match selection {
+        None | Some("off") => TranscriptEnhancementMode::disabled(),
+        Some("local") => {
+            TranscriptEnhancementMode::gemma_mlx(model_directory.map(PathBuf::from), None)
+        }
+        Some("gemini") => TranscriptEnhancementMode::gemini_openrouter_from_environment(),
+        Some(_) => {
+            return Err(Error::new(
+                Status::InvalidArg,
+                "enhancement must be off, local, or gemini".to_owned(),
+            ));
+        }
+    };
+    if model_directory.is_some() && selection != Some("local") {
+        return Err(Error::new(
+            Status::InvalidArg,
+            "enhancementModelPath requires enhancement: local".to_owned(),
+        ));
+    }
+    let locale = result
+        .language
+        .clone()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| requested_language.to_owned())
+        .replace('_', "-");
+    let language = locale
+        .split('-')
+        .next()
+        .filter(|value| !value.is_empty() && *value != "auto")
+        .unwrap_or("und");
+    apply_transcript_enhancement(
+        result,
+        mode,
+        &TranscriptEnhancementContext::new(language, &locale),
+        cancellation,
+    )
+    .map_err(node_error)
+}
+
 #[napi]
 pub fn version() -> String {
     cuttledoc::VERSION.to_owned()
@@ -167,6 +256,26 @@ pub fn version() -> String {
 #[napi(js_name = "recognitionBackends")]
 pub fn recognition_backends() -> Vec<BackendCapability> {
     recognition_capabilities()
+        .into_iter()
+        .map(|capability| {
+            let (available, unavailable_reason) = match capability.availability {
+                Availability::Available => (true, None),
+                Availability::Unavailable { reason, .. } => {
+                    (false, Some(reason.as_str().to_owned()))
+                }
+            };
+            BackendCapability {
+                id: capability.backend.to_string(),
+                available,
+                unavailable_reason,
+            }
+        })
+        .collect()
+}
+
+#[napi(js_name = "textGenerationBackends")]
+pub fn text_generation_backends() -> Vec<BackendCapability> {
+    text_generation_capabilities()
         .into_iter()
         .map(|capability| {
             let (available, unavailable_reason) = match capability.availability {
@@ -228,7 +337,28 @@ fn cancellation_token(signal: Option<&AbortSignal>) -> CancellationToken {
 }
 
 fn map_transcription_result(result: TranscriptionResult) -> PcmTranscriptionResult {
+    let enhancement = result.enhancement.map(|enhancement| {
+        let (outcome, fallback_reason, fallback_detail) = match enhancement.outcome {
+            EnhancementOutcome::Applied => ("applied".to_owned(), None, None),
+            EnhancementOutcome::RawFallback { reason, detail } => (
+                "raw_fallback".to_owned(),
+                Some(reason.as_str().to_owned()),
+                Some(detail),
+            ),
+        };
+        TranscriptEnhancement {
+            backend: enhancement.backend.to_string(),
+            model: enhancement.model.to_string(),
+            outcome,
+            fallback_reason,
+            fallback_detail,
+            prompt_id: enhancement.prompt_id.to_owned(),
+            prompt_sha256: enhancement.prompt_sha256.to_owned(),
+            processing_duration_ms: duration_milliseconds(enhancement.processing_duration),
+        }
+    });
     PcmTranscriptionResult {
+        raw_text: result.raw_text,
         text: result.text,
         language: result.language,
         backend: result.backend.to_string(),
@@ -255,6 +385,7 @@ fn map_transcription_result(result: TranscriptionResult) -> PcmTranscriptionResu
                     .collect(),
             })
             .collect(),
+        enhancement,
     }
 }
 
@@ -299,11 +430,19 @@ mod tests {
             }
         );
         assert_eq!(backends[1].id, "whisper");
+        assert_eq!(
+            text_generation_backends()
+                .into_iter()
+                .map(|backend| backend.id)
+                .collect::<Vec<_>>(),
+            vec!["gemma-mlx", "openrouter"]
+        );
     }
 
     #[test]
     fn result_mapping_preserves_structured_timing_and_confidence() {
         let result = map_transcription_result(TranscriptionResult {
+            raw_text: "hello".to_owned(),
             text: "hello".to_owned(),
             language: Some("en_US".to_owned()),
             backend: BackendId::apple_speech(),
@@ -320,9 +459,11 @@ mod tests {
                     confidence: Some(0.875),
                 }],
             }],
+            enhancement: None,
         });
 
         assert_eq!(result.backend, "apple-speech");
+        assert_eq!(result.raw_text, "hello");
         assert_eq!(result.media_duration_ms, 1_000.0);
         assert_eq!(result.processing_duration_ms, 250.0);
         assert_eq!(result.segments[0].words[0].confidence, Some(0.875));
@@ -337,6 +478,8 @@ mod tests {
                 backend: None,
                 model_path: None,
                 sample_rate: None,
+                enhancement: None,
+                enhancement_model_path: None,
             },
             cancellation: CancellationToken::new(),
         };
@@ -354,6 +497,8 @@ mod tests {
                 backend: None,
                 model_path: None,
                 ffmpeg_path: Some("/definitely/missing/ffmpeg".to_owned()),
+                enhancement: None,
+                enhancement_model_path: None,
             },
             cancellation: CancellationToken::new(),
         };
