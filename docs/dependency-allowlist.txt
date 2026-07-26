@@ -9,3 +9,4 @@ napi-derive
 objc2
 objc2-core-ml
 objc2-foundation
+serde_json

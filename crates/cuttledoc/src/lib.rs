@@ -4,7 +4,9 @@ mod audio;
 mod backend;
 mod cancellation;
 mod capability;
+mod enhancement;
 mod error;
+mod generation;
 mod lifecycle;
 mod media;
 mod progress;
@@ -22,7 +24,16 @@ pub use cuttledoc_models::{
     ManifestId, ModelDescriptor, ModelId, ModelOperations, ModelProvisioning, ModelState,
     ProviderId,
 };
+pub use enhancement::{
+    EnhancementFallbackReason, EnhancementOutcome, EnhancementSection, EnhancementSectionResult,
+    TranscriptEnhancementRequest, TranscriptEnhancementResult, WordDiff, enhance_transcript,
+    enhance_transcript_with_progress,
+};
 pub use error::{CuttledocError, ErrorCode, Result};
+pub use generation::{
+    FinishReason, GenerationMessage, GenerationOptions, GenerationOutputFormat, GenerationRequest,
+    GenerationResult, GenerationRole, GenerationUpdate, GenerationUsage, TextGenerationEngine,
+};
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation};
 pub use progress::{ProgressEvent, ProgressPhase};

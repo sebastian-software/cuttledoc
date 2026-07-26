@@ -17,6 +17,8 @@ pub enum ErrorCode {
     EngineLoadFailed,
     BackendContractViolation,
     TranscriptionFailed,
+    GenerationFailed,
+    GenerationContractViolation,
     AuthenticationFailed,
     Cancelled,
 }
@@ -36,6 +38,8 @@ impl ErrorCode {
             Self::EngineLoadFailed => "ENGINE_LOAD_FAILED",
             Self::BackendContractViolation => "BACKEND_CONTRACT_VIOLATION",
             Self::TranscriptionFailed => "TRANSCRIPTION_FAILED",
+            Self::GenerationFailed => "GENERATION_FAILED",
+            Self::GenerationContractViolation => "GENERATION_CONTRACT_VIOLATION",
             Self::AuthenticationFailed => "AUTHENTICATION_FAILED",
             Self::Cancelled => "CANCELLED",
         }
@@ -156,6 +160,10 @@ mod tests {
     #[test]
     fn error_code_serialization_is_stable() {
         assert_eq!(ErrorCode::EngineBusy.as_str(), "ENGINE_BUSY");
+        assert_eq!(
+            ErrorCode::GenerationContractViolation.as_str(),
+            "GENERATION_CONTRACT_VIOLATION"
+        );
         assert_eq!(ErrorCode::Cancelled.as_str(), "CANCELLED");
     }
 }
