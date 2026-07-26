@@ -615,7 +615,7 @@ fn resolve_recognition_model_path(
     explicit: Option<PathBuf>,
     cache_root: Option<&PathBuf>,
 ) -> CliResult<Option<PathBuf>> {
-    if explicit.is_some() || cache_root.is_none() {
+    if explicit.is_some() {
         return Ok(explicit);
     }
     let uses_whisper = matches!(
@@ -625,7 +625,7 @@ fn resolve_recognition_model_path(
     if !uses_whisper {
         return Ok(None);
     }
-    let manager = ModelManager::new(cache_root.expect("checked cache root"));
+    let manager = ModelManager::new(model_commands::resolve_cache_root(cache_root.cloned())?);
     Ok(Some(
         manager
             .model_directory("whisper-large-v3-turbo")
@@ -639,10 +639,10 @@ fn resolve_enhancement_model_path(
     explicit: Option<PathBuf>,
     cache_root: Option<&PathBuf>,
 ) -> CliResult<Option<PathBuf>> {
-    if explicit.is_some() || cache_root.is_none() || enhancement != EnhancementSelection::Local {
+    if explicit.is_some() || enhancement != EnhancementSelection::Local {
         return Ok(explicit);
     }
-    ModelManager::new(cache_root.expect("checked cache root"))
+    ModelManager::new(model_commands::resolve_cache_root(cache_root.cloned())?)
         .model_directory("gemma-4-26b-a4b-it-4bit")
         .map(Some)
         .map_err(CliError::from)
@@ -1026,5 +1026,23 @@ mod tests {
                 .expect("automatic path"),
             None
         );
+    }
+
+    #[test]
+    fn default_cache_root_resolves_managed_runtime_paths() {
+        let whisper = resolve_recognition_model_path(
+            &BackendSelection::Id(BackendId::whisper()),
+            None,
+            None,
+            None,
+        )
+        .expect("default Whisper path")
+        .expect("Whisper model path");
+        assert!(whisper.ends_with("models/whisper-large-v3-turbo/ggml-large-v3-turbo.bin"));
+
+        let gemma = resolve_enhancement_model_path(EnhancementSelection::Local, None, None)
+            .expect("default Gemma path")
+            .expect("Gemma model path");
+        assert!(gemma.ends_with("models/gemma-4-26b-a4b-it-4bit"));
     }
 }
