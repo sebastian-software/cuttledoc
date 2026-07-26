@@ -108,7 +108,7 @@ pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
 }
 
 pub fn text_generation_capabilities() -> Vec<TextGenerationCapabilities> {
-    vec![gemma_mlx_capabilities()]
+    vec![gemma_mlx_capabilities(), openrouter_capabilities()]
 }
 
 pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
@@ -359,6 +359,46 @@ fn gemma_mlx_capabilities() -> TextGenerationCapabilities {
     }
 }
 
+fn openrouter_capabilities() -> TextGenerationCapabilities {
+    let backend = BackendId::openrouter();
+    let model = ModelId::new(cuttledoc_openrouter::MODEL_ID)
+        .expect("the built-in OpenRouter model ID is valid");
+    let availability = match cuttledoc_openrouter::build_support() {
+        cuttledoc_openrouter::BuildSupport::UnsupportedPlatform => Availability::Unavailable {
+            reason: AvailabilityReason::UnsupportedPlatform,
+            detail: "the OpenRouter Foundation adapter requires macOS on Apple Silicon".to_owned(),
+            remediation: None,
+        },
+        cuttledoc_openrouter::BuildSupport::Native => {
+            match cuttledoc_openrouter::Credential::from_environment() {
+                Ok(_) => Availability::Available,
+                Err(_) => Availability::Unavailable {
+                    reason: AvailabilityReason::CredentialsMissing,
+                    detail: "an OpenRouter credential is not configured in the environment"
+                        .to_owned(),
+                    remediation: Some(format!(
+                        "set {} or provide an in-memory credential when explicitly selecting hosted enhancement",
+                        cuttledoc_openrouter::API_KEY_ENV
+                    )),
+                },
+            }
+        }
+    };
+
+    TextGenerationCapabilities {
+        backend,
+        model,
+        availability,
+        local: false,
+        structured_output: true,
+        maximum_output_tokens: 4_096,
+        maximum_concurrent_requests: 1,
+        cancellation_boundary: CancellationBoundary::Request,
+        minimum_unified_memory_bytes: None,
+        required_available_memory_bytes: None,
+    }
+}
+
 fn language_identifiers(locales: &[String]) -> Vec<String> {
     let mut languages = locales
         .iter()
@@ -431,10 +471,13 @@ mod tests {
     }
 
     #[test]
-    fn local_generation_capabilities_publish_the_hard_gates() {
+    fn generation_capabilities_publish_local_and_hosted_gates() {
         let capabilities = text_generation_capabilities();
-        assert_eq!(capabilities.len(), 1);
-        let gemma = &capabilities[0];
+        assert_eq!(capabilities.len(), 2);
+        let gemma = capabilities
+            .iter()
+            .find(|capability| capability.backend == BackendId::gemma_mlx())
+            .expect("Gemma is a known generation backend");
         assert_eq!(gemma.backend, BackendId::gemma_mlx());
         assert!(gemma.local);
         assert_eq!(gemma.maximum_concurrent_requests, 1);
@@ -445,6 +488,18 @@ mod tests {
         assert_eq!(
             gemma.required_available_memory_bytes,
             Some(cuttledoc_gemma_mlx::REQUIRED_AVAILABLE_MEMORY_BYTES)
+        );
+
+        let openrouter = capabilities
+            .iter()
+            .find(|capability| capability.backend == BackendId::openrouter())
+            .expect("OpenRouter is a known generation backend");
+        assert!(!openrouter.local);
+        assert!(openrouter.structured_output);
+        assert_eq!(openrouter.minimum_unified_memory_bytes, None);
+        assert_eq!(
+            openrouter.cancellation_boundary,
+            CancellationBoundary::Request
         );
     }
 }

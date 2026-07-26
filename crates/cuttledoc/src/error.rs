@@ -177,6 +177,30 @@ impl From<cuttledoc_gemma_mlx::AdapterError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_openrouter::AdapterError> for CuttledocError {
+    fn from(error: cuttledoc_openrouter::AdapterError) -> Self {
+        use cuttledoc_openrouter::AdapterErrorKind;
+
+        let code = match error.kind {
+            AdapterErrorKind::UnsupportedPlatform => ErrorCode::UnsupportedPlatform,
+            AdapterErrorKind::CredentialsMissing => ErrorCode::AuthenticationFailed,
+            AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AdapterErrorKind::AuthenticationFailed => ErrorCode::AuthenticationFailed,
+            AdapterErrorKind::TransportFailed => ErrorCode::GenerationFailed,
+            AdapterErrorKind::ResponseInvalid | AdapterErrorKind::ProviderDrift => {
+                ErrorCode::GenerationContractViolation
+            }
+            AdapterErrorKind::Cancelled => ErrorCode::Cancelled,
+        };
+        Self::new(code, error.message)
+            .with_backend(BackendId::openrouter())
+            .with_model(
+                ModelId::new(cuttledoc_openrouter::MODEL_ID)
+                    .expect("the built-in OpenRouter model ID is valid"),
+            )
+    }
+}
+
 pub type Result<T> = std::result::Result<T, CuttledocError>;
 
 #[cfg(test)]

@@ -130,6 +130,7 @@ dependencies = [
  "cuttledoc-audio",
  "cuttledoc-gemma-mlx",
  "cuttledoc-models",
+ "cuttledoc-openrouter",
  "cuttledoc-whisper",
  "serde_json",
 ]

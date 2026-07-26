@@ -34,7 +34,8 @@ pub use error::{CuttledocError, ErrorCode, Result};
 pub use generation::{
     FinishReason, GemmaGenerationEngine, GemmaGenerationOptions, GenerationMessage,
     GenerationOptions, GenerationOutputFormat, GenerationRequest, GenerationResult, GenerationRole,
-    GenerationUpdate, GenerationUsage, TextGenerationEngine,
+    GenerationUpdate, GenerationUsage, OpenRouterGenerationEngine, OpenRouterGenerationOptions,
+    TextGenerationEngine,
 };
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation};

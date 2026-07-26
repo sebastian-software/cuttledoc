@@ -25,6 +25,10 @@ impl BackendId {
         Self(cuttledoc_gemma_mlx::BACKEND_ID.to_owned())
     }
 
+    pub fn openrouter() -> Self {
+        Self(cuttledoc_openrouter::BACKEND_ID.to_owned())
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
