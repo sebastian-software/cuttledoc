@@ -462,8 +462,20 @@ mod memory {
 
     use super::MemorySnapshot;
 
+    const KERN_SUCCESS: i32 = 0;
+    const HOST_VM_INFO: i32 = 2;
+    const HOST_VM_INFO_COUNT: u32 = 15;
+    const FREE_COUNT: usize = 0;
+    const INACTIVE_COUNT: usize = 2;
+    const PURGEABLE_COUNT: usize = 12;
+
     unsafe extern "C" {
-        fn os_proc_available_memory() -> usize;
+        static mach_task_self_: u32;
+
+        fn mach_host_self() -> u32;
+        fn mach_port_deallocate(task: u32, name: u32) -> i32;
+        fn host_page_size(host: u32, page_size: *mut u32) -> i32;
+        fn host_statistics(host: u32, flavor: i32, statistics: *mut i32, count: *mut u32) -> i32;
         fn sysctlbyname(
             name: *const c_char,
             old_value: *mut c_void,
@@ -490,8 +502,64 @@ mod memory {
         }
         Some(MemorySnapshot {
             total_bytes,
-            available_bytes: u64::try_from(unsafe { os_proc_available_memory() }).ok()?,
+            available_bytes: available_memory_bytes()?,
         })
+    }
+
+    fn available_memory_bytes() -> Option<u64> {
+        let host = unsafe { mach_host_self() };
+        let result = (|| {
+            let mut page_size = 0_u32;
+            if unsafe { host_page_size(host, &mut page_size) } != KERN_SUCCESS {
+                return None;
+            }
+
+            let mut statistics = [0_i32; HOST_VM_INFO_COUNT as usize];
+            let mut count = HOST_VM_INFO_COUNT;
+            if unsafe { host_statistics(host, HOST_VM_INFO, statistics.as_mut_ptr(), &mut count) }
+                != KERN_SUCCESS
+                || count < HOST_VM_INFO_COUNT
+            {
+                return None;
+            }
+
+            available_bytes_from_vm_statistics(&statistics, page_size)
+        })();
+        unsafe {
+            let _ = mach_port_deallocate(mach_task_self_, host);
+        }
+        result
+    }
+
+    fn available_bytes_from_vm_statistics(
+        statistics: &[i32; HOST_VM_INFO_COUNT as usize],
+        page_size: u32,
+    ) -> Option<u64> {
+        let free = u64::from(u32::try_from(statistics[FREE_COUNT]).ok()?);
+        let inactive = u64::from(u32::try_from(statistics[INACTIVE_COUNT]).ok()?);
+        let purgeable = u64::from(u32::try_from(statistics[PURGEABLE_COUNT]).ok()?);
+        free.checked_add(inactive)?
+            .checked_add(purgeable)?
+            .checked_mul(u64::from(page_size))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn available_memory_counts_reclaimable_pages_without_speculative_double_counting() {
+            let mut statistics = [0_i32; HOST_VM_INFO_COUNT as usize];
+            statistics[FREE_COUNT] = 2;
+            statistics[INACTIVE_COUNT] = 3;
+            statistics[PURGEABLE_COUNT] = 5;
+            statistics[14] = 100;
+
+            assert_eq!(
+                available_bytes_from_vm_statistics(&statistics, 16_384),
+                Some(10 * 16_384)
+            );
+        }
     }
 }
 
