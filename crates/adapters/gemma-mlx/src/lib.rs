@@ -83,6 +83,10 @@ impl AdapterError {
             message: message.into(),
         }
     }
+
+    pub fn callback_violation(message: impl Into<String>) -> Self {
+        Self::new(AdapterErrorKind::CallbackViolation, message)
+    }
 }
 
 impl fmt::Display for AdapterError {
@@ -160,6 +164,7 @@ pub enum NativeFinishReason {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NativeGenerationResult {
     pub text: String,
+    pub token_ids: Vec<u32>,
     pub finish_reason: NativeFinishReason,
     pub prompt_tokens: u64,
     pub generated_tokens: u64,
@@ -260,29 +265,20 @@ impl GemmaEngine {
         }
 
         let mut generated_tokens = Vec::new();
+        let mut decode_stream = self.tokenizer.decode_stream(true);
         let mut emitted_text = String::new();
         let native =
             self.session
                 .generate(prompt_tokens, maximum_tokens, &is_cancelled, &mut |token| {
                     generated_tokens.push(token);
-                    let decoded =
-                        self.tokenizer
-                            .decode(&generated_tokens, true)
-                            .map_err(|error| {
-                                AdapterError::new(
-                                    AdapterErrorKind::CallbackViolation,
-                                    format!("could not decode a Gemma token update: {error}"),
-                                )
-                            })?;
-                    let delta = decoded.strip_prefix(&emitted_text).ok_or_else(|| {
+                    if let Some(delta) = decode_stream.step(token).map_err(|error| {
                         AdapterError::new(
                             AdapterErrorKind::CallbackViolation,
-                            "Gemma token updates changed text that was already emitted",
+                            format!("could not decode a Gemma token update: {error}"),
                         )
-                    })?;
-                    if !delta.is_empty() {
-                        on_delta(delta.to_owned())?;
-                        emitted_text = decoded;
+                    })? {
+                        on_delta(delta.clone())?;
+                        emitted_text.push_str(&delta);
                     }
                     Ok(())
                 })?;
@@ -308,6 +304,7 @@ impl GemmaEngine {
         }
         Ok(NativeGenerationResult {
             text,
+            token_ids: generated_tokens.clone(),
             finish_reason: native.finish_reason,
             prompt_tokens: u64::try_from(prompt_tokens.len()).unwrap_or(u64::MAX),
             generated_tokens: u64::try_from(generated_tokens.len()).unwrap_or(u64::MAX),

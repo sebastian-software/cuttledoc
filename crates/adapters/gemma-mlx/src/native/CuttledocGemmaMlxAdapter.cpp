@@ -333,12 +333,12 @@ public:
       check_cancelled(cancel_callback, callback_context);
       const auto token = next_token(current_tokens, caches);
       check_cancelled(cancel_callback, callback_context);
+      if (token_callback(callback_context, static_cast<uint32_t>(token)) != 0) {
+        throw CallbackError("Gemma token callback rejected an update");
+      }
       if (is_stop_token(token)) {
         mx::clear_cache();
         return CUTTLEDOC_GEMMA_MLX_FINISH_STOP;
-      }
-      if (token_callback(callback_context, static_cast<uint32_t>(token)) != 0) {
-        throw CallbackError("Gemma token callback rejected an update");
       }
       current_tokens.assign(1, token);
     }

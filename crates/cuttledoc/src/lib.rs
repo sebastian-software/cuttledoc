@@ -18,7 +18,8 @@ pub use backend::{BackendId, BackendSelection, known_backend_ids};
 pub use cancellation::CancellationToken;
 pub use capability::{
     Availability, AvailabilityReason, CancellationBoundary, RecognitionAssetInventory,
-    RecognitionCapabilities, recognition_asset_inventory, recognition_capabilities,
+    RecognitionCapabilities, TextGenerationCapabilities, recognition_asset_inventory,
+    recognition_capabilities, text_generation_capabilities,
 };
 pub use cuttledoc_models::{
     ManifestId, ModelDescriptor, ModelId, ModelOperations, ModelProvisioning, ModelState,
@@ -31,8 +32,9 @@ pub use enhancement::{
 };
 pub use error::{CuttledocError, ErrorCode, Result};
 pub use generation::{
-    FinishReason, GenerationMessage, GenerationOptions, GenerationOutputFormat, GenerationRequest,
-    GenerationResult, GenerationRole, GenerationUpdate, GenerationUsage, TextGenerationEngine,
+    FinishReason, GemmaGenerationEngine, GemmaGenerationOptions, GenerationMessage,
+    GenerationOptions, GenerationOutputFormat, GenerationRequest, GenerationResult, GenerationRole,
+    GenerationUpdate, GenerationUsage, TextGenerationEngine,
 };
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation};

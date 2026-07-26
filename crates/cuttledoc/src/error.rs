@@ -151,6 +151,32 @@ impl From<cuttledoc_whisper::AdapterError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_gemma_mlx::AdapterError> for CuttledocError {
+    fn from(error: cuttledoc_gemma_mlx::AdapterError) -> Self {
+        use cuttledoc_gemma_mlx::AdapterErrorKind;
+
+        let code = match error.kind {
+            AdapterErrorKind::UnsupportedPlatform => ErrorCode::UnsupportedPlatform,
+            AdapterErrorKind::SourceNotPrepared => ErrorCode::BackendUnavailable,
+            AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AdapterErrorKind::ModelMissing => ErrorCode::ModelMissing,
+            AdapterErrorKind::ModelInvalid => ErrorCode::ModelInvalid,
+            AdapterErrorKind::InsufficientMemory => ErrorCode::BackendUnavailable,
+            AdapterErrorKind::EngineLoadFailed => ErrorCode::EngineLoadFailed,
+            AdapterErrorKind::GenerationFailed => ErrorCode::GenerationFailed,
+            AdapterErrorKind::Cancelled => ErrorCode::Cancelled,
+            AdapterErrorKind::Busy => ErrorCode::EngineBusy,
+            AdapterErrorKind::CallbackViolation => ErrorCode::GenerationContractViolation,
+        };
+        Self::new(code, error.message)
+            .with_backend(BackendId::gemma_mlx())
+            .with_model(
+                ModelId::new(cuttledoc_gemma_mlx::MODEL_ID)
+                    .expect("the built-in Gemma model ID is valid"),
+            )
+    }
+}
+
 pub type Result<T> = std::result::Result<T, CuttledocError>;
 
 #[cfg(test)]

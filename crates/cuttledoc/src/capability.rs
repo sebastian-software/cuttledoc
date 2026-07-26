@@ -89,8 +89,26 @@ pub struct RecognitionAssetInventory {
     pub maximum_reserved_locales: u32,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TextGenerationCapabilities {
+    pub backend: BackendId,
+    pub model: ModelId,
+    pub availability: Availability,
+    pub local: bool,
+    pub structured_output: bool,
+    pub maximum_output_tokens: u32,
+    pub maximum_concurrent_requests: u16,
+    pub cancellation_boundary: CancellationBoundary,
+    pub minimum_unified_memory_bytes: Option<u64>,
+    pub required_available_memory_bytes: Option<u64>,
+}
+
 pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
     vec![apple_speech_capabilities(), whisper_capabilities()]
+}
+
+pub fn text_generation_capabilities() -> Vec<TextGenerationCapabilities> {
+    vec![gemma_mlx_capabilities()]
 }
 
 pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
@@ -247,6 +265,100 @@ fn whisper_capabilities() -> RecognitionCapabilities {
     }
 }
 
+fn gemma_mlx_capabilities() -> TextGenerationCapabilities {
+    use cuttledoc_gemma_mlx::{AdapterErrorKind, BuildSupport, MemoryGate};
+
+    let backend = BackendId::gemma_mlx();
+    let model =
+        ModelId::new(cuttledoc_gemma_mlx::MODEL_ID).expect("the built-in Gemma model ID is valid");
+    let availability = match cuttledoc_gemma_mlx::build_support() {
+        BuildSupport::UnsupportedPlatform => Availability::Unavailable {
+            reason: AvailabilityReason::UnsupportedPlatform,
+            detail: "Gemma MLX requires macOS on Apple Silicon".to_owned(),
+            remediation: None,
+        },
+        BuildSupport::SourceNotPrepared => Availability::Unavailable {
+            reason: AvailabilityReason::NativeComponentUnavailable,
+            detail: "Gemma MLX was not included in this Cuttledoc build".to_owned(),
+            remediation: Some(
+                "use a release artifact with Gemma support or build with the ADR-0014 MLX source"
+                    .to_owned(),
+            ),
+        },
+        BuildSupport::Native => match cuttledoc_gemma_mlx::system_memory_snapshot() {
+            None => Availability::Unavailable {
+                reason: AvailabilityReason::UnsupportedHardware,
+                detail: "unified-memory capacity could not be measured".to_owned(),
+                remediation: None,
+            },
+            Some(memory) => match cuttledoc_gemma_mlx::evaluate_memory(memory) {
+                MemoryGate::InsufficientTotal {
+                    required_bytes,
+                    actual_bytes,
+                } => Availability::Unavailable {
+                    reason: AvailabilityReason::UnsupportedHardware,
+                    detail: format!(
+                        "Gemma requires {required_bytes} bytes of unified memory; the host reports {actual_bytes}"
+                    ),
+                    remediation: Some(
+                        "leave transcript enhancement disabled or select explicit hosted enhancement"
+                            .to_owned(),
+                    ),
+                },
+                MemoryGate::InsufficientHeadroom {
+                    required_bytes,
+                    actual_bytes,
+                } => Availability::Unavailable {
+                    reason: AvailabilityReason::UnsupportedHardware,
+                    detail: format!(
+                        "Gemma requires {required_bytes} currently available bytes; the host reports {actual_bytes}"
+                    ),
+                    remediation: Some(
+                        "release other heavyweight workloads before enabling local enhancement"
+                            .to_owned(),
+                    ),
+                },
+                MemoryGate::Ready => match cuttledoc_gemma_mlx::configured_model_directory() {
+                    None => Availability::Unavailable {
+                        reason: AvailabilityReason::ModelMissing,
+                        detail: "Gemma 4 26B-A4B 4-bit is not installed".to_owned(),
+                        remediation: Some(format!(
+                            "set {} or install the pinned model in the Cuttledoc cache",
+                            cuttledoc_gemma_mlx::MODEL_PATH_ENV
+                        )),
+                    },
+                    Some(path) => match cuttledoc_gemma_mlx::validate_model(&path) {
+                        Ok(()) => Availability::Available,
+                        Err(error) => Availability::Unavailable {
+                            reason: match error.kind {
+                                AdapterErrorKind::ModelMissing => AvailabilityReason::ModelMissing,
+                                _ => AvailabilityReason::ModelInvalid,
+                            },
+                            detail: error.message,
+                            remediation: Some(
+                                "install or select the exact ADR-0014 model snapshot".to_owned(),
+                            ),
+                        },
+                    },
+                },
+            },
+        },
+    };
+
+    TextGenerationCapabilities {
+        backend,
+        model,
+        availability,
+        local: true,
+        structured_output: false,
+        maximum_output_tokens: 4_096,
+        maximum_concurrent_requests: 1,
+        cancellation_boundary: CancellationBoundary::DecoderStep,
+        minimum_unified_memory_bytes: Some(cuttledoc_gemma_mlx::MINIMUM_UNIFIED_MEMORY_BYTES),
+        required_available_memory_bytes: Some(cuttledoc_gemma_mlx::REQUIRED_AVAILABLE_MEMORY_BYTES),
+    }
+}
+
 fn language_identifiers(locales: &[String]) -> Vec<String> {
     let mut languages = locales
         .iter()
@@ -316,5 +428,23 @@ mod tests {
         assert!(whisper.segment_timestamps);
         assert!(!whisper.confidence);
         assert!(!whisper.streaming_pcm_input);
+    }
+
+    #[test]
+    fn local_generation_capabilities_publish_the_hard_gates() {
+        let capabilities = text_generation_capabilities();
+        assert_eq!(capabilities.len(), 1);
+        let gemma = &capabilities[0];
+        assert_eq!(gemma.backend, BackendId::gemma_mlx());
+        assert!(gemma.local);
+        assert_eq!(gemma.maximum_concurrent_requests, 1);
+        assert_eq!(
+            gemma.minimum_unified_memory_bytes,
+            Some(cuttledoc_gemma_mlx::MINIMUM_UNIFIED_MEMORY_BYTES)
+        );
+        assert_eq!(
+            gemma.required_available_memory_bytes,
+            Some(cuttledoc_gemma_mlx::REQUIRED_AVAILABLE_MEMORY_BYTES)
+        );
     }
 }
