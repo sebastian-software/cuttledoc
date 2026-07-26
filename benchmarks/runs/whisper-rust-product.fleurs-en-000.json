@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "phase3.whisper-rust-product.fleurs-en-000-1",
+  "captured_at": "2026-07-26T11:09:08Z",
+  "source_revision": "18b3153e667d805b3f93bf68d4f7819133ed8d16",
+  "fixture_id": "fleurs-en-us-test-000",
+  "candidate": {
+    "task": "asr",
+    "model": {
+      "id": "whisper-large-v3-turbo",
+      "revision": "GGML sha256 1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69 + Core ML tree sha256 a4ce8c6307d111df0e08836120f6b14c7852f6ffddcba78f351cbfc436f4d3e0",
+      "quantization": "upstream GGML F16 model with Float16 Core ML encoder",
+      "license": "MIT for both pinned model artifacts"
+    },
+    "runtime": {
+      "id": "cuttledoc-whisper-rust-product",
+      "version": "whisper.cpp v1.8.2 at 4979e04f5dcaccb36057e059bbaed8a2f5288315",
+      "boundary": "Repository-owned C ABI and safe Rust adapter; Rust owns selection, validation, errors, cancellation, normalization, and lifecycle"
+    },
+    "options": {
+      "sample_rate_hz": 16000,
+      "language": "explicit en-US and auto",
+      "use_gpu": true,
+      "repeated_lifecycle": 3
+    }
+  },
+  "host": {
+    "id": "mac-studio-m1-ultra-local",
+    "chip": "Apple M1 Ultra",
+    "memory_bytes": 68719476736,
+    "os": "macOS 26.5.2 (25F84)",
+    "architecture": "arm64",
+    "power_state": "unknown"
+  },
+  "measurements": {
+    "quality": {
+      "wer": 0.21052631578947367,
+      "cer": 0.037037037037037035
+    },
+    "timing": {
+      "audio_duration_ms": 10560,
+      "cold_load_ms": 124820,
+      "warm_inference_ms": 1650,
+      "real_time_factor": 0.15625
+    },
+    "resources": {
+      "peak_memory_bytes": 1963130880,
+      "model_size_bytes": 2899675450,
+      "binary_size_bytes": 2781280
+    },
+    "streaming": {
+      "supported": false,
+      "first_result_ms": null,
+      "update_count": 1,
+      "volatile_update_count": 0,
+      "final_update_count": 1,
+      "revoke_count": 0,
+      "timestamps": "segment"
+    },
+    "energy": {
+      "method": "not-measured",
+      "sample_rate_ms": null,
+      "sample_count": null,
+      "energy_joules": null,
+      "raw_artifact": null,
+      "notes": "Energy remains a release-threshold measurement."
+    }
+  },
+  "engineering_cost": {
+    "conversion_effort": "The exact baseline GGML and Core ML model pair is reused without conversion.",
+    "update_cost": "Cuttledoc owns a small opaque C ABI over a verified whisper.cpp checkout; runtime upgrades require differential transcript, lifecycle, cancellation, timing, memory, and artifact checks.",
+    "packaging_cost": "The 2.78 MB Node-API library ships in a 1.01 MB compressed npm tarball; the external model pair occupies 2.90 GB."
+  },
+  "reproduction": {
+    "command": "See benchmarks/raw/phase3.whisper-rust-product.fleurs-en-000-1/result.json for lifecycle and packed-artifact commands.",
+    "raw_artifacts": [
+      "benchmarks/raw/phase3.whisper-rust-product.fleurs-en-000-1/result.json"
+    ]
+  },
+  "result": {
+    "status": "partial",
+    "blocker": "Text, detected language, segment range, lifecycle, cancellation, and artifact parity are proven, but the product timing includes one-shot context lifecycle and is not yet a like-for-like reusable-engine inference measurement; energy and statistical release-corpus gates also remain.",
+    "observations": [
+      "The Rust product reproduces the legacy Whisper hypothesis exactly for explicit language and auto-detection.",
+      "The legacy constant confidence value is deliberately omitted because it is not measured confidence.",
+      "Three complete create/transcribe/dispose cycles produced identical results without material process-memory growth.",
+      "The packed ESM/CommonJS artifact exercised both local backends and active Whisper cancellation without invoking a compiler during installation.",
+      "The first process under a new executable identity spent about 124.82 seconds creating a Core ML execution plan; the warm one-shot process completed in about 1.65 seconds."
+    ]
+  }
+}

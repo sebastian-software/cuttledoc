@@ -483,6 +483,11 @@ mod tests {
         let error = validate_model(&model).expect_err("encoder must be required");
         assert_eq!(error.kind, AdapterErrorKind::ModelMissing);
 
+        let invalid = root.join("model.gguf");
+        fs::write(&invalid, b"model").expect("invalid model fixture");
+        let error = validate_model(&invalid).expect_err("extension must be validated");
+        assert_eq!(error.kind, AdapterErrorKind::ModelInvalid);
+
         fs::create_dir(root.join("ggml-large-v3-turbo-encoder.mlmodelc")).expect("encoder fixture");
         validate_model(&model).expect("paired model fixture");
         fs::remove_dir_all(root).expect("remove test directory");

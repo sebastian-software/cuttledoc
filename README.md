@@ -68,7 +68,8 @@ for the full evidence and limitations.
 ```text
 crates/
 ├── adapters/
-│   └── apple-speech/    # private Swift C ABI boundary
+│   ├── apple-speech/    # private Swift C ABI boundary
+│   └── whisper/         # private whisper.cpp C++/C ABI boundary
 ├── cuttledoc-audio/     # owned external media-decoding boundary
 ├── cuttledoc/           # public Rust contracts and orchestration
 ├── cuttledoc-models/    # model identity and provisioning
@@ -78,9 +79,12 @@ crates/
 
 Runtime adapters are split by foreign toolchain and ownership boundary rather
 than collected in one broad Apple crate. Candidate crates enter the workspace
-only after the bakeoff accepts their production role. The first foundation
-therefore includes Apple Speech only; Whisper, MLX text generation, audio
-decoding, OpenAI, and the npm facade arrive with their product vertical slices.
+only after the bakeoff accepts their production role. Apple Speech is the
+first-choice local backend. The opt-in Whisper `large-v3-turbo` compatibility
+backend adds broader language coverage through a source-integrated,
+repository-owned boundary over pinned whisper.cpp v1.8.2. General media
+decoding and the npm facade are already Rust-owned; MLX text generation and
+hosted transcription arrive with their separate product vertical slices.
 
 The workspace uses the pinned Rust 1.88 toolchain. Its local verification gate
 is:
@@ -109,9 +113,32 @@ not available on `PATH`. Advanced callers can bypass media decoding with
 `transcribe-pcm`, which accepts mono little-endian `f32` PCM and an explicit
 sample rate.
 
-`backends list` reports the live Apple Speech capability and system-managed
-locale inventory. These development commands require Apple Silicon with macOS
-26 or newer and normal access to the macOS Speech service.
+`backends list` reports both local backends and the live system/model
+availability. `auto` remains strictly local: it selects Apple Speech when the
+requested locale is available and otherwise uses Whisper only when its pinned
+model pair is available. It never sends audio to a hosted service.
+
+Whisper is an explicit quality/language-coverage fallback. Development builds
+prepare the pinned upstream source before enabling the adapter:
+
+```sh
+scripts/fetch-whisper-cpp.sh target/vendor/whisper.cpp-v1.8.2
+
+CUTTLEDOC_WHISPER_CPP_DIR="$PWD/target/vendor/whisper.cpp-v1.8.2" \
+  cargo run --locked -p cuttledoc-cli -- \
+  transcribe input.ogg \
+  --backend whisper \
+  --language auto \
+  --model-path /path/to/ggml-large-v3-turbo.bin
+```
+
+The `.bin` file must be accompanied by
+`ggml-large-v3-turbo-encoder.mlmodelc`. Cargo and npm installation never
+download source or models implicitly. The complete model-management workflow
+is tracked separately in issue #27.
+
+Local recognition requires Apple Silicon with macOS 26 or newer. Apple Speech
+also requires normal access to the macOS Speech service.
 
 ## Development Node API
 
@@ -125,6 +152,16 @@ const result = await transcribeFile('/path/to/podcast.m4a', {
   language: 'en-US',
 });
 console.log(result.text);
+```
+
+Select the compatibility backend explicitly when needed:
+
+```js
+const result = await transcribeFile('/path/to/podcast.m4a', {
+  backend: 'whisper',
+  language: 'auto',
+  modelPath: '/path/to/ggml-large-v3-turbo.bin',
+});
 ```
 
 `transcribePcm` remains the advanced decoder bypass. `AbortSignal` cancels

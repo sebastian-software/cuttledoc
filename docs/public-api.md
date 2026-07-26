@@ -175,6 +175,7 @@ pub enum BackendSelection {
 pub struct TranscribeOptions {
     pub backend: BackendSelection,
     pub model: Option<ModelId>,
+    pub model_path: Option<PathBuf>,
     pub language: Option<String>,
 }
 
@@ -197,24 +198,27 @@ pub struct TranscriptionSegment {
 }
 ```
 
-Known constants/completions initially cover `parakeet-local`, `whisper-local`,
-`apple-speech`, and `openai-transcription`. The MLX proof now implements one
-end-to-end task, but it does not receive a public backend ID until the bakeoff
-selects and productizes it; runtime evidence alone does not define product
-identity.
+The current implemented local IDs are `apple-speech` and `whisper`. Planned
+Parakeet and hosted-provider IDs are added only with their product vertical
+slices. The MLX proofs implement end-to-end tasks, but a runtime does not
+receive a public backend ID until the product selects and integrates that task;
+runtime evidence alone does not define product identity.
 
 TypeScript uses the same open policy rather than a closed union that makes
 widening a breaking change:
 
 ```ts
 type KnownBackend =
-  | "parakeet-local"
-  | "whisper-local"
   | "apple-speech"
-  | "openai-transcription";
+  | "whisper";
 type BackendId = KnownBackend | (string & {});
 type BackendSelection = "auto" | BackendId;
 ```
+
+`model_path` / `modelPath` is the current explicit provisioning escape hatch
+for the pinned Whisper GGML/Core ML pair. It is not a runtime handle and does
+not weaken the model identity. The model manager in #27 will make the common
+case path-free while retaining explicit paths for controlled deployments.
 
 Credentials and provider-specific connection settings belong on the
 `Cuttledoc` context/provider configuration, not in common transcription
@@ -574,16 +578,29 @@ type CuttledocErrorCode =
 Proposed commands:
 
 ```text
-cuttledoc <input> [--backend auto|parakeet-local|whisper-local|apple-speech|openai-transcription]
-                  [--language <code>]
-                  [--output <path>]
-                  [--format text|markdown|json]
+cuttledoc transcribe <input>
+                     [--backend auto|apple-speech|whisper]
+                     [--model-path <path>]
+                     [--language <code|auto>]
+                     [--ffmpeg-path <path>]
 
+cuttledoc transcribe-pcm <input>
+                         --sample-rate <hz>
+                         [--backend auto|apple-speech|whisper]
+                         [--model-path <path>]
+                         [--language <code|auto>]
+
+cuttledoc backends list
+```
+
+Issue #27 adds the remaining compatibility commands and formats:
+
+```text
+cuttledoc transcribe ... [--output <path>] [--format text|markdown|json]
 cuttledoc models list
 cuttledoc models download <model|all|asr>
 cuttledoc models verify <model|all>
 cuttledoc models remove <model>
-cuttledoc backends list
 cuttledoc doctor
 cuttledoc benchmark <input> --reference <text>
 ```

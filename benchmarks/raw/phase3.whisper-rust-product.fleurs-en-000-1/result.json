@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "phase3.whisper-rust-product.fleurs-en-000-1",
+  "captured_at": "2026-07-26T11:09:08Z",
+  "source_revision": "18b3153e667d805b3f93bf68d4f7819133ed8d16",
+  "fixture": {
+    "id": "fleurs-en-us-test-000",
+    "source_sha256": "3f5c5cab149908b7133cae1aade5623acae4c870a4c87c62adad0dca0c8b058c",
+    "pcm_sha256": "645769836a2e19904a313494f8edca207ca54a41d94971844217572beb5c9a3a",
+    "reference_sha256": "94ac868ffec4f7c70ed84e34efdb3d7e5a728d7efcbe9342dda4342e32583365",
+    "audio_duration_ms": 10560,
+    "sample_rate_hz": 16000
+  },
+  "runtime": {
+    "backend": "whisper",
+    "model": "whisper-large-v3-turbo",
+    "whisper_cpp_revision": "4979e04f5dcaccb36057e059bbaed8a2f5288315",
+    "boundary": "repository-owned C++ C ABI with safe Rust orchestration"
+  },
+  "result": {
+    "hypothesis": "However, due to the slow communication channels, styles in the West could lag behind by 25-30 years.",
+    "language": "en",
+    "segments": [
+      {
+        "start_ms": 0,
+        "end_ms": 10560,
+        "text": "However, due to the slow communication channels, styles in the West could lag behind by 25-30 years."
+      }
+    ],
+    "explicit_language": "en-US",
+    "auto_language": "en",
+    "matches_legacy_hypothesis": true
+  },
+  "warm_one_shot": {
+    "wall_ms": 1650,
+    "max_resident_set_size_bytes": 1951383552,
+    "peak_memory_footprint_bytes": 1928579160,
+    "notes": "Fresh Rust example process after the Core ML execution plan cache existed; includes context creation and teardown."
+  },
+  "first_executable_identity": {
+    "wall_ms": 124820,
+    "notes": "One-time Core ML execution-plan creation for the new executable identity; subsequent runs reused the system cache."
+  },
+  "repeated_lifecycle": {
+    "repetitions": 3,
+    "all_results_equal": true,
+    "wall_ms_including_cargo_build": 29740,
+    "cargo_build_ms": 12970,
+    "max_resident_set_size_bytes": 1963130880,
+    "peak_memory_footprint_bytes": 1928366168
+  },
+  "cancellation": {
+    "boundary": "decoder-step",
+    "active_request_status": "CANCELLED",
+    "model_load_is_cancellable": false
+  },
+  "artifact": {
+    "node_api_binary_bytes": 2781280,
+    "node_api_binary_sha256": "190d093b9adff461c33a4ec142d226acf7222f376a1f2b282f55275a04789b97",
+    "npm_tarball_bytes": 1007607,
+    "esm": "passed",
+    "commonjs": "passed",
+    "active_whisper_cancellation": "passed",
+    "install_compiler_guard": "passed",
+    "missing_artifact_diagnostic": "passed"
+  },
+  "verification": {
+    "portable_workspace": "cargo fmt, clippy -D warnings, and all workspace targets passed",
+    "source_integrated_workspace": "clippy -D warnings and all workspace targets passed",
+    "dependency_policy": "passed",
+    "node_versions": "Node 22 and 24 are delegated to CI"
+  },
+  "commands": {
+    "lifecycle": "CUTTLEDOC_WHISPER_CPP_DIR=target/vendor/whisper.cpp-v1.8.2 /usr/bin/time -lp cargo run -p cuttledoc-whisper --example transcribe_whisper_pcm -- <model.bin> <fixture.pcm> auto --repeat 3",
+    "artifact": "CUTTLEDOC_NODE_PCM_FIXTURE=<fixture.pcm> CUTTLEDOC_NODE_WHISPER_MODEL_PATH=<model.bin> CUTTLEDOC_NODE_MEDIA_FIXTURE=<fixture.ogg> CUTTLEDOC_NODE_FFMPEG_PATH=<ffmpeg> bash scripts/test-cuttledoc-node-package.sh"
+  }
+}

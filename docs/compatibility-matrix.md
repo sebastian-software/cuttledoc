@@ -45,7 +45,7 @@ Unsupported local inference must be represented as capability absence. Installin
 | Reusable engine      |                           Yes |                           Yes |                    Yes |    Service client | Required                           |
 | Structured segments  |                           Yes |                           Yes |                    Yes |   Model-dependent | Required                           |
 | Language detection   |                Model behavior |                           Yes |               Evaluate |   Model-dependent | Required where currently available |
-| Confidence           |         Not currently exposed |            Segment confidence |                    Yes |   Model-dependent | Preserve where available           |
+| Confidence           |         Not currently exposed | Legacy constant deliberately omitted |                    Yes |   Model-dependent | Preserve only measured confidence  |
 | Arbitrary media path |                Through FFmpeg |                Through FFmpeg |         Through FFmpeg |       Upload path | Required                           |
 | Direct PCM input     |                   16 kHz mono |                   16 kHz mono |              Supported |       Not primary | Required for advanced API          |
 | Cancellation         |                       Limited |                       Limited |                    Yes | HTTP cancellation | New                                |
@@ -97,13 +97,41 @@ Recognition gate:
 | Encoder        | CoreML/ANE                                                  | Match                                                                                       |
 | Decoder        | whisper.cpp via Metal/CPU                                   | Match                                                                                       |
 | Required files | GGML plus CoreML encoder                                    | Manifest requires both                                                                      |
-| Result         | text, detected language, duration, segments, confidence     | Match with normalized time units                                                            |
+| Result         | text, detected language, duration, segments, constant confidence | Match text/language/ranges; omit the unmeasured confidence constant                     |
 | Warm speed     | Approximately 14× realtime on documented M1 Ultra benchmark | No more than 10% RTF regression on identical controlled hardware without accepted rationale |
 
 Recognition gate:
 
 - No statistically meaningful WER regression on existing Whisper/FLEURS fixtures.
 - Language detection must match the baseline for the controlled multilingual set or document an upstream model/runtime reason.
+
+### Rust product checkpoint
+
+The issue #24 checkpoint at `18b3153` completes the product boundary:
+
+- explicit `whisper` and local-only `auto` selection are shared by Rust, CLI,
+  ESM, and CommonJS;
+- the pinned FLEURS fixture reproduces the exact legacy hypothesis,
+  auto-detected `en`, and the normalized `0..10560 ms` segment;
+- explicit BCP-47 language input is reduced to the Whisper language identifier;
+- stable missing/invalid-model, source-unavailable, engine-load, transcription,
+  contract, and cancellation errors replace native implementation leakage;
+- cancellation is cooperative at decoder steps; Core ML model/plan loading is
+  a documented non-cancellable boundary;
+- three complete create/transcribe/dispose repetitions returned identical
+  results with 1,963,130,880 bytes maximum RSS;
+- the release Node-API library is 2,781,280 bytes and the compiler-free npm
+  tarball is 1,007,607 bytes. The tarball transcribes with both Apple Speech and
+  Whisper through ESM and CommonJS and covers active Whisper cancellation.
+
+This proves compatibility behavior, not the final release-performance claim.
+The product port's observed warm one-shot process was about 1.65 seconds for
+10.56 seconds of audio, but the old 657.6 ms measurement isolated repeated
+inference on an already loaded context. A like-for-like reusable-engine timing,
+energy measurement, and the statistical release corpus remain release-threshold
+work rather than blockers for the ownership port. Full model provisioning is
+owned by #27. See
+`benchmarks/runs/whisper-rust-product.fleurs-en-000.json`.
 
 ## Audio compatibility
 

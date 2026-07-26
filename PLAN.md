@@ -217,20 +217,31 @@ Exit criteria:
 
 ### Current checkpoint
 
-Issue #24 owns the opt-in Whisper `large-v3-turbo` compatibility backend. The
-port starts from the measured `whisper-coreml` 1.1.0 / whisper.cpp v1.8.2
-behavior and keeps the existing FLEURS, multilingual, and audiobook records as
-differential oracles. The first checkpoint records the exact production pin
-and repository-owned C ABI before changing the common engine.
+Issue #24 implements the opt-in Whisper `large-v3-turbo` compatibility backend
+at `18b3153`. The port preserves the measured `whisper-coreml` 1.1.0 /
+whisper.cpp v1.8.2 FLEURS text, detected language, and segment range while
+moving orchestration, selection, model validation, errors, cancellation, and
+lifecycle into Rust. The runtime is isolated behind a repository-owned C ABI;
+Cargo and npm installation never download or compile upstream source.
+
+Rust, CLI, ESM, and CommonJS all exercise the same backend. `auto` selects only
+available local backends, preferring Apple Speech for an exact requested locale
+and otherwise considering Whisper. Three complete
+create/transcribe/dispose cycles produced identical output without material
+RSS growth, and the final 1,007,607-byte npm tarball exercised Apple Speech,
+Whisper, active cancellation, and missing-artifact diagnostics without an
+install-time compiler. The product port evidence is recorded in
+`benchmarks/runs/whisper-rust-product.fleurs-en-000.json`.
 
 Scope:
 
 - Preserve or deliberately replace the valuable Whisper `large-v3-turbo` baseline capabilities.
 - Pin the selected model, runtime, conversion, and native upstream revisions reproducibly.
 - Automatic language detection and explicit language selection.
-- Segment timestamps and confidence.
+- Segment timestamps; deliberately omit the legacy constant confidence value.
 - Broader language or runtime coverage missing from the first vertical slice.
-- Model downloads, validation, progress, and atomic installation.
+- Model identity/path validation and actionable failures. Full download,
+  progress, verification, and atomic installation remain in #27.
 
 Exit criteria:
 
@@ -425,19 +436,16 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-Evidence snapshot: 2026-07-26 at `82fd077`, with a clean worktree.
+Evidence snapshot: 2026-07-26 at implementation checkpoint `18b3153`.
 
-1. Complete #24: port the measured Whisper `large-v3-turbo` CoreML/Metal
-   backend behind the common Rust engine, then expose explicit and local-only
-   automatic backend selection through CLI and Node.
-2. Complete #25: add provider-neutral transcript enhancement, Gemma locally on
+1. Complete #25: add provider-neutral transcript enhancement, Gemma locally on
    capable machines, and Gemini only through explicit OpenRouter
    configuration. Raw text always remains available.
-3. Complete #26: add hosted transcription and the Linux/Windows cloud-only
+2. Complete #26: add hosted transcription and the Linux/Windows cloud-only
    path without automatic remote fallback.
-4. Complete #27: finish output-file, Markdown/JSON, capability, and
+3. Complete #27: finish output-file, Markdown/JSON, capability, and
    model-management CLI parity.
-5. Complete #28: build, sign, notarize, attest, and clean-machine-test the
+4. Complete #28: build, sign, notarize, attest, and clean-machine-test the
    reproducible v3 release artifacts.
-6. Run the TTS vertical slice in #13 after the transcription release gates; it
+5. Run the TTS vertical slice in #13 after the transcription release gates; it
    remains a strategic but non-blocking product direction.
