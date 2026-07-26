@@ -23,8 +23,10 @@ pub use capability::{
     recognition_capabilities, text_generation_capabilities,
 };
 pub use cuttledoc_models::{
-    ManifestId, ModelDescriptor, ModelId, ModelOperations, ModelProvisioning, ModelState,
-    ProviderId,
+    ArtifactFetcher, ArtifactManifest, BUILT_IN_MANIFESTS, CACHE_ROOT_ENV, ManifestId,
+    ModelDescriptor, ModelError, ModelErrorCode, ModelId, ModelManager, ModelManifest,
+    ModelOperations, ModelProgress, ModelProgressPhase, ModelProvisioning, ModelResult, ModelState,
+    ProviderId, built_in_manifest, default_cache_root,
 };
 pub use enhancement::{
     EnhancementFallbackReason, EnhancementOutcome, EnhancementSection, EnhancementSectionResult,

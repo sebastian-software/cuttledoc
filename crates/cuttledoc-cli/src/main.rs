@@ -11,8 +11,10 @@ use cuttledoc::{
     transcribe_file, transcribe_pcm,
 };
 
+mod model_commands;
 mod output;
 
+use model_commands::ModelCommand;
 use output::{OutputFormat, OutputOptions, emit_result};
 
 const HELP: &str = "\
@@ -22,6 +24,11 @@ Usage:
   cuttledoc --help
   cuttledoc --version
   cuttledoc backends list
+  cuttledoc models list [--cache-root <path>] [--format <text|json>]
+  cuttledoc models install <model|asr|all> [--cache-root <path>]
+  cuttledoc models verify <model|asr|all> [--cache-root <path>]
+  cuttledoc models remove <model> [--cache-root <path>]
+  cuttledoc models cache-root [--cache-root <path>]
   cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
   cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
 
@@ -54,6 +61,7 @@ enum Command {
     Help,
     Version,
     ListBackends,
+    Models(ModelCommand),
     Transcribe {
         path: PathBuf,
         language: String,
@@ -99,6 +107,7 @@ fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, String>
         [value] if value == "--help" || value == "-h" => Ok(Command::Help),
         [value] if value == "--version" || value == "-V" => Ok(Command::Version),
         [group, action] if group == "backends" && action == "list" => Ok(Command::ListBackends),
+        [group, rest @ ..] if group == "models" => model_commands::parse(rest).map(Command::Models),
         [command, rest @ ..] if command == "transcribe" => parse_transcribe(rest),
         [command, rest @ ..] if command == "transcribe-pcm" => parse_transcribe_pcm(rest),
         _ => Err(format!("unsupported arguments: {}", arguments.join(" "))),
@@ -418,6 +427,7 @@ fn run(command: Command) -> Result<(), String> {
                 }
             }
         }
+        Command::Models(command) => model_commands::run(command)?,
         Command::Transcribe {
             path,
             language,
@@ -530,6 +540,12 @@ mod tests {
         assert_eq!(
             parse(arguments(&["backends", "list"])),
             Ok(Command::ListBackends)
+        );
+        assert_eq!(
+            parse(arguments(&["models", "cache-root"])),
+            Ok(Command::Models(ModelCommand::CacheRoot {
+                cache_root: None
+            }))
         );
         assert_eq!(
             parse(arguments(&[
