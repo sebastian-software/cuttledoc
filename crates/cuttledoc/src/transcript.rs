@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use crate::{BackendId, BackendSelection, ModelId};
@@ -246,6 +247,7 @@ fn join_text<'a>(parts: impl Iterator<Item = &'a str>) -> String {
 pub struct TranscribeOptions {
     pub backend: BackendSelection,
     pub model: Option<ModelId>,
+    pub model_path: Option<PathBuf>,
     pub language: Option<String>,
 }
 

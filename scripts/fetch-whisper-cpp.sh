@@ -26,8 +26,12 @@ else
   fi
 fi
 
-git -C "$destination" fetch --depth 1 origin "$revision"
-git -C "$destination" checkout --detach "$revision"
+if [[ "$(git -C "$destination" rev-parse HEAD 2>/dev/null || true)" != "$revision" ]]; then
+  if ! git -C "$destination" cat-file -e "$revision^{commit}" 2>/dev/null; then
+    git -C "$destination" fetch --depth 1 origin "$revision"
+  fi
+  git -C "$destination" checkout --detach "$revision"
+fi
 
 actual_revision="$(git -C "$destination" rev-parse HEAD)"
 actual_tree="$(git -C "$destination" rev-parse 'HEAD^{tree}')"

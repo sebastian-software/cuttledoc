@@ -10,6 +10,14 @@ if [[ "$(uname -s)" != "Darwin" || "$(uname -m)" != "arm64" ]]; then
   exit 1
 fi
 
+if [[ -z "${CUTTLEDOC_WHISPER_CPP_DIR:-}" ]]; then
+  CUTTLEDOC_WHISPER_CPP_DIR="$(
+    "$repo_root/scripts/fetch-whisper-cpp.sh" \
+      "$repo_root/target/vendor/whisper.cpp-v1.8.2"
+  )"
+  export CUTTLEDOC_WHISPER_CPP_DIR
+fi
+
 cargo build --release --locked -p cuttledoc-node
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/cuttledoc-node-pack.XXXXXX")"

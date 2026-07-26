@@ -36,6 +36,7 @@ dependencies = [
  "cuttledoc-apple-speech",
  "cuttledoc-audio",
  "cuttledoc-models",
+ "cuttledoc-whisper",
 ]
 
 [[package]]

@@ -33,16 +33,24 @@ export interface TranscriptionResult {
 export type PcmTranscriptionResult = TranscriptionResult;
 
 export interface PcmTranscriptionOptions {
-  /** Explicit BCP 47 language tag, such as `en-US` or `de-DE`. */
+  /** Explicit BCP 47 language tag, or `auto` for backends that detect it. */
   language: string;
+  /** Local backend selection. Defaults to capability-aware `auto`. */
+  backend?: 'auto' | 'apple-speech' | 'whisper';
+  /** Explicit model file override for Cuttledoc-managed model backends. */
+  modelPath?: string;
   /** Sample rate in hertz. Defaults to 16,000. */
   sampleRate?: number;
   signal?: AbortSignal;
 }
 
 export interface FileTranscriptionOptions {
-  /** Explicit BCP 47 language tag, such as `en-US` or `de-DE`. */
+  /** Explicit BCP 47 language tag, or `auto` for backends that detect it. */
   language: string;
+  /** Local backend selection. Defaults to capability-aware `auto`. */
+  backend?: 'auto' | 'apple-speech' | 'whisper';
+  /** Explicit model file override for Cuttledoc-managed model backends. */
+  modelPath?: string;
   /**
    * FFmpeg executable override. Resolution otherwise checks `FFMPEG_PATH` and
    * then the process `PATH`.

@@ -12,6 +12,7 @@ publish = false
 cuttledoc-apple-speech = { path = "../adapters/apple-speech", version = "=0.1.0" }
 cuttledoc-audio = { path = "../cuttledoc-audio", version = "=0.1.0" }
 cuttledoc-models = { path = "../cuttledoc-models", version = "=0.1.0" }
+cuttledoc-whisper = { path = "../adapters/whisper", version = "=0.1.0" }
 
 [lints]
 workspace = true

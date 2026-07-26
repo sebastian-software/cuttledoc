@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use cuttledoc::{
-    AudioFormat, Availability, CancellationToken, ErrorCode, MediaDecodeOptions, PcmBuffer,
-    TranscribeOptions, TranscriptionResult, recognition_capabilities,
-    transcribe_file_with_cancellation, transcribe_pcm_with_cancellation,
+    AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, ErrorCode,
+    MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptionResult,
+    recognition_capabilities, transcribe_file_with_cancellation, transcribe_pcm_with_cancellation,
 };
 use napi::bindgen_prelude::{AbortSignal, AsyncTask, Buffer};
 use napi::{Env, Error, Result, Status, Task};
@@ -22,6 +22,9 @@ pub struct BackendCapability {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PcmTranscriptionOptions {
     pub language: String,
+    pub backend: Option<String>,
+    #[napi(js_name = "modelPath")]
+    pub model_path: Option<String>,
     #[napi(js_name = "sampleRate")]
     pub sample_rate: Option<u32>,
 }
@@ -30,6 +33,9 @@ pub struct PcmTranscriptionOptions {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FileTranscriptionOptions {
     pub language: String,
+    pub backend: Option<String>,
+    #[napi(js_name = "modelPath")]
+    pub model_path: Option<String>,
     #[napi(js_name = "ffmpegPath")]
     pub ffmpeg_path: Option<String>,
 }
@@ -91,15 +97,13 @@ impl Task for PcmTranscriptionTask {
         let format =
             AudioFormat::new(self.options.sample_rate.unwrap_or(16_000), 1).map_err(node_error)?;
         let input = PcmBuffer::from_f32le_bytes(format, &self.pcm).map_err(node_error)?;
-        let result = transcribe_pcm_with_cancellation(
-            &input,
-            &TranscribeOptions {
-                language: Some(self.options.language.clone()),
-                ..TranscribeOptions::default()
-            },
-            &self.cancellation,
-        )
-        .map_err(node_error)?;
+        let options = transcribe_options(
+            &self.options.language,
+            self.options.backend.as_deref(),
+            self.options.model_path.as_deref(),
+        )?;
+        let result = transcribe_pcm_with_cancellation(&input, &options, &self.cancellation)
+            .map_err(node_error)?;
         Ok(map_transcription_result(result))
     }
 
@@ -113,12 +117,14 @@ impl Task for FileTranscriptionTask {
     type JsValue = PcmTranscriptionResult;
 
     fn compute(&mut self) -> Result<Self::Output> {
+        let transcribe_options = transcribe_options(
+            &self.options.language,
+            self.options.backend.as_deref(),
+            self.options.model_path.as_deref(),
+        )?;
         let result = transcribe_file_with_cancellation(
             &self.path,
-            &TranscribeOptions {
-                language: Some(self.options.language.clone()),
-                ..TranscribeOptions::default()
-            },
+            &transcribe_options,
             &MediaDecodeOptions {
                 ffmpeg_path: self.options.ffmpeg_path.as_deref().map(PathBuf::from),
             },
@@ -131,6 +137,26 @@ impl Task for FileTranscriptionTask {
     fn resolve(&mut self, _env: Env, output: Self::Output) -> Result<Self::JsValue> {
         Ok(output)
     }
+}
+
+fn transcribe_options(
+    language: &str,
+    backend: Option<&str>,
+    model_path: Option<&str>,
+) -> Result<TranscribeOptions> {
+    let backend = match backend {
+        None | Some("auto") => BackendSelection::Auto,
+        Some(value) => BackendSelection::Id(
+            BackendId::new(value)
+                .map_err(|error| Error::new(Status::InvalidArg, error.to_string()))?,
+        ),
+    };
+    Ok(TranscribeOptions {
+        backend,
+        model_path: model_path.map(PathBuf::from),
+        language: Some(language.to_owned()),
+        ..TranscribeOptions::default()
+    })
 }
 
 #[napi]
@@ -262,14 +288,17 @@ mod tests {
             Availability::Available => (true, None),
             Availability::Unavailable { reason, .. } => (false, Some(reason.as_str().to_owned())),
         };
+        let backends = recognition_backends();
+        assert_eq!(backends.len(), 2);
         assert_eq!(
-            recognition_backends(),
-            vec![BackendCapability {
+            backends[0],
+            BackendCapability {
                 id: "apple-speech".to_owned(),
                 available,
                 unavailable_reason,
-            }]
+            }
         );
+        assert_eq!(backends[1].id, "whisper");
     }
 
     #[test]
@@ -305,6 +334,8 @@ mod tests {
             pcm: vec![0, 1, 2],
             options: PcmTranscriptionOptions {
                 language: "en-US".to_owned(),
+                backend: None,
+                model_path: None,
                 sample_rate: None,
             },
             cancellation: CancellationToken::new(),
@@ -320,6 +351,8 @@ mod tests {
             path: std::env::temp_dir().join("cuttledoc-node-definitely-missing.media"),
             options: FileTranscriptionOptions {
                 language: "en-US".to_owned(),
+                backend: None,
+                model_path: None,
                 ffmpeg_path: Some("/definitely/missing/ffmpeg".to_owned()),
             },
             cancellation: CancellationToken::new(),

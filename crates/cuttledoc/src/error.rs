@@ -123,6 +123,30 @@ impl From<cuttledoc_audio::AudioDecodeError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_whisper::AdapterError> for CuttledocError {
+    fn from(error: cuttledoc_whisper::AdapterError) -> Self {
+        use cuttledoc_whisper::AdapterErrorKind;
+
+        let code = match error.kind {
+            AdapterErrorKind::UnsupportedPlatform => ErrorCode::UnsupportedPlatform,
+            AdapterErrorKind::SourceNotPrepared => ErrorCode::BackendUnavailable,
+            AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AdapterErrorKind::ModelMissing => ErrorCode::ModelMissing,
+            AdapterErrorKind::ModelInvalid => ErrorCode::ModelInvalid,
+            AdapterErrorKind::EngineLoadFailed => ErrorCode::EngineLoadFailed,
+            AdapterErrorKind::TranscriptionFailed => ErrorCode::TranscriptionFailed,
+            AdapterErrorKind::Cancelled => ErrorCode::Cancelled,
+            AdapterErrorKind::CallbackViolation => ErrorCode::BackendContractViolation,
+        };
+        Self::new(code, error.message)
+            .with_backend(BackendId::whisper())
+            .with_model(
+                ModelId::new(cuttledoc_whisper::MODEL_ID)
+                    .expect("the built-in Whisper model ID is valid"),
+            )
+    }
+}
+
 pub type Result<T> = std::result::Result<T, CuttledocError>;
 
 #[cfg(test)]

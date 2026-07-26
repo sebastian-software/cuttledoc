@@ -11,6 +11,15 @@ pub const BACKEND_ID: &str = "whisper";
 pub const MODEL_ID: &str = "whisper-large-v3-turbo";
 pub const ABI_VERSION: u32 = 1;
 pub const MODEL_PATH_ENV: &str = "CUTTLEDOC_WHISPER_MODEL_PATH";
+pub const SUPPORTED_LANGUAGES: &[&str] = &[
+    "en", "zh", "de", "es", "ru", "ko", "fr", "ja", "pt", "tr", "pl", "ca", "nl", "ar", "sv", "it",
+    "id", "hi", "fi", "vi", "he", "uk", "el", "ms", "cs", "ro", "da", "hu", "ta", "no", "th", "ur",
+    "hr", "bg", "lt", "la", "mi", "ml", "cy", "sk", "te", "fa", "lv", "bn", "sr", "az", "sl", "kn",
+    "et", "mk", "br", "eu", "is", "hy", "ne", "mn", "bs", "kk", "sq", "sw", "gl", "mr", "pa", "si",
+    "km", "sn", "yo", "so", "af", "oc", "ka", "be", "tg", "sd", "gu", "am", "yi", "lo", "uz", "fo",
+    "ht", "ps", "tk", "nn", "mt", "sa", "lb", "my", "bo", "tl", "mg", "as", "tt", "haw", "ln",
+    "ha", "ba", "jw", "su", "yue",
+];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BuildSupport {
@@ -281,12 +290,15 @@ mod platform {
                 )
             };
             if let Some(message) = state.error {
+                let _ = take_native_string(language_output);
+                let _ = take_native_string(error_output);
                 return Err(AdapterError::new(
                     AdapterErrorKind::CallbackViolation,
                     message,
                 ));
             }
             if status != STATUS_OK {
+                let _ = take_native_string(language_output);
                 let kind = match status {
                     STATUS_INVALID_INPUT => AdapterErrorKind::InvalidInput,
                     STATUS_LOAD_FAILED => AdapterErrorKind::EngineLoadFailed,
@@ -488,5 +500,12 @@ mod tests {
                 .kind,
             AdapterErrorKind::InvalidInput
         );
+    }
+
+    #[test]
+    fn pinned_language_table_is_stable() {
+        assert_eq!(SUPPORTED_LANGUAGES.len(), 100);
+        assert_eq!(SUPPORTED_LANGUAGES.first(), Some(&"en"));
+        assert_eq!(SUPPORTED_LANGUAGES.last(), Some(&"yue"));
     }
 }

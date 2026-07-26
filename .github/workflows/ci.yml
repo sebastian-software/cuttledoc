@@ -36,3 +36,8 @@ jobs:
         run: cargo check --workspace --all-targets --locked
       - name: Test the workspace
         run: cargo test --workspace --locked
+      - name: Test the source-integrated Whisper boundary
+        run: |
+          whisper_cpp_dir="$(bash scripts/fetch-whisper-cpp.sh "$RUNNER_TEMP/whisper.cpp-v1.8.2")"
+          CUTTLEDOC_WHISPER_CPP_DIR="$whisper_cpp_dir" \
+            cargo test -p cuttledoc-whisper -p cuttledoc --locked

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <memory>
 #include <new>
 #include <string>
 
@@ -82,7 +83,7 @@ extern "C" void *cuttledoc_whisper_engine_create(
     }
 
     try {
-        auto *engine = new WhisperEngine();
+        auto engine = std::make_unique<WhisperEngine>();
         engine->language = language == nullptr ? "auto" : language;
         engine->threads = threads == 0 ? 4 : threads;
 
@@ -91,11 +92,10 @@ extern "C" void *cuttledoc_whisper_engine_create(
         parameters.use_gpu = true;
         engine->context = whisper_init_from_file_with_params(model_path, parameters);
         if (engine->context == nullptr) {
-            delete engine;
             set_error(error_output, "whisper.cpp could not load the configured model");
             return nullptr;
         }
-        return engine;
+        return engine.release();
     } catch (const std::exception &error) {
         set_error(error_output, error.what());
         return nullptr;
@@ -137,8 +137,8 @@ extern "C" int32_t cuttledoc_whisper_engine_transcribe(
         whisper_full_params parameters =
             whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
         const bool detect_language = is_auto_language(engine->language);
-        parameters.language = detect_language ? nullptr : engine->language.c_str();
-        parameters.detect_language = detect_language;
+        parameters.language = engine->language.c_str();
+        parameters.detect_language = false;
         parameters.translate = false;
         parameters.no_timestamps = false;
         parameters.n_threads = static_cast<int>(engine->threads);

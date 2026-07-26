@@ -10,7 +10,7 @@ import {
 assert.equal(version(), '0.1.0');
 assert.deepEqual(
   recognitionBackends().map(({ id }) => id),
-  ['apple-speech'],
+  ['apple-speech', 'whisper'],
 );
 
 assert.throws(
@@ -24,6 +24,22 @@ assert.throws(
 assert.throws(
   () => transcribeFile('', { language: 'en-US' }),
   /path must be a non-empty/,
+);
+assert.throws(
+  () =>
+    transcribePcm(new Uint8Array(4), {
+      language: 'en-US',
+      backend: 'unknown',
+    }),
+  /backend must be/,
+);
+assert.throws(
+  () =>
+    transcribePcm(new Uint8Array(4), {
+      language: 'en-US',
+      modelPath: '',
+    }),
+  /modelPath must be a non-empty/,
 );
 assert.throws(
   () =>
@@ -86,6 +102,34 @@ if (process.env.CUTTLEDOC_NODE_PCM_FIXTURE) {
   });
   setTimeout(() => activeController.abort(), 5);
   await assert.rejects(cancelled, /CANCELLED/);
+
+  if (process.env.CUTTLEDOC_NODE_WHISPER_MODEL_PATH) {
+    const whisper = await transcribePcm(pcm, {
+      language: 'en',
+      backend: 'whisper',
+      modelPath: process.env.CUTTLEDOC_NODE_WHISPER_MODEL_PATH,
+    });
+    assert.equal(
+      whisper.text,
+      'However, due to the slow communication channels, styles in the West could lag behind by 25-30 years.',
+    );
+    assert.equal(whisper.language, 'en');
+    assert.equal(whisper.backend, 'whisper');
+    assert.equal(whisper.model, 'whisper-large-v3-turbo');
+    assert.equal(whisper.mediaDurationMs, 10_560);
+    assert.equal(whisper.segments.length, 1);
+    assert.equal(whisper.segments[0].words.length, 0);
+
+    const whisperController = new AbortController();
+    const cancelledWhisper = transcribePcm(pcm, {
+      language: 'en',
+      backend: 'whisper',
+      modelPath: process.env.CUTTLEDOC_NODE_WHISPER_MODEL_PATH,
+      signal: whisperController.signal,
+    });
+    setTimeout(() => whisperController.abort(), 5);
+    await assert.rejects(cancelledWhisper, /CANCELLED|aborted/i);
+  }
 }
 
 if (process.env.CUTTLEDOC_NODE_MEDIA_FIXTURE) {

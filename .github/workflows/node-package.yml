@@ -7,11 +7,13 @@ on:
       - "Cargo.lock"
       - "Cargo.toml"
       - "crates/adapters/apple-speech/**"
+      - "crates/adapters/whisper/**"
       - "crates/cuttledoc-audio/**"
       - "crates/cuttledoc/**"
       - "crates/cuttledoc-node/**"
       - "packages/cuttledoc/**"
       - "scripts/pack-cuttledoc-node.sh"
+      - "scripts/fetch-whisper-cpp.sh"
       - "scripts/test-cuttledoc-node-package.sh"
   push:
     branches: [main]
@@ -20,11 +22,13 @@ on:
       - "Cargo.lock"
       - "Cargo.toml"
       - "crates/adapters/apple-speech/**"
+      - "crates/adapters/whisper/**"
       - "crates/cuttledoc-audio/**"
       - "crates/cuttledoc/**"
       - "crates/cuttledoc-node/**"
       - "packages/cuttledoc/**"
       - "scripts/pack-cuttledoc-node.sh"
+      - "scripts/fetch-whisper-cpp.sh"
       - "scripts/test-cuttledoc-node-package.sh"
 
 permissions:

@@ -4,8 +4,9 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use cuttledoc::{
-    AudioFormat, Availability, MediaDecodeOptions, PcmBuffer, TranscribeOptions,
-    recognition_asset_inventory, recognition_capabilities, transcribe_file, transcribe_pcm,
+    AudioFormat, Availability, BackendId, BackendSelection, MediaDecodeOptions, PcmBuffer,
+    TranscribeOptions, recognition_asset_inventory, recognition_capabilities, transcribe_file,
+    transcribe_pcm,
 };
 
 const HELP: &str = "\
@@ -15,8 +16,8 @@ Usage:
   cuttledoc --help
   cuttledoc --version
   cuttledoc backends list
-  cuttledoc transcribe <path> --language <tag> [--ffmpeg-path <path>]
-  cuttledoc transcribe-pcm <path> --language <tag> [--sample-rate <hz>]
+  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--ffmpeg-path <path>]
+  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--sample-rate <hz>]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
@@ -31,11 +32,15 @@ enum Command {
     Transcribe {
         path: PathBuf,
         language: String,
+        backend: BackendSelection,
+        model_path: Option<PathBuf>,
         ffmpeg_path: Option<PathBuf>,
     },
     TranscribePcm {
         path: PathBuf,
         language: String,
+        backend: BackendSelection,
+        model_path: Option<PathBuf>,
         sample_rate: u32,
     },
 }
@@ -74,6 +79,8 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
         return Err("transcribe requires an input path".to_owned());
     };
     let mut language = None;
+    let mut backend = None;
+    let mut model_path = None;
     let mut ffmpeg_path = None;
     let mut index = 1;
     while index < arguments.len() {
@@ -98,12 +105,34 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
                 }
                 index += 2;
             }
+            "--backend" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--backend requires auto or a backend identifier")?;
+                if backend.replace(parse_backend(value)?).is_some() {
+                    return Err("--backend may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--model-path" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--model-path requires a model path")?;
+                if model_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--model-path may only be specified once".to_owned());
+                }
+                index += 2;
+            }
             option => return Err(format!("unsupported transcribe option: {option}")),
         }
     }
     Ok(Command::Transcribe {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe requires --language <tag>")?,
+        backend: backend.unwrap_or_default(),
+        model_path,
         ffmpeg_path,
     })
 }
@@ -113,6 +142,8 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
         return Err("transcribe-pcm requires an input path".to_owned());
     };
     let mut language = None;
+    let mut backend = None;
+    let mut model_path = None;
     let mut sample_rate = None;
     let mut index = 1;
     while index < arguments.len() {
@@ -141,14 +172,45 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
                 }
                 index += 2;
             }
+            "--backend" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--backend requires auto or a backend identifier")?;
+                if backend.replace(parse_backend(value)?).is_some() {
+                    return Err("--backend may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--model-path" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--model-path requires a model path")?;
+                if model_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--model-path may only be specified once".to_owned());
+                }
+                index += 2;
+            }
             option => return Err(format!("unsupported transcribe-pcm option: {option}")),
         }
     }
     Ok(Command::TranscribePcm {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe-pcm requires --language <tag>")?,
+        backend: backend.unwrap_or_default(),
+        model_path,
         sample_rate: sample_rate.unwrap_or(16_000),
     })
+}
+
+fn parse_backend(value: &str) -> Result<BackendSelection, String> {
+    if value == "auto" {
+        return Ok(BackendSelection::Auto);
+    }
+    BackendId::new(value)
+        .map(BackendSelection::Id)
+        .map_err(|error| error.to_string())
 }
 
 fn run(command: Command) -> Result<(), String> {
@@ -189,12 +251,16 @@ fn run(command: Command) -> Result<(), String> {
         Command::Transcribe {
             path,
             language,
+            backend,
+            model_path,
             ffmpeg_path,
         } => {
             let result = transcribe_file(
                 &path,
                 &TranscribeOptions {
+                    backend,
                     language: Some(language),
+                    model_path,
                     ..TranscribeOptions::default()
                 },
                 &MediaDecodeOptions { ffmpeg_path },
@@ -205,6 +271,8 @@ fn run(command: Command) -> Result<(), String> {
         Command::TranscribePcm {
             path,
             language,
+            backend,
+            model_path,
             sample_rate,
         } => {
             let bytes = fs::read(&path)
@@ -215,7 +283,9 @@ fn run(command: Command) -> Result<(), String> {
             let result = transcribe_pcm(
                 &input,
                 &TranscribeOptions {
+                    backend,
                     language: Some(language),
+                    model_path,
                     ..TranscribeOptions::default()
                 },
             )
@@ -247,12 +317,18 @@ mod tests {
                 "speech.ogg",
                 "--language",
                 "de-DE",
+                "--backend",
+                "whisper",
+                "--model-path",
+                "/models/whisper.bin",
                 "--ffmpeg-path",
                 "/opt/ffmpeg"
             ])),
             Ok(Command::Transcribe {
                 path: PathBuf::from("speech.ogg"),
                 language: "de-DE".to_owned(),
+                backend: BackendSelection::Id(BackendId::whisper()),
+                model_path: Some(PathBuf::from("/models/whisper.bin")),
                 ffmpeg_path: Some(PathBuf::from("/opt/ffmpeg")),
             })
         );
@@ -266,6 +342,8 @@ mod tests {
             Ok(Command::TranscribePcm {
                 path: PathBuf::from("speech.f32le"),
                 language: "de-DE".to_owned(),
+                backend: BackendSelection::Auto,
+                model_path: None,
                 sample_rate: 16_000,
             })
         );
@@ -281,6 +359,8 @@ mod tests {
             Ok(Command::TranscribePcm {
                 path: PathBuf::from("speech.f32le"),
                 language: "en-US".to_owned(),
+                backend: BackendSelection::Auto,
+                model_path: None,
                 sample_rate: 48_000,
             })
         );
@@ -303,6 +383,17 @@ mod tests {
             .is_err()
         );
         assert!(parse(arguments(&["transcribe-pcm", "speech.f32le"])).is_err());
+        assert!(
+            parse(arguments(&[
+                "transcribe-pcm",
+                "speech.f32le",
+                "--language",
+                "en-US",
+                "--backend",
+                ""
+            ]))
+            .is_err()
+        );
         assert!(
             parse(arguments(&[
                 "transcribe-pcm",

@@ -7,8 +7,8 @@ use cuttledoc_apple_speech::{
 };
 
 use crate::{
-    BackendId, BackendSelection, CancellationToken, CuttledocError, ErrorCode, PcmBuffer, Result,
-    Stability, TimeRange, TranscribeOptions, TranscriptReducer, TranscriptionResult,
+    BackendId, BackendSelection, CancellationToken, CuttledocError, ErrorCode, ModelId, PcmBuffer,
+    Result, Stability, TimeRange, TranscribeOptions, TranscriptReducer, TranscriptionResult,
     TranscriptionSegment, TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,
 };
 
@@ -27,10 +27,29 @@ pub fn transcribe_pcm_with_cancellation(
     options: &TranscribeOptions,
     cancellation: &CancellationToken,
 ) -> Result<TranscriptionResult> {
-    let backend = select_backend(&options.backend)?;
-    validate_request(input, options, &backend)?;
+    let backend = select_backend(options)?;
     ensure_not_cancelled(cancellation, &backend)?;
 
+    if backend == BackendId::apple_speech() {
+        return transcribe_apple_speech(input, options, cancellation, backend);
+    }
+    if backend == BackendId::whisper() {
+        return transcribe_whisper(input, options, cancellation, backend);
+    }
+    Err(CuttledocError::new(
+        ErrorCode::BackendUnavailable,
+        format!("recognition backend {backend} is not implemented"),
+    )
+    .with_backend(backend))
+}
+
+fn transcribe_apple_speech(
+    input: &PcmBuffer,
+    options: &TranscribeOptions,
+    cancellation: &CancellationToken,
+    backend: BackendId,
+) -> Result<TranscriptionResult> {
+    validate_apple_request(input, options, &backend)?;
     let started_at = Instant::now();
     let requested_locale = options
         .language
@@ -84,11 +103,112 @@ pub fn transcribe_pcm_with_cancellation(
     })
 }
 
-fn select_backend(selection: &BackendSelection) -> Result<BackendId> {
+fn transcribe_whisper(
+    input: &PcmBuffer,
+    options: &TranscribeOptions,
+    cancellation: &CancellationToken,
+    backend: BackendId,
+) -> Result<TranscriptionResult> {
+    validate_whisper_request(input, options, &backend)?;
+    let model =
+        ModelId::new(cuttledoc_whisper::MODEL_ID).expect("the built-in Whisper model ID is valid");
+    let model_path = options
+        .model_path
+        .clone()
+        .or_else(cuttledoc_whisper::configured_model_path)
+        .ok_or_else(|| {
+            CuttledocError::new(
+                ErrorCode::ModelMissing,
+                format!(
+                    "Whisper large-v3-turbo is not installed; set {} or pass an explicit model path",
+                    cuttledoc_whisper::MODEL_PATH_ENV
+                ),
+            )
+            .with_backend(backend.clone())
+            .with_model(model.clone())
+        })?;
+    let language = whisper_language(options.language.as_deref(), &backend)?;
+
+    let started_at = Instant::now();
+    let mut engine = cuttledoc_whisper::WhisperEngine::create(&cuttledoc_whisper::EngineOptions {
+        model_path,
+        language,
+        threads: 4,
+    })
+    .map_err(CuttledocError::from)?;
+    let native = engine
+        .transcribe(&input.samples, || cancellation.is_cancelled())
+        .map_err(CuttledocError::from)?;
+    ensure_not_cancelled(cancellation, &backend)?;
+
+    let media_duration = media_duration(input);
+    let media_end_ms = u64::try_from(media_duration.as_millis()).unwrap_or(u64::MAX);
+    let mut previous_end = None;
+    let mut segments = Vec::with_capacity(native.segments.len());
+    for segment in native.segments {
+        let start_ms = segment.range.start_ms.min(media_end_ms);
+        let end_ms = segment.range.end_ms.min(media_end_ms);
+        if start_ms >= end_ms || previous_end.is_some_and(|end| end > start_ms) {
+            return Err(contract_error(
+                &backend,
+                "Whisper emitted invalid or overlapping segment ranges",
+            ));
+        }
+        previous_end = Some(end_ms);
+        segments.push(TranscriptionSegment {
+            range: TimeRange::from_millis(start_ms, end_ms),
+            text: segment.text,
+            confidence: None,
+            words: Vec::new(),
+        });
+    }
+    let text = segments
+        .iter()
+        .map(|segment| segment.text.trim())
+        .filter(|text| !text.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    Ok(TranscriptionResult {
+        text,
+        language: native.language,
+        backend,
+        model: Some(model),
+        media_duration,
+        processing_duration: started_at.elapsed(),
+        segments,
+    })
+}
+
+fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
     let apple = BackendId::apple_speech();
-    match selection {
-        BackendSelection::Auto => Ok(apple),
+    let whisper = BackendId::whisper();
+    match &options.backend {
+        BackendSelection::Auto => {
+            let capabilities = crate::recognition_capabilities();
+            if options.language.as_deref().is_some_and(|language| {
+                capabilities.iter().any(|capability| {
+                    capability.backend == apple
+                        && capability.availability.is_available()
+                        && apple_supports_language(capability, language)
+                })
+            }) {
+                return Ok(apple);
+            }
+            if capabilities.iter().any(|capability| {
+                capability.backend == whisper
+                    && (capability.availability.is_available()
+                        || explicit_whisper_model_is_available(options))
+            }) {
+                return Ok(whisper);
+            }
+            Err(CuttledocError::new(
+                ErrorCode::BackendUnavailable,
+                "no local recognition backend is available for this request",
+            ))
+        }
         BackendSelection::Id(backend) if backend == &apple => Ok(backend.clone()),
+        BackendSelection::Id(backend) if backend == &whisper => Ok(backend.clone()),
         BackendSelection::Id(backend) => Err(CuttledocError::new(
             ErrorCode::BackendUnavailable,
             format!("recognition backend {backend} is not implemented"),
@@ -97,7 +217,32 @@ fn select_backend(selection: &BackendSelection) -> Result<BackendId> {
     }
 }
 
-fn validate_request(
+fn apple_supports_language(capability: &crate::RecognitionCapabilities, requested: &str) -> bool {
+    let requested = requested.to_ascii_lowercase().replace('_', "-");
+    if requested.is_empty() {
+        return false;
+    }
+    if requested.contains('-') {
+        return capability
+            .locales
+            .iter()
+            .any(|locale| locale.to_ascii_lowercase().replace('_', "-") == requested);
+    }
+    capability
+        .languages
+        .iter()
+        .any(|language| language == &requested)
+}
+
+fn explicit_whisper_model_is_available(options: &TranscribeOptions) -> bool {
+    cuttledoc_whisper::build_support() == cuttledoc_whisper::BuildSupport::Native
+        && options
+            .model_path
+            .as_deref()
+            .is_some_and(|path| cuttledoc_whisper::validate_model(path).is_ok())
+}
+
+fn validate_apple_request(
     input: &PcmBuffer,
     options: &TranscribeOptions,
     backend: &BackendId,
@@ -124,7 +269,58 @@ fn validate_request(
         .with_backend(backend.clone())
         .with_model(model.clone()));
     }
+    if options.model_path.is_some() {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            "Apple Speech uses system-managed assets and does not accept a model path",
+        )
+        .with_backend(backend.clone()));
+    }
     Ok(())
+}
+
+fn validate_whisper_request(
+    input: &PcmBuffer,
+    options: &TranscribeOptions,
+    backend: &BackendId,
+) -> Result<()> {
+    if input.format.channels != 1 || input.format.sample_rate != 16_000 {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            "Whisper requires mono 16000 Hz PCM input",
+        )
+        .with_backend(backend.clone()));
+    }
+    if let Some(model) = &options.model
+        && model.as_str() != cuttledoc_whisper::MODEL_ID
+    {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            format!("Whisper supports only {}", cuttledoc_whisper::MODEL_ID),
+        )
+        .with_backend(backend.clone())
+        .with_model(model.clone()));
+    }
+    Ok(())
+}
+
+fn whisper_language(language: Option<&str>, backend: &BackendId) -> Result<Option<String>> {
+    let Some(language) = language.filter(|value| !value.is_empty() && *value != "auto") else {
+        return Ok(None);
+    };
+    let language = language
+        .split(['-', '_'])
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    if !cuttledoc_whisper::SUPPORTED_LANGUAGES.contains(&language.as_str()) {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            format!("Whisper does not support language {language}"),
+        )
+        .with_backend(backend.clone()));
+    }
+    Ok(Some(language))
 }
 
 fn ensure_not_cancelled(cancellation: &CancellationToken, backend: &BackendId) -> Result<()> {
@@ -288,7 +484,9 @@ fn contract_error(backend: &BackendId, message: &str) -> CuttledocError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AudioFormat, ModelId};
+    use crate::{
+        AudioFormat, Availability, CancellationBoundary, ModelId, RecognitionCapabilities,
+    };
 
     fn native_final() -> NativeTranscriptionUpdate {
         NativeTranscriptionUpdate {
@@ -387,7 +585,7 @@ mod tests {
             ..TranscribeOptions::default()
         };
         assert_eq!(
-            validate_request(&stereo, &options, &backend)
+            validate_apple_request(&stereo, &options, &backend)
                 .expect_err("stereo must fail")
                 .code,
             ErrorCode::InvalidInput
@@ -400,7 +598,7 @@ mod tests {
         .expect("valid mono buffer");
         options.language = None;
         assert_eq!(
-            validate_request(&mono, &options, &backend)
+            validate_apple_request(&mono, &options, &backend)
                 .expect_err("missing language must fail")
                 .code,
             ErrorCode::InvalidInput
@@ -409,7 +607,7 @@ mod tests {
         options.language = Some("en-US".to_owned());
         options.model = Some(ModelId::new("custom").expect("valid model"));
         assert_eq!(
-            validate_request(&mono, &options, &backend)
+            validate_apple_request(&mono, &options, &backend)
                 .expect_err("model selection must fail")
                 .code,
             ErrorCode::InvalidInput
@@ -424,5 +622,150 @@ mod tests {
         let error = ensure_not_cancelled(&cancellation, &backend).expect_err("must cancel");
         assert_eq!(error.code, ErrorCode::Cancelled);
         assert_eq!(error.backend, Some(backend));
+    }
+
+    #[test]
+    fn explicit_whisper_selection_is_independent_of_model_availability() {
+        let options = TranscribeOptions {
+            backend: BackendSelection::Id(BackendId::whisper()),
+            language: Some("en-US".to_owned()),
+            ..TranscribeOptions::default()
+        };
+        assert_eq!(
+            select_backend(&options).expect("explicit backend"),
+            BackendId::whisper()
+        );
+    }
+
+    #[test]
+    fn apple_auto_selection_requires_an_exact_regional_locale() {
+        let capability = RecognitionCapabilities {
+            backend: BackendId::apple_speech(),
+            model: None,
+            availability: Availability::Available,
+            file_input: false,
+            bounded_pcm_input: true,
+            streaming_pcm_input: true,
+            dynamic_locales: true,
+            languages: vec!["en".to_owned()],
+            locales: vec!["en_GB".to_owned()],
+            segment_timestamps: true,
+            word_timestamps: true,
+            confidence: true,
+            incremental_finals: true,
+            volatile_results: true,
+            max_concurrent_requests: 1,
+            cancellation_boundary: CancellationBoundary::InputChunk,
+        };
+
+        assert!(apple_supports_language(&capability, "en"));
+        assert!(apple_supports_language(&capability, "en-GB"));
+        assert!(!apple_supports_language(&capability, "en-US"));
+    }
+
+    #[test]
+    fn explicit_model_availability_reflects_native_build_support() {
+        let temporary_root = std::env::temp_dir().join(format!(
+            "cuttledoc-whisper-selection-{}",
+            std::process::id()
+        ));
+        let model_path = temporary_root.join("ggml-large-v3-turbo.bin");
+        let encoder_path = temporary_root.join("ggml-large-v3-turbo-encoder.mlmodelc");
+        std::fs::create_dir_all(&encoder_path).expect("temporary encoder directory");
+        std::fs::write(&model_path, b"placeholder").expect("temporary model file");
+        let options = TranscribeOptions {
+            model_path: Some(model_path),
+            ..TranscribeOptions::default()
+        };
+
+        assert_eq!(
+            explicit_whisper_model_is_available(&options),
+            cuttledoc_whisper::build_support() == cuttledoc_whisper::BuildSupport::Native
+        );
+
+        std::fs::remove_dir_all(temporary_root).expect("remove temporary model pair");
+    }
+
+    #[test]
+    fn whisper_languages_normalize_bcp47_and_preserve_auto_detection() {
+        let backend = BackendId::whisper();
+        assert_eq!(
+            whisper_language(Some("pt-BR"), &backend).expect("supported language"),
+            Some("pt".to_owned())
+        );
+        assert_eq!(
+            whisper_language(Some("auto"), &backend).expect("auto detection"),
+            None
+        );
+        assert_eq!(
+            whisper_language(None, &backend).expect("auto detection"),
+            None
+        );
+        assert_eq!(
+            whisper_language(Some("invalid"), &backend)
+                .expect_err("unknown language")
+                .code,
+            ErrorCode::InvalidInput
+        );
+    }
+
+    #[test]
+    fn whisper_validation_requires_normalized_pcm_and_the_pinned_model() {
+        let backend = BackendId::whisper();
+        let input = PcmBuffer::new(
+            AudioFormat::new(16_000, 1).expect("valid format"),
+            vec![0.0],
+        )
+        .expect("valid buffer");
+        validate_whisper_request(&input, &TranscribeOptions::default(), &backend)
+            .expect("default model");
+
+        let options = TranscribeOptions {
+            model: Some(ModelId::new("another-model").expect("valid ID")),
+            ..TranscribeOptions::default()
+        };
+        assert_eq!(
+            validate_whisper_request(&input, &options, &backend)
+                .expect_err("wrong model")
+                .code,
+            ErrorCode::InvalidInput
+        );
+
+        let wrong_rate = PcmBuffer::new(
+            AudioFormat::new(48_000, 1).expect("valid format"),
+            vec![0.0],
+        )
+        .expect("valid buffer");
+        assert_eq!(
+            validate_whisper_request(&wrong_rate, &TranscribeOptions::default(), &backend)
+                .expect_err("wrong sample rate")
+                .code,
+            ErrorCode::InvalidInput
+        );
+    }
+
+    #[test]
+    fn missing_whisper_model_has_a_stable_product_error() {
+        let input = PcmBuffer::new(
+            AudioFormat::new(16_000, 1).expect("valid format"),
+            vec![0.0],
+        )
+        .expect("valid buffer");
+        let options = TranscribeOptions {
+            backend: BackendSelection::Id(BackendId::whisper()),
+            model_path: Some(std::env::temp_dir().join(format!(
+                "cuttledoc-definitely-missing-whisper-model-{}/model.bin",
+                std::process::id()
+            ))),
+            ..TranscribeOptions::default()
+        };
+
+        let error = transcribe_pcm(&input, &options).expect_err("missing model must fail");
+        assert_eq!(error.code, ErrorCode::ModelMissing);
+        assert_eq!(error.backend, Some(BackendId::whisper()));
+        assert_eq!(
+            error.model,
+            Some(ModelId::new(cuttledoc_whisper::MODEL_ID).expect("valid model ID"))
+        );
     }
 }

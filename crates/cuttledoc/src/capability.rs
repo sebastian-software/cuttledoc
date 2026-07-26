@@ -90,7 +90,7 @@ pub struct RecognitionAssetInventory {
 }
 
 pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
-    vec![apple_speech_capabilities()]
+    vec![apple_speech_capabilities(), whisper_capabilities()]
 }
 
 pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
@@ -180,6 +180,73 @@ fn apple_speech_capabilities() -> RecognitionCapabilities {
     }
 }
 
+fn whisper_capabilities() -> RecognitionCapabilities {
+    use cuttledoc_whisper::{AdapterErrorKind, BuildSupport};
+
+    let model =
+        ModelId::new(cuttledoc_whisper::MODEL_ID).expect("the built-in Whisper model ID is valid");
+    let availability = match cuttledoc_whisper::build_support() {
+        BuildSupport::UnsupportedPlatform => Availability::Unavailable {
+            reason: AvailabilityReason::UnsupportedPlatform,
+            detail: "Whisper requires macOS 26 or newer on Apple Silicon".to_owned(),
+            remediation: None,
+        },
+        BuildSupport::SourceNotPrepared => Availability::Unavailable {
+            reason: AvailabilityReason::NativeComponentUnavailable,
+            detail: "Whisper was not included in this Cuttledoc build".to_owned(),
+            remediation: Some(
+                "use a release artifact with Whisper support or build with the ADR-0017 source"
+                    .to_owned(),
+            ),
+        },
+        BuildSupport::Native => match cuttledoc_whisper::configured_model_path() {
+            None => Availability::Unavailable {
+                reason: AvailabilityReason::ModelMissing,
+                detail: "Whisper large-v3-turbo is not installed".to_owned(),
+                remediation: Some(format!(
+                    "set {} or install the paired model in the Cuttledoc cache",
+                    cuttledoc_whisper::MODEL_PATH_ENV
+                )),
+            },
+            Some(path) => match cuttledoc_whisper::validate_model(&path) {
+                Ok(()) => Availability::Available,
+                Err(error) => Availability::Unavailable {
+                    reason: match error.kind {
+                        AdapterErrorKind::ModelMissing => AvailabilityReason::ModelMissing,
+                        _ => AvailabilityReason::ModelInvalid,
+                    },
+                    detail: error.message,
+                    remediation: Some(
+                        "install or select the pinned GGML and Core ML model pair".to_owned(),
+                    ),
+                },
+            },
+        },
+    };
+
+    RecognitionCapabilities {
+        backend: BackendId::whisper(),
+        model: Some(model),
+        availability,
+        file_input: false,
+        bounded_pcm_input: true,
+        streaming_pcm_input: false,
+        dynamic_locales: false,
+        languages: cuttledoc_whisper::SUPPORTED_LANGUAGES
+            .iter()
+            .map(|value| (*value).to_owned())
+            .collect(),
+        locales: Vec::new(),
+        segment_timestamps: true,
+        word_timestamps: false,
+        confidence: false,
+        incremental_finals: false,
+        volatile_results: false,
+        max_concurrent_requests: 1,
+        cancellation_boundary: CancellationBoundary::DecoderStep,
+    }
+}
+
 fn language_identifiers(locales: &[String]) -> Vec<String> {
     let mut languages = locales
         .iter()
@@ -230,5 +297,24 @@ mod tests {
             language_identifiers(&["en_US".to_owned(), "de-DE".to_owned(), "en_GB".to_owned()]),
             vec!["de", "en"]
         );
+    }
+
+    #[test]
+    fn whisper_capability_matches_the_pinned_language_table() {
+        let whisper = recognition_capabilities()
+            .into_iter()
+            .find(|capability| capability.backend == BackendId::whisper())
+            .expect("Whisper is a known backend");
+        assert_eq!(
+            whisper.model.as_ref().map(ModelId::as_str),
+            Some(cuttledoc_whisper::MODEL_ID)
+        );
+        assert_eq!(whisper.languages.len(), 100);
+        for language in ["de", "en", "es", "fr", "pt", "yue"] {
+            assert!(whisper.languages.iter().any(|value| value == language));
+        }
+        assert!(whisper.segment_timestamps);
+        assert!(!whisper.confidence);
+        assert!(!whisper.streaming_pcm_input);
     }
 }

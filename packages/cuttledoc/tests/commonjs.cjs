@@ -12,7 +12,7 @@ async function main() {
   assert.equal(version(), '0.1.0');
   assert.deepEqual(
     recognitionBackends().map(({ id }) => id),
-    ['apple-speech'],
+    ['apple-speech', 'whisper'],
   );
 
   assert.throws(
@@ -61,6 +61,28 @@ async function main() {
     assert.equal(result.backend, 'apple-speech');
     assert.equal(result.mediaDurationMs, 10_560);
     assert.equal(result.segments[0].words.length, 19);
+  }
+
+  if (
+    process.env.CUTTLEDOC_NODE_PCM_FIXTURE &&
+    process.env.CUTTLEDOC_NODE_WHISPER_MODEL_PATH
+  ) {
+    const pcm = require('node:fs').readFileSync(
+      process.env.CUTTLEDOC_NODE_PCM_FIXTURE,
+    );
+    const whisper = await transcribePcm(pcm, {
+      language: 'auto',
+      backend: 'whisper',
+      modelPath: process.env.CUTTLEDOC_NODE_WHISPER_MODEL_PATH,
+    });
+    assert.equal(
+      whisper.text,
+      'However, due to the slow communication channels, styles in the West could lag behind by 25-30 years.',
+    );
+    assert.equal(whisper.language, 'en');
+    assert.equal(whisper.backend, 'whisper');
+    assert.equal(whisper.model, 'whisper-large-v3-turbo');
+    assert.equal(whisper.segments.length, 1);
   }
 
   console.log('CommonJS package smoke passed');

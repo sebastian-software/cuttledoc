@@ -29,7 +29,23 @@ function validateOptions(options) {
     throw new TypeError('options must be an object');
   }
   if (typeof options.language !== 'string' || options.language.trim() === '') {
-    throw new TypeError('options.language must be a non-empty BCP 47 language tag');
+    throw new TypeError(
+      'options.language must be a non-empty BCP 47 language tag or auto',
+    );
+  }
+  if (
+    options.backend !== undefined &&
+    !['auto', 'apple-speech', 'whisper'].includes(options.backend)
+  ) {
+    throw new TypeError(
+      'options.backend must be auto, apple-speech, or whisper',
+    );
+  }
+  if (
+    options.modelPath !== undefined &&
+    (typeof options.modelPath !== 'string' || options.modelPath.trim() === '')
+  ) {
+    throw new TypeError('options.modelPath must be a non-empty model path');
   }
   if (
     options.signal !== undefined &&
@@ -69,6 +85,8 @@ function transcribePcm(pcm, options) {
     ownedPcm,
     {
       language: options.language,
+      backend: options.backend,
+      modelPath: options.modelPath,
       sampleRate: options.sampleRate,
     },
     options.signal,
@@ -95,6 +113,8 @@ function transcribeFile(path, options) {
     path,
     {
       language: options.language,
+      backend: options.backend,
+      modelPath: options.modelPath,
       ffmpegPath: options.ffmpegPath,
     },
     options.signal,

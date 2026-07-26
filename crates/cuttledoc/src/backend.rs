@@ -17,6 +17,10 @@ impl BackendId {
         Self(cuttledoc_apple_speech::BACKEND_ID.to_owned())
     }
 
+    pub fn whisper() -> Self {
+        Self(cuttledoc_whisper::BACKEND_ID.to_owned())
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -47,7 +51,7 @@ pub enum BackendSelection {
 }
 
 pub fn known_backend_ids() -> Vec<BackendId> {
-    vec![BackendId::apple_speech()]
+    vec![BackendId::apple_speech(), BackendId::whisper()]
 }
 
 #[cfg(test)]
