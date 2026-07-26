@@ -75,6 +75,8 @@ fn transcribe_apple_speech(
     let chunk_size = input_chunk_size(input.format.sample_rate);
     let total_samples = u64::try_from(input.samples.len()).unwrap_or(u64::MAX);
     let mut completed_samples = 0_u64;
+    let progress_step = (total_samples / 20).max(1);
+    let mut next_progress = progress_step;
     on_progress(progress(
         ProgressPhase::Transcribing,
         completed_samples,
@@ -98,11 +100,16 @@ fn transcribe_apple_speech(
         )?;
         completed_samples =
             completed_samples.saturating_add(u64::try_from(chunk.len()).unwrap_or(u64::MAX));
-        on_progress(progress(
-            ProgressPhase::Transcribing,
-            completed_samples,
-            Some(total_samples),
-        ));
+        if completed_samples >= next_progress || completed_samples >= total_samples {
+            on_progress(progress(
+                ProgressPhase::Transcribing,
+                completed_samples,
+                Some(total_samples),
+            ));
+            while next_progress <= completed_samples {
+                next_progress = next_progress.saturating_add(progress_step);
+            }
+        }
     }
 
     if cancellation.is_cancelled() {
