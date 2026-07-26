@@ -8,5 +8,8 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[dependencies]
+sha2 = { version = "=0.11.0", default-features = false }
+
 [lints]
 workspace = true

@@ -3,6 +3,15 @@
 use std::error::Error;
 use std::fmt;
 
+mod manager;
+mod manifests;
+
+pub use manager::{
+    ArtifactFetcher, CACHE_ROOT_ENV, ModelError, ModelErrorCode, ModelManager, ModelProgress,
+    ModelProgressPhase, ModelResult, default_cache_root,
+};
+pub use manifests::{ArtifactManifest, BUILT_IN_MANIFESTS, ModelManifest, built_in_manifest};
+
 macro_rules! identifier {
     ($name:ident, $kind:literal) => {
         #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -81,8 +90,23 @@ pub struct ModelOperations {
 pub enum ModelState {
     Available,
     Missing,
+    Partial,
+    Ready,
     Invalid,
     ProviderUnavailable,
+}
+
+impl ModelState {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Available => "available",
+            Self::Missing => "missing",
+            Self::Partial => "partial",
+            Self::Ready => "ready",
+            Self::Invalid => "invalid",
+            Self::ProviderUnavailable => "provider_unavailable",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -115,5 +139,6 @@ mod tests {
         );
         assert_eq!(ModelProvisioning::SystemManaged.as_str(), "system_managed");
         assert_eq!(ModelProvisioning::Remote.as_str(), "remote");
+        assert_eq!(ModelState::Ready.as_str(), "ready");
     }
 }
