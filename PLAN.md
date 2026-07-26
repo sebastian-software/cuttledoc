@@ -215,6 +215,14 @@ Exit criteria:
 
 **Purpose:** add the second backend or compatibility path justified by gaps in the first vertical slice.
 
+### Current checkpoint
+
+Issue #24 owns the opt-in Whisper `large-v3-turbo` compatibility backend. The
+port starts from the measured `whisper-coreml` 1.1.0 / whisper.cpp v1.8.2
+behavior and keeps the existing FLEURS, multilingual, and audiobook records as
+differential oracles. The first checkpoint records the exact production pin
+and repository-owned C ABI before changing the common engine.
+
 Scope:
 
 - Preserve or deliberately replace the valuable Whisper `large-v3-turbo` baseline capabilities.
@@ -265,6 +273,11 @@ decoder `Vec` into the public `Arc<[f32]>` buffer. This is acceptable for the
 first 16 GB file slice; multi-hour and streaming measurements remain the
 trigger for chunked decoding.
 
+Issue #23 completed the general media-file path. Issue #26 owns hosted
+transcription and cloud-only platform support; issue #27 owns the remaining CLI
+output and model-management parity. These are separate so provider security,
+user-facing CLI behavior, and model provisioning can be reviewed independently.
+
 Scope:
 
 - Audio/video probing and decode to normalized 16 kHz mono `f32` samples.
@@ -305,10 +318,11 @@ Gate:
 
 - Issue #7 proves the runtime and safety-gate foundation. Issue #20 and
   ADR-0014 select Gemma 4 26B-A4B 4-bit as the local model and Gemini 3.6 Flash
-  as the explicit hosted option. Implement Gemma first through a narrow owned
-  adapter over official MLX after the common text-generation and enhancement
-  contracts exist. A Core ML conversion is triggered only by a material MLX
-  memory, parity, energy, lifecycle, or packaging problem.
+  as the explicit hosted option. Issue #25 owns their product implementation:
+  implement Gemma first through a narrow owned adapter over official MLX after
+  the common text-generation and enhancement contracts exist. A Core ML
+  conversion is triggered only by a material MLX memory, parity, energy,
+  lifecycle, or packaging problem.
 - Keep enhancement only where measured transcript quality, install size, and operational complexity justify it.
 - Do not select an immature runtime merely because its model experiment succeeds.
 - Preserve raw transcription as a complete product regardless of this decision.
@@ -318,6 +332,9 @@ Gate:
 ## Phase 6 — Distribution and compatibility
 
 **Purpose:** prove that the final delivery mechanisms work, not just source checkouts.
+
+Issue #28 owns the reproducible release-candidate artifact set after the
+backend, hosted-provider, and CLI compatibility gates are complete.
 
 Deliverables:
 
@@ -408,14 +425,19 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-1. Close the completed or superseded Phase 0 issues with links to their
-   evidence, then close the Phase 0 epic.
-2. Scaffold the Phase 1 Cargo workspace with only the common product crates and
-   the Apple Speech adapter selected by ADR-0015.
-3. Establish formatting, Clippy, unit-test, dependency-policy, and macOS CI
-   gates around the empty vertical architecture.
-4. Build the first real Apple Speech transcription path through Rust, CLI, and
-   the packed Node artifact before adding the Whisper fallback.
-5. Add transcript enhancement after the common `TextGenerationEngine` and raw
-   transcription result paths exist: Gemma locally on capable machines and
-   Gemini only through explicit OpenRouter configuration.
+Evidence snapshot: 2026-07-26 at `82fd077`, with a clean worktree.
+
+1. Complete #24: port the measured Whisper `large-v3-turbo` CoreML/Metal
+   backend behind the common Rust engine, then expose explicit and local-only
+   automatic backend selection through CLI and Node.
+2. Complete #25: add provider-neutral transcript enhancement, Gemma locally on
+   capable machines, and Gemini only through explicit OpenRouter
+   configuration. Raw text always remains available.
+3. Complete #26: add hosted transcription and the Linux/Windows cloud-only
+   path without automatic remote fallback.
+4. Complete #27: finish output-file, Markdown/JSON, capability, and
+   model-management CLI parity.
+5. Complete #28: build, sign, notarize, attest, and clean-machine-test the
+   reproducible v3 release artifacts.
+6. Run the TTS vertical slice in #13 after the transcription release gates; it
+   remains a strategic but non-blocking product direction.
