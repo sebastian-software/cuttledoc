@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "phase5.transcript-enhancement-product.gemma-de-dialogue-1",
+  "captured_at": "2026-07-26T15:58:35Z",
+  "source_revision": "1d53c7879906b96b314b9675517e443a702f9dd0",
+  "issue": "https://github.com/sebastian-software/cuttledoc-rs/issues/25",
+  "measurement_scope": "One product-level sequential Apple Speech to local Gemma transcript-enhancement smoke on a checked-in synthetic German professional-audio fixture. This proves the Rust/CLI lifecycle, raw-text ownership, official-MLX adapter, frozen prompt, benchmark-compatible local parser, and correction-policy gates on a 64 GiB host. It is not the still-required direct 32 GiB host gate or a population-quality benchmark.",
+  "host": {
+    "architecture": "arm64",
+    "processor": "Apple M1 Ultra",
+    "memory_bytes": 68719476736,
+    "os": "macOS 26.5.2 (25F84)",
+    "execution_context": "Normal host process outside the restricted diagnostic sandbox"
+  },
+  "input": {
+    "asset_id": "synthetic-de-dialogue.qwen3-tts-1.7b-voicedesign-warm.opus-64k-1",
+    "path": "benchmarks/assets/synthetic/de-DE/qwen3-tts-1.7b-voicedesign-warm/synthetic-de-dialogue/audio.opus",
+    "license": "CC-BY-SA-4.0",
+    "bytes": 486076,
+    "sha256": "6faa7a999f9ef4dcd35da826377e711378d5bedf3eee28bc46b43d5da793b0b3",
+    "duration_ms": 56880
+  },
+  "procedure": {
+    "command_shape": "cuttledoc transcribe <fixture> --language de-DE --backend apple-speech --enhance local --enhancement-model-path <verified-model> --json",
+    "lifecycle": "transcribe_file returned its owned result and released the Apple Speech session before apply_transcript_enhancement acquired Gemma and its MLX session",
+    "prompt_id": "conservative-sections-local-diff-v2",
+    "prompt_sha256": "02865763287e92528f45785e2d93f4ef916a67968abb7378c87bb4443b9808c9",
+    "sampling": "greedy",
+    "seed": 0
+  },
+  "runtime": {
+    "boundary": "Rust-owned task API through a narrow C ABI over official MLX C++",
+    "mlx_version": "0.32.0",
+    "mlx_revision": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247",
+    "model": "mlx-community/gemma-4-26b-a4b-it-4bit",
+    "model_revision": "0d77464eeb233a2da68ebf9d7dc4edaac7db956d",
+    "model_snapshot_bytes": 15373586252,
+    "minimum_unified_memory_bytes": 34359738368,
+    "required_available_memory_bytes": 23963520844,
+    "memory_gate_status": "passed"
+  },
+  "asr": {
+    "backend": "apple-speech",
+    "reported_language": "de_DE",
+    "processing_duration_ms": 1901.035666,
+    "raw_text": "Was macht eine Aufnahme eigentlich leicht verständlich? fragt Mara. Vor allem Ruhe, antwortet Jonas. Nicht völlige Stille, sondern eine ruhige Umgebung, in der die Stimme klar im Mittelpunkt steht. Mara rückt etwas näher an das Mikrofon.  Also genügt ein gutes Gerät? Nein, der Abstand ist genauso wichtig. Etwa 15 Zentimeter sind ein brauchbarer Anfang, aber jede Stimme klingt anders. Und wenn jemand beim Sprechen den Kopf bewegt? Jonas lacht  Dann verändert sich die Lautstärke. Deshalb sollte man bequem sitzen, frei atmen und nicht jedes Wort erzwingen. Mara macht eine kurze Pause. Das klingt weniger technisch, als ich erwartet hatte.  Gute Technik fällt kaum auf, sagt Jonas. Am Ende soll niemand über das Mikrofon nachdenken. Die Zuhörer sollen einfach verstehen, was du erzählen möchtest."
+  },
+  "enhancement": {
+    "backend": "gemma-mlx",
+    "model": "gemma-4-26b-a4b-it-4bit",
+    "processing_duration_ms": 42354.922833,
+    "outcome": "applied",
+    "fallback_reason": null,
+    "protected_numeric_spans_preserved": true,
+    "benchmark_contract_required_fields": [
+      "id",
+      "text"
+    ],
+    "additional_diagnostic_fields_ignored": true,
+    "text": "„Was macht eine Aufnahme eigentlich leicht verständlich?“, fragt Mara. „Vor allem Ruhe“, antwortet Jonas. „Nicht völlige Stille, sondern eine ruhige Umgebung, in der die Stimme klar im Mittelpunkt steht.“ Mara rückt etwas näher an das Mikrofon. „Also genügt ein gutes Gerät?“ „Nein, der Abstand ist genauso wichtig. Etwa 15 Zentimeter sind ein brauchbarer Anfang, aber jede Stimme klingt anders.“ „Und wenn jemand beim Sprechen den Kopf bewegt?“ Jonas lacht. „Dann verändert sich die Lautstärke. Deshalb sollte man bequem sitzen, frei atmen und nicht jedes Wort erzwingen.“ Mara macht eine kurze Pause. „Das klingt weniger technisch, als ich erwartet hatte.“ „Gute Technik fällt kaum auf“, sagt Jonas. „Am Ende soll niemand über das Mikrofon nachdenken. Die Zuhörer sollen einfach verstehen, was du erzählen möchtest.“"
+  },
+  "assertions": {
+    "raw_text_retained_exactly": true,
+    "asr_released_before_enhancement_acquisition": true,
+    "python_runtime_absent": true,
+    "official_mlx_direct_path": true,
+    "structured_output_validated": true,
+    "policy_accepted": true,
+    "result_text_separate_from_raw_text": true
+  }
+}

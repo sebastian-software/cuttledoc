@@ -54,7 +54,7 @@ cuttledoc-node ────┼──▶ cuttledoc ───▶ backend/audio/mod
                    └─────────────────────────┘
 
 runtime-specific adapter crates ─▶ internal task abstractions
-cuttledoc-openai ────────────────▶ internal task abstractions
+remote provider adapters ────────▶ internal task abstractions
 cuttledoc-audio ─────────────────▶ domain audio types
 cuttledoc-models ────────────────▶ provisioning and storage contracts
 ```
@@ -165,9 +165,14 @@ inside an ASR adapter. Any such stage must preserve the original input and be
 measured as part of the selected pipeline. See
 [`audio-use-cases.md`](audio-use-cases.md).
 
-### `cuttledoc-openai`
+### Remote provider adapters
 
-Owns cloud transcription requests and response conversion. It receives credentials from in-memory configuration and must never persist or log them.
+Own pinned hosted requests and response conversion behind the same task
+contracts. The implemented `cuttledoc-openrouter` slice serves only the
+explicitly selected Gemini 3.6 Flash enhancement route. It receives credentials
+from environment or in-memory configuration and never persists or logs them.
+Provider fallback is disabled; local resource limits never activate a remote
+adapter.
 
 ### `cuttledoc-cli`
 

@@ -2,10 +2,11 @@
 
 ## Status
 
-This document is the Phase 0 boundary decision, not yet a published
+This document began as the Phase 0 boundary decision and is not yet a published
 compatibility promise. Task separation, worker ownership, open backend IDs,
-capability discovery, and streaming semantics are settled by ADR-0010; exact
-Rust names remain provisional until the first vertical slice.
+capability discovery, and streaming semantics are settled by ADR-0010. The
+issue-#25 generation and transcript-enhancement vertical slice now implements
+the core contracts described here.
 
 ## API layers
 
@@ -107,6 +108,11 @@ pub enum GenerationRole {
 pub enum GenerationOutputFormat {
     Text,
     JsonObject,
+    JsonSchema {
+        name: String,
+        schema: String,
+        strict: bool,
+    },
 }
 
 pub struct GenerationOptions {
@@ -136,12 +142,13 @@ and cancellation terminates the stream with the common cancelled error at the
 backend's advertised safe boundary.
 
 Transcript enhancement is orchestration above this engine. It selects and
-hashes prompts, chunks long transcripts, supplies language/domain context,
-compares the generated output with the raw input, applies protected-span and
-lexical guards, and retains both raw and accepted text. Consequently OpenAI,
-Ollama, a future official-MLX adapter, and a possible llama.cpp adapter can
-implement the same engine without moving prompt policy into a runtime adapter.
-STT output is never overwritten in place.
+hashes prompts, supplies language/domain context, compares generated output
+with raw input, applies protected-span and lexical guards, and retains both raw
+and accepted text. The first implementation processes one bounded multi-page
+document; batching hours-long transcripts remains a separate product slice.
+Consequently local Gemma/official MLX, explicit Gemini/OpenRouter, and future
+providers implement the same engine without moving prompt policy into a
+runtime adapter. STT output is never overwritten in place.
 
 Both streams define cancellation and backpressure behavior. Phase 5 must use a
 real TTS runtime to validate output sample ownership, chunk timing, format
@@ -180,6 +187,7 @@ pub struct TranscribeOptions {
 }
 
 pub struct TranscriptionResult {
+    pub raw_text: String,
     pub text: String,
     pub language: Option<String>,
     pub backend: BackendId,
@@ -187,6 +195,7 @@ pub struct TranscriptionResult {
     pub media_duration: Duration,
     pub processing_duration: Duration,
     pub segments: Vec<TranscriptionSegment>,
+    pub enhancement: Option<TranscriptEnhancementResult>,
 }
 
 pub struct TranscriptionSegment {
@@ -198,11 +207,11 @@ pub struct TranscriptionSegment {
 }
 ```
 
-The current implemented local IDs are `apple-speech` and `whisper`. Planned
-Parakeet and hosted-provider IDs are added only with their product vertical
-slices. The MLX proofs implement end-to-end tasks, but a runtime does not
-receive a public backend ID until the product selects and integrates that task;
-runtime evidence alone does not define product identity.
+The current implemented recognition IDs are `apple-speech` and `whisper`.
+Generation exposes `gemma-mlx` and `openrouter`; OpenRouter is pinned to the
+selected Gemini route rather than being an automatic cloud fallback. Planned
+Parakeet or other provider IDs are added only with their product vertical
+slices. Runtime evidence alone does not define product identity.
 
 TypeScript uses the same open policy rather than a closed union that makes
 widening a breaking change:

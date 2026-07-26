@@ -71,14 +71,16 @@ delivery advantage.
 
 ## Validation and review triggers
 
-The first direct-runtime gate is complete: the repository-owned adapter over
+The direct-runtime gate is complete: the repository-owned adapter over
 official MLX matches the pinned Python reference's complete greedy token
-sequence and decoded text exactly on the fixed smoke fixture. Before calling
-the local path generally available, run an end-to-end memory and output smoke
-test on a 32 GB Apple Silicon machine with sequential STT and enhancement
-lifecycles. Revisit this decision if a materially smaller local model reaches
-comparable quality, the Gemma artifact or license changes, or a hosted model
-produces a clear quality, safety, or operational advantage over Gemini.
+sequence and decoded text exactly on the fixed smoke fixture. Complete
+sequential local and hosted product smokes also pass on a 64 GB M1 Ultra while
+retaining the exact raw ASR text. Local enhancement remains explicitly
+selected and the default remains off until an end-to-end memory and output
+smoke passes on a real 32 GB Apple Silicon machine. Revisit this decision if a
+materially smaller local model reaches comparable quality, the Gemma artifact
+or license changes, or a hosted model produces a clear quality, safety, or
+operational advantage over Gemini.
 
 The benchmark is a selected synthetic development challenge. It supports model
 and product-mode selection but does not establish universal podcast or
@@ -92,3 +94,4 @@ audiobook accuracy.
 - [Local upscale-model decision](../../benchmarks/postprocessing/local-llm-upscale-challenger-decision.json)
 - [Hosted German/English comparison](../../benchmarks/postprocessing/hosted-llm-de-en-prominent-comparison.json)
 - [Direct Gemma 4 adapter over official MLX](../spikes/gemma-4-official-mlx-direct.md)
+- [Transcript-enhancement implementation](../transcript-enhancement-implementation.md)
