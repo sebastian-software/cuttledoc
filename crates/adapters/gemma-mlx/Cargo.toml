@@ -1,0 +1,15 @@
+[package]
+name = "cuttledoc-gemma-mlx"
+description = "Private official-MLX Gemma text-generation boundary for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+tokenizers = { version = "=0.23.1", default-features = false, features = ["fancy-regex"] }
+
+[lints]
+workspace = true

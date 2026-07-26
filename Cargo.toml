@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/adapters/apple-speech",
+  "crates/adapters/gemma-mlx",
   "crates/adapters/whisper",
   "crates/cuttledoc-audio",
   "crates/cuttledoc",
