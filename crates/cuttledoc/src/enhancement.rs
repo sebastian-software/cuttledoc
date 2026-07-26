@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
@@ -438,8 +439,9 @@ fn parse_section(
             detail: "response section text must not be empty".to_owned(),
         });
     }
+    let text = repair_redundant_terminal_punctuation(text);
 
-    let diff = word_diff(&input.text, text);
+    let diff = word_diff(&input.text, &text);
     if diff.edit_rate > MAXIMUM_WORD_EDIT_RATE {
         return Err(Fallback {
             reason: EnhancementFallbackReason::PolicyViolation,
@@ -450,7 +452,7 @@ fn parse_section(
     let mut protected = input.protected_spans.clone();
     protected.extend(glossary.iter().cloned());
     protected.extend(numeric_spans(&input.text));
-    if !protected_spans_unchanged(&input.text, text, &protected) {
+    if !protected_spans_unchanged(&input.text, &text, &protected) {
         return Err(Fallback {
             reason: EnhancementFallbackReason::PolicyViolation,
             detail: "response changes a protected span".to_owned(),
@@ -460,9 +462,16 @@ fn parse_section(
     Ok(EnhancementSectionResult {
         id: input.id.clone(),
         raw_text: input.text.clone(),
-        text: text.to_owned(),
+        text: text.into_owned(),
         diff,
     })
+}
+
+fn repair_redundant_terminal_punctuation(text: &str) -> Cow<'_, str> {
+    if !text.contains("?,") && !text.contains("!,") {
+        return Cow::Borrowed(text);
+    }
+    Cow::Owned(text.replace("?,", "?").replace("!,", "!"))
 }
 
 fn strip_json_fence(value: &str) -> &str {
@@ -708,6 +717,21 @@ mod tests {
             "Das ist ein Test mit MLX 25.\n\nNoch ein Satz."
         );
         assert_eq!(result.sections[0].diff.edit_distance, 0);
+    }
+
+    #[test]
+    fn redundant_comma_after_terminal_punctuation_is_repaired_locally() {
+        let mut engine = engine_with_text(
+            r#"{"sections":[{"id":"section-1","text":"Das ist ein Test mit MLX 25?, fragt Mara."},{"id":"section-2","text":"Noch ein Satz!,"}]}"#,
+        );
+        let result = enhance_transcript(&request(), &mut engine, &CancellationToken::new())
+            .expect("surface repair must remain valid");
+
+        assert_eq!(result.outcome, EnhancementOutcome::Applied);
+        assert_eq!(
+            result.text,
+            "Das ist ein Test mit MLX 25? fragt Mara.\n\nNoch ein Satz!"
+        );
     }
 
     #[test]
