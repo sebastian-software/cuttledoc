@@ -10,6 +10,8 @@ use cuttledoc::{
 };
 use serde_json::json;
 
+use crate::cli_error::{CliError, CliResult};
+
 const MODEL_LIST_SCHEMA_VERSION: &str = "1.0.0";
 const APPLE_ASSET_MODEL_ID: &str = "apple-speech-assets";
 
@@ -100,13 +102,13 @@ pub fn parse(arguments: &[String]) -> Result<ModelCommand, String> {
     }
 }
 
-pub fn run(command: ModelCommand) -> Result<(), String> {
+pub fn run(command: ModelCommand) -> CliResult<()> {
     match command {
         ModelCommand::List { cache_root, format } => {
             let manager = manager(cache_root)?;
             let mut entries = manager
                 .list()
-                .map_err(format_model_error)?
+                .map_err(CliError::from)?
                 .into_iter()
                 .map(|descriptor| ModelListEntry {
                     total_bytes: manifest_bytes(descriptor.id.as_str()),
@@ -128,7 +130,7 @@ pub fn run(command: ModelCommand) -> Result<(), String> {
             for id in selected_models(&selector)? {
                 let descriptor = manager
                     .install(id, &mut fetcher, render_progress)
-                    .map_err(format_model_error)?;
+                    .map_err(CliError::from)?;
                 println!("{}\t{}", descriptor.id, descriptor.state.as_str());
             }
             Ok(())
@@ -139,14 +141,14 @@ pub fn run(command: ModelCommand) -> Result<(), String> {
         } => {
             let manager = manager(cache_root)?;
             for id in selected_models(&selector)? {
-                let descriptor = manager.verify(id).map_err(format_model_error)?;
+                let descriptor = manager.verify(id).map_err(CliError::from)?;
                 println!("{}\t{}", descriptor.id, descriptor.state.as_str());
             }
             Ok(())
         }
         ModelCommand::Remove { id, cache_root } => {
             let manager = manager(cache_root)?;
-            let removed = manager.remove(&id).map_err(format_model_error)?;
+            let removed = manager.remove(&id).map_err(CliError::from)?;
             println!(
                 "{id}\t{}",
                 if removed { "removed" } else { "not_installed" }
@@ -160,17 +162,17 @@ pub fn run(command: ModelCommand) -> Result<(), String> {
     }
 }
 
-pub fn resolve_cache_root(explicit: Option<PathBuf>) -> Result<PathBuf, String> {
+pub fn resolve_cache_root(explicit: Option<PathBuf>) -> CliResult<PathBuf> {
     match explicit {
         Some(path) if path.as_os_str().is_empty() => {
-            Err("--cache-root must not be empty".to_owned())
+            Err(CliError::usage("--cache-root must not be empty"))
         }
         Some(path) => Ok(path),
-        None => default_cache_root().map_err(format_model_error),
+        None => default_cache_root().map_err(CliError::from),
     }
 }
 
-fn manager(cache_root: Option<PathBuf>) -> Result<ModelManager, String> {
+fn manager(cache_root: Option<PathBuf>) -> CliResult<ModelManager> {
     Ok(ModelManager::new(resolve_cache_root(cache_root)?))
 }
 
@@ -221,16 +223,19 @@ fn parse_selector(value: &str) -> ModelSelector {
     }
 }
 
-fn selected_models(selector: &ModelSelector) -> Result<Vec<&'static str>, String> {
+fn selected_models(selector: &ModelSelector) -> CliResult<Vec<&'static str>> {
     match selector {
         ModelSelector::Id(id) => BUILT_IN_MANIFESTS
             .iter()
             .find(|manifest| manifest.id == id)
             .map(|manifest| vec![manifest.id])
             .ok_or_else(|| {
-                format!(
-                    "UNKNOWN_MODEL: unknown Cuttledoc-managed model: {id}; run `cuttledoc models list`"
+                CliError::new(
+                    "UNKNOWN_MODEL",
+                    format!("unknown Cuttledoc-managed model: {id}"),
+                    1,
                 )
+                .with_remediation("run `cuttledoc models list` to inspect supported models")
             }),
         ModelSelector::All => Ok(BUILT_IN_MANIFESTS
             .iter()
@@ -240,14 +245,16 @@ fn selected_models(selector: &ModelSelector) -> Result<Vec<&'static str>, String
     }
 }
 
-fn require_local_model_host() -> Result<(), String> {
+fn require_local_model_host() -> CliResult<()> {
     if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
         Ok(())
     } else {
-        Err(
-            "UNSUPPORTED_MODEL_OPERATION: local model installation requires macOS on Apple Silicon"
-                .to_owned(),
+        Err(CliError::new(
+            "UNSUPPORTED_MODEL_OPERATION",
+            "local model installation requires macOS on Apple Silicon",
+            1,
         )
+        .with_remediation("use hosted transcription on this platform"))
     }
 }
 
@@ -302,7 +309,7 @@ fn apple_asset_entry() -> ModelListEntry {
     }
 }
 
-fn render_list(entries: &[ModelListEntry], format: ModelOutputFormat) -> Result<(), String> {
+fn render_list(entries: &[ModelListEntry], format: ModelOutputFormat) -> CliResult<()> {
     match format {
         ModelOutputFormat::Text => {
             for entry in entries {
@@ -368,8 +375,13 @@ fn render_list(entries: &[ModelListEntry], format: ModelOutputFormat) -> Result<
             });
             println!(
                 "{}",
-                serde_json::to_string_pretty(&output)
-                    .map_err(|error| format!("could not encode model list: {error}"))?
+                serde_json::to_string_pretty(&output).map_err(|error| {
+                    CliError::new(
+                        "OUTPUT_ENCODING_FAILED",
+                        format!("could not encode model list: {error}"),
+                        1,
+                    )
+                })?
             );
             Ok(())
         }
@@ -395,13 +407,6 @@ fn render_progress(progress: ModelProgress) {
         progress.phase.as_str(),
         progress.artifact.as_deref().unwrap_or("-")
     );
-}
-
-fn format_model_error(error: cuttledoc::ModelError) -> String {
-    match &error.remediation {
-        Some(remediation) => format!("{error}; remediation: {remediation}"),
-        None => error.to_string(),
-    }
 }
 
 struct CurlArtifactFetcher {
@@ -551,7 +556,8 @@ mod tests {
         assert!(
             selected_models(&ModelSelector::Id("unknown".to_owned()))
                 .expect_err("unknown model")
-                .starts_with("UNKNOWN_MODEL:")
+                .code
+                == "UNKNOWN_MODEL"
         );
     }
 }

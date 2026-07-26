@@ -11,11 +11,13 @@ use cuttledoc::{
     text_generation_capabilities, transcribe_file, transcribe_pcm,
 };
 
+mod cli_error;
 mod model_commands;
 mod output;
 
+use cli_error::{CliError, CliResult};
 use model_commands::ModelCommand;
-use output::{OutputFormat, OutputOptions, emit_result};
+use output::{OutputFormat, OutputOptions, emit_result, validate_output};
 
 const HELP: &str = "\
 Cuttledoc speech and text processing
@@ -103,14 +105,15 @@ fn main() -> ExitCode {
     match parse(env::args().skip(1)) {
         Ok(command) => match run(command) {
             Ok(()) => ExitCode::SUCCESS,
-            Err(message) => {
-                eprintln!("{message}");
-                ExitCode::FAILURE
+            Err(error) => {
+                eprintln!("{error}");
+                ExitCode::from(error.exit_status)
             }
         },
         Err(message) => {
-            eprintln!("{message}\n\n{HELP}");
-            ExitCode::from(2)
+            let error = CliError::usage(message);
+            eprintln!("{error}\n\n{HELP}");
+            ExitCode::from(error.exit_status)
         }
     }
 }
@@ -420,7 +423,7 @@ fn finish_shared_transcription_arguments(
     })
 }
 
-fn run(command: Command) -> Result<(), String> {
+fn run(command: Command) -> CliResult<()> {
     match command {
         Command::Help => print!("{HELP}"),
         Command::Version => println!("cuttledoc {}", cuttledoc::VERSION),
@@ -484,6 +487,7 @@ fn run(command: Command) -> Result<(), String> {
             enhancement_model_path,
             output,
         } => {
+            validate_output(&output)?;
             let model_path = resolve_recognition_model_path(
                 &backend,
                 model.as_ref(),
@@ -505,7 +509,7 @@ fn run(command: Command) -> Result<(), String> {
                 },
                 &MediaDecodeOptions { ffmpeg_path },
             )
-            .map_err(|error| error.to_string())?;
+            .map_err(CliError::from)?;
             let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
             emit_result(&result, &output)?;
         }
@@ -521,6 +525,7 @@ fn run(command: Command) -> Result<(), String> {
             enhancement_model_path,
             output,
         } => {
+            validate_output(&output)?;
             let model_path = resolve_recognition_model_path(
                 &backend,
                 model.as_ref(),
@@ -532,11 +537,17 @@ fn run(command: Command) -> Result<(), String> {
                 enhancement_model_path,
                 cache_root.as_ref(),
             )?;
-            let bytes = fs::read(&path)
-                .map_err(|error| format!("could not read {}: {error}", path.display()))?;
-            let format = AudioFormat::new(sample_rate, 1).map_err(|error| error.to_string())?;
-            let input =
-                PcmBuffer::from_f32le_bytes(format, &bytes).map_err(|error| error.to_string())?;
+            let bytes = fs::read(&path).map_err(|error| {
+                CliError::new(
+                    "INPUT_READ_FAILED",
+                    format!("could not read {}: {error}", path.display()),
+                    1,
+                )
+            })?;
+            let format = AudioFormat::new(sample_rate, 1)
+                .map_err(|error| CliError::new("INVALID_INPUT", error.to_string(), 1))?;
+            let input = PcmBuffer::from_f32le_bytes(format, &bytes)
+                .map_err(|error| CliError::new("INVALID_INPUT", error.to_string(), 1))?;
             let result = transcribe_pcm(
                 &input,
                 &TranscribeOptions {
@@ -546,7 +557,7 @@ fn run(command: Command) -> Result<(), String> {
                     model_path,
                 },
             )
-            .map_err(|error| error.to_string())?;
+            .map_err(CliError::from)?;
             let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
             emit_result(&result, &output)?;
         }
@@ -559,7 +570,7 @@ fn resolve_recognition_model_path(
     model: Option<&ModelId>,
     explicit: Option<PathBuf>,
     cache_root: Option<&PathBuf>,
-) -> Result<Option<PathBuf>, String> {
+) -> CliResult<Option<PathBuf>> {
     if explicit.is_some() || cache_root.is_none() {
         return Ok(explicit);
     }
@@ -574,7 +585,7 @@ fn resolve_recognition_model_path(
     Ok(Some(
         manager
             .model_directory("whisper-large-v3-turbo")
-            .map_err(|error| error.to_string())?
+            .map_err(CliError::from)?
             .join("ggml-large-v3-turbo.bin"),
     ))
 }
@@ -583,14 +594,14 @@ fn resolve_enhancement_model_path(
     enhancement: EnhancementSelection,
     explicit: Option<PathBuf>,
     cache_root: Option<&PathBuf>,
-) -> Result<Option<PathBuf>, String> {
+) -> CliResult<Option<PathBuf>> {
     if explicit.is_some() || cache_root.is_none() || enhancement != EnhancementSelection::Local {
         return Ok(explicit);
     }
     ModelManager::new(cache_root.expect("checked cache root"))
         .model_directory("gemma-4-26b-a4b-it-4bit")
         .map(Some)
-        .map_err(|error| error.to_string())
+        .map_err(CliError::from)
 }
 
 fn enhance_result(
@@ -598,7 +609,7 @@ fn enhance_result(
     requested_language: &str,
     selection: EnhancementSelection,
     model_directory: Option<PathBuf>,
-) -> Result<TranscriptionResult, String> {
+) -> CliResult<TranscriptionResult> {
     let mode = match selection {
         EnhancementSelection::Off => TranscriptEnhancementMode::disabled(),
         EnhancementSelection::Local => TranscriptEnhancementMode::gemma_mlx(model_directory, None),
@@ -623,7 +634,7 @@ fn enhance_result(
         &TranscriptEnhancementContext::new(language, &locale),
         &CancellationToken::new(),
     )
-    .map_err(|error| error.to_string())?;
+    .map_err(CliError::from)?;
     if let Some(enhancement) = &result.enhancement
         && let EnhancementOutcome::RawFallback { reason, detail } = &enhancement.outcome
     {
@@ -924,24 +935,15 @@ mod tests {
             ))
         );
         assert_eq!(
-            resolve_enhancement_model_path(
-                EnhancementSelection::Local,
-                None,
-                Some(&cache_root),
-            )
-            .expect("Gemma path"),
+            resolve_enhancement_model_path(EnhancementSelection::Local, None, Some(&cache_root),)
+                .expect("Gemma path"),
             Some(PathBuf::from(
                 "/srv/cuttledoc/models/gemma-4-26b-a4b-it-4bit"
             ))
         );
         assert_eq!(
-            resolve_recognition_model_path(
-                &BackendSelection::Auto,
-                None,
-                None,
-                Some(&cache_root),
-            )
-            .expect("automatic path"),
+            resolve_recognition_model_path(&BackendSelection::Auto, None, None, Some(&cache_root),)
+                .expect("automatic path"),
             None
         );
     }
