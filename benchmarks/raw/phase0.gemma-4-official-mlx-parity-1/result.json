@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "phase0.gemma-4-official-mlx-parity-1",
+  "captured_at": "2026-07-26T15:10:23Z",
+  "source_revision": "f610601945c79d2d7ebfcb610157e19889c2be56",
+  "issue": "https://github.com/sebastian-software/cuttledoc-rs/issues/25",
+  "measurement_scope": "Greedy token and decoded-text parity between the pinned Python MLX-LM oracle and Cuttledoc's repository-owned Gemma task adapter over official MLX C++. This is a functional parity smoke test, not a performance, quality, or 32 GB memory-capacity result.",
+  "host": {
+    "architecture": "arm64",
+    "processor": "Apple M1 Ultra",
+    "memory_bytes": 68719476736,
+    "os": "macOS 26.5.2 (25F84)",
+    "execution_context": "Normal host process outside the restricted diagnostic sandbox"
+  },
+  "toolchain": {
+    "mlx": {
+      "version": "0.32.0",
+      "revision": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247"
+    },
+    "mlx_lm_reference": "0.31.3",
+    "rustc": "1.88.0 (6b00bc388 2025-06-23)",
+    "cmake": "4.4.0"
+  },
+  "model": {
+    "repository": "mlx-community/gemma-4-26b-a4b-it-4bit",
+    "revision": "0d77464eeb233a2da68ebf9d7dc4edaac7db956d",
+    "artifact_bytes": 15373586252
+  },
+  "input": {
+    "prompt": "Correct only punctuation and capitalization. Return only the corrected sentence:\n\ndas ist ein reproduzierbarer mlx test\n",
+    "maximum_tokens": 32,
+    "sampling": "greedy"
+  },
+  "memory_gate": {
+    "minimum_unified_memory_bytes": 34359738368,
+    "required_available_memory_bytes": 23963520844,
+    "available_measurement": "Mach HOST_VM_INFO free + inactive + purgeable pages; speculative pages are already represented by free_count and are not added again",
+    "status": "passed"
+  },
+  "python_reference": {
+    "boundary": "Pinned MLX-LM Python oracle",
+    "prompt_tokens": 35,
+    "generated_tokens": 12,
+    "finish_reason": "stop",
+    "token_ids": [
+      22943,
+      3526,
+      2535,
+      17326,
+      77774,
+      156906,
+      20885,
+      236917,
+      236772,
+      3694,
+      236761,
+      106
+    ],
+    "text": "Das ist ein reproduzierbarer MLX-Test."
+  },
+  "native_result": {
+    "boundary": "Rust-owned task API through a narrow C ABI over official MLX C++",
+    "prompt_tokens": 35,
+    "generated_tokens": 12,
+    "finish_reason": "stop",
+    "token_ids": [
+      22943,
+      3526,
+      2535,
+      17326,
+      77774,
+      156906,
+      20885,
+      236917,
+      236772,
+      3694,
+      236761,
+      106
+    ],
+    "streamed_text_matches_final_text": true,
+    "text": "Das ist ein reproduzierbarer MLX-Test."
+  },
+  "comparison": {
+    "prompt_token_count_equal": true,
+    "generated_token_count_equal": true,
+    "finish_reason_equal": true,
+    "token_ids_equal": true,
+    "decoded_text_equal": true,
+    "status": "exact_greedy_parity"
+  }
+}
