@@ -24,6 +24,8 @@
   },
   "files": [
     "cuttledoc.darwin-arm64.node",
+    "libcuttledoc_gemma_mlx_adapter.dylib",
+    "mlx.metallib",
     "index.cjs",
     "index.js",
     "index.d.ts",

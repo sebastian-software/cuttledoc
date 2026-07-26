@@ -331,6 +331,11 @@ pub fn configured_metallib_path() -> Option<PathBuf> {
             return Some(path);
         }
     }
+    if let Some(path) = image::sibling("mlx.metallib")
+        && path.is_file()
+    {
+        return Some(path);
+    }
     option_env!("CUTTLEDOC_GEMMA_BUILD_METALLIB")
         .map(PathBuf::from)
         .filter(|path| path.is_file())
@@ -560,6 +565,54 @@ mod memory {
                 Some(10 * 16_384)
             );
         }
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+mod image {
+    use std::ffi::{CStr, c_char, c_int, c_void};
+    use std::os::unix::ffi::OsStrExt;
+    use std::path::PathBuf;
+    use std::{ffi::OsStr, ptr};
+
+    #[repr(C)]
+    struct DlInfo {
+        file_name: *const c_char,
+        image_base: *mut c_void,
+        symbol_name: *const c_char,
+        symbol_address: *mut c_void,
+    }
+
+    unsafe extern "C" {
+        fn dladdr(address: *const c_void, info: *mut DlInfo) -> c_int;
+    }
+
+    pub fn sibling(file_name: &str) -> Option<PathBuf> {
+        extern "C" fn image_marker() {}
+
+        let mut info = DlInfo {
+            file_name: ptr::null(),
+            image_base: ptr::null_mut(),
+            symbol_name: ptr::null(),
+            symbol_address: ptr::null_mut(),
+        };
+        if unsafe { dladdr(image_marker as *const c_void, &mut info) } == 0
+            || info.file_name.is_null()
+        {
+            return None;
+        }
+        let path = unsafe { CStr::from_ptr(info.file_name) };
+        Some(PathBuf::from(OsStr::from_bytes(path.to_bytes())).with_file_name(file_name))
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+mod image {
+    use std::path::PathBuf;
+
+    pub fn sibling(_file_name: &str) -> Option<PathBuf> {
+        None
     }
 }
 

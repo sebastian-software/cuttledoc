@@ -80,6 +80,7 @@ fn main() {
         "cargo:rustc-link-arg=-Wl,-rpath,{}",
         build_directory.display()
     );
+    println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path");
     println!(
         "cargo:rustc-env=CUTTLEDOC_GEMMA_BUILD_METALLIB={}",
         metallib.display()
