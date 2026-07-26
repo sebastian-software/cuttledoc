@@ -13,6 +13,7 @@ use tokenizers::Tokenizer;
 pub const BACKEND_ID: &str = "gemma-mlx";
 pub const MODEL_ID: &str = "gemma-4-26b-a4b-it-4bit";
 pub const MODEL_PATH_ENV: &str = "CUTTLEDOC_GEMMA_MODEL_DIR";
+pub const METALLIB_PATH_ENV: &str = "CUTTLEDOC_MLX_METALLIB_PATH";
 pub const ABI_VERSION: u32 = 1;
 pub const MODEL_REVISION: &str = "0d77464eeb233a2da68ebf9d7dc4edaac7db956d";
 pub const MLX_REVISION: &str = "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247";
@@ -167,6 +168,7 @@ pub struct NativeGenerationResult {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct EngineOptions {
     pub model_directory: PathBuf,
+    pub metallib_path: Option<PathBuf>,
     pub memory: Option<MemorySnapshot>,
 }
 
@@ -224,7 +226,8 @@ impl GemmaEngine {
             )
         })?;
         validate_tokenizer(&tokenizer)?;
-        let session = platform::Session::create(&options.model_directory)?;
+        let session =
+            platform::Session::create(&options.model_directory, options.metallib_path.as_deref())?;
         Ok(Self { tokenizer, session })
     }
 
@@ -319,6 +322,21 @@ pub fn configured_model_directory() -> Option<PathBuf> {
     let home = std::env::var_os("HOME").map(PathBuf::from)?;
     let path = home.join(".cache/cuttledoc/models/gemma-4-26b-a4b-it-4bit");
     path.is_dir().then_some(path)
+}
+
+pub fn configured_metallib_path() -> Option<PathBuf> {
+    if let Some(path) = std::env::var_os(METALLIB_PATH_ENV).map(PathBuf::from) {
+        return Some(path);
+    }
+    if let Ok(executable) = std::env::current_exe() {
+        let path = executable.with_file_name("mlx.metallib");
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+    option_env!("CUTTLEDOC_GEMMA_BUILD_METALLIB")
+        .map(PathBuf::from)
+        .filter(|path| path.is_file())
 }
 
 pub fn validate_model(model_directory: &Path) -> Result<(), AdapterError> {
@@ -522,6 +540,7 @@ mod platform {
         fn cuttledoc_gemma_mlx_abi_version() -> u32;
         fn cuttledoc_gemma_mlx_session_create(
             model_directory: *const c_char,
+            metallib_path: *const c_char,
             status_output: *mut i32,
             error_output: *mut *mut c_char,
         ) -> *mut c_void;
@@ -545,7 +564,10 @@ mod platform {
     }
 
     impl Session {
-        pub fn create(model_directory: &Path) -> Result<Self, AdapterError> {
+        pub fn create(
+            model_directory: &Path,
+            metallib_path: Option<&Path>,
+        ) -> Result<Self, AdapterError> {
             if unsafe { cuttledoc_gemma_mlx_abi_version() } != ABI_VERSION {
                 return Err(AdapterError::new(
                     AdapterErrorKind::EngineLoadFailed,
@@ -559,11 +581,31 @@ mod platform {
                         "Gemma model path contains an interior NUL byte",
                     )
                 })?;
+            let metallib_path = metallib_path
+                .map(Path::to_path_buf)
+                .or_else(super::configured_metallib_path)
+                .ok_or_else(|| {
+                    AdapterError::new(
+                        AdapterErrorKind::EngineLoadFailed,
+                        format!(
+                            "MLX metallib is missing; set {} or colocate mlx.metallib with the executable",
+                            super::METALLIB_PATH_ENV
+                        ),
+                    )
+                })?;
+            let metallib_path =
+                CString::new(metallib_path.as_os_str().as_bytes()).map_err(|_| {
+                    AdapterError::new(
+                        AdapterErrorKind::InvalidInput,
+                        "MLX metallib path contains an interior NUL byte",
+                    )
+                })?;
             let mut status = STATUS_LOAD_FAILED;
             let mut error_output = ptr::null_mut();
             let handle = unsafe {
                 cuttledoc_gemma_mlx_session_create(
                     model_directory.as_ptr(),
+                    metallib_path.as_ptr(),
                     &mut status,
                     &mut error_output,
                 )
@@ -710,7 +752,10 @@ mod platform {
     pub struct Session;
 
     impl Session {
-        pub fn create(_model_directory: &Path) -> Result<Self, AdapterError> {
+        pub fn create(
+            _model_directory: &Path,
+            _metallib_path: Option<&Path>,
+        ) -> Result<Self, AdapterError> {
             let (kind, message) = match build_support() {
                 BuildSupport::UnsupportedPlatform => (
                     AdapterErrorKind::UnsupportedPlatform,
