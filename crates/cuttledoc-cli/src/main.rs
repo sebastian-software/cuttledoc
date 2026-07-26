@@ -5,10 +5,11 @@ use std::process::ExitCode;
 
 use cuttledoc::{
     AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
-    MediaDecodeOptions, ModelId, ModelManager, PcmBuffer, TranscribeOptions,
+    MediaDecodeOptions, ModelId, ModelManager, PcmBuffer, ProgressEvent, TranscribeOptions,
     TranscriptEnhancementContext, TranscriptEnhancementMode, TranscriptionResult,
     apply_transcript_enhancement, recognition_asset_inventory, recognition_capabilities,
-    text_generation_capabilities, transcribe_file, transcribe_pcm,
+    text_generation_capabilities, transcribe_file, transcribe_file_with_progress, transcribe_pcm,
+    transcribe_pcm_with_progress,
 };
 
 mod cli_error;
@@ -31,8 +32,8 @@ Usage:
   cuttledoc models verify <model|asr|all> [--cache-root <path>]
   cuttledoc models remove <model> [--cache-root <path>]
   cuttledoc models cache-root [--cache-root <path>]
-  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
-  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
+  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
+  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
@@ -58,6 +59,7 @@ struct SharedTranscriptionArguments {
     output_format: Option<OutputFormat>,
     output_path: Option<PathBuf>,
     overwrite: bool,
+    progress: bool,
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -67,6 +69,7 @@ struct ResolvedSharedTranscriptionArguments {
     recognition_model: Option<ModelId>,
     cache_root: Option<PathBuf>,
     output: OutputOptions,
+    progress: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -86,6 +89,7 @@ enum Command {
         enhancement: EnhancementSelection,
         enhancement_model_path: Option<PathBuf>,
         output: OutputOptions,
+        progress: bool,
     },
     TranscribePcm {
         path: PathBuf,
@@ -98,6 +102,7 @@ enum Command {
         enhancement: EnhancementSelection,
         enhancement_model_path: Option<PathBuf>,
         output: OutputOptions,
+        progress: bool,
     },
 }
 
@@ -205,6 +210,7 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
         enhancement: shared.enhancement,
         enhancement_model_path: shared.enhancement_model_path,
         output: shared.output,
+        progress: shared.progress,
     })
 }
 
@@ -285,6 +291,7 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
         enhancement: shared.enhancement,
         enhancement_model_path: shared.enhancement_model_path,
         output: shared.output,
+        progress: shared.progress,
     })
 }
 
@@ -396,6 +403,13 @@ fn parse_shared_transcription_argument(
             parsed.overwrite = true;
             Ok(Some(index + 1))
         }
+        "--progress" => {
+            if parsed.progress {
+                return Err("--progress may only be specified once".to_owned());
+            }
+            parsed.progress = true;
+            Ok(Some(index + 1))
+        }
         _ => Ok(None),
     }
 }
@@ -420,6 +434,7 @@ fn finish_shared_transcription_arguments(
             path: parsed.output_path,
             overwrite: parsed.overwrite,
         },
+        progress: parsed.progress,
     })
 }
 
@@ -486,6 +501,7 @@ fn run(command: Command) -> CliResult<()> {
             enhancement,
             enhancement_model_path,
             output,
+            progress,
         } => {
             validate_output(&output)?;
             let model_path = resolve_recognition_model_path(
@@ -499,18 +515,32 @@ fn run(command: Command) -> CliResult<()> {
                 enhancement_model_path,
                 cache_root.as_ref(),
             )?;
-            let result = transcribe_file(
-                &path,
-                &TranscribeOptions {
-                    backend,
-                    model,
-                    language: Some(language.clone()),
-                    model_path,
-                },
-                &MediaDecodeOptions { ffmpeg_path },
-            )
+            let options = TranscribeOptions {
+                backend,
+                model,
+                language: Some(language.clone()),
+                model_path,
+            };
+            let decode_options = MediaDecodeOptions { ffmpeg_path };
+            let result = if progress {
+                transcribe_file_with_progress(
+                    &path,
+                    &options,
+                    &decode_options,
+                    &CancellationToken::new(),
+                    render_transcription_progress,
+                )
+            } else {
+                transcribe_file(&path, &options, &decode_options)
+            }
             .map_err(CliError::from)?;
-            let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
+            let result = enhance_result(
+                result,
+                &language,
+                enhancement,
+                enhancement_model_path,
+                progress,
+            )?;
             emit_result(&result, &output)?;
         }
         Command::TranscribePcm {
@@ -524,6 +554,7 @@ fn run(command: Command) -> CliResult<()> {
             enhancement,
             enhancement_model_path,
             output,
+            progress,
         } => {
             validate_output(&output)?;
             let model_path = resolve_recognition_model_path(
@@ -548,17 +579,30 @@ fn run(command: Command) -> CliResult<()> {
                 .map_err(|error| CliError::new("INVALID_INPUT", error.to_string(), 1))?;
             let input = PcmBuffer::from_f32le_bytes(format, &bytes)
                 .map_err(|error| CliError::new("INVALID_INPUT", error.to_string(), 1))?;
-            let result = transcribe_pcm(
-                &input,
-                &TranscribeOptions {
-                    backend,
-                    model,
-                    language: Some(language.clone()),
-                    model_path,
-                },
-            )
+            let options = TranscribeOptions {
+                backend,
+                model,
+                language: Some(language.clone()),
+                model_path,
+            };
+            let result = if progress {
+                transcribe_pcm_with_progress(
+                    &input,
+                    &options,
+                    &CancellationToken::new(),
+                    render_transcription_progress,
+                )
+            } else {
+                transcribe_pcm(&input, &options)
+            }
             .map_err(CliError::from)?;
-            let result = enhance_result(result, &language, enhancement, enhancement_model_path)?;
+            let result = enhance_result(
+                result,
+                &language,
+                enhancement,
+                enhancement_model_path,
+                progress,
+            )?;
             emit_result(&result, &output)?;
         }
     }
@@ -609,6 +653,7 @@ fn enhance_result(
     requested_language: &str,
     selection: EnhancementSelection,
     model_directory: Option<PathBuf>,
+    progress: bool,
 ) -> CliResult<TranscriptionResult> {
     let mode = match selection {
         EnhancementSelection::Off => TranscriptEnhancementMode::disabled(),
@@ -628,6 +673,14 @@ fn enhance_result(
         .next()
         .filter(|value| !value.is_empty() && *value != "auto")
         .unwrap_or("und");
+    if progress && selection != EnhancementSelection::Off {
+        render_transcription_progress(ProgressEvent {
+            phase: cuttledoc::ProgressPhase::Enhancing,
+            completed: 0,
+            total: Some(1),
+            message: None,
+        });
+    }
     let result = apply_transcript_enhancement(
         result,
         mode,
@@ -635,6 +688,14 @@ fn enhance_result(
         &CancellationToken::new(),
     )
     .map_err(CliError::from)?;
+    if progress && selection != EnhancementSelection::Off {
+        render_transcription_progress(ProgressEvent {
+            phase: cuttledoc::ProgressPhase::Enhancing,
+            completed: 1,
+            total: Some(1),
+            message: None,
+        });
+    }
     if let Some(enhancement) = &result.enhancement
         && let EnhancementOutcome::RawFallback { reason, detail } = &enhancement.outcome
     {
@@ -644,6 +705,18 @@ fn enhance_result(
         );
     }
     Ok(result)
+}
+
+fn render_transcription_progress(progress: ProgressEvent) {
+    eprintln!(
+        "progress\t{}\t{}\t{}\t{}",
+        progress.phase.as_str(),
+        progress.completed,
+        progress
+            .total
+            .map_or_else(|| "-".to_owned(), |total| total.to_string()),
+        progress.message.as_deref().unwrap_or("-")
+    );
 }
 
 #[cfg(test)]
@@ -691,6 +764,7 @@ mod tests {
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
+                progress: false,
             })
         );
         assert_eq!(
@@ -711,6 +785,7 @@ mod tests {
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
+                progress: false,
             })
         );
         assert_eq!(
@@ -733,6 +808,7 @@ mod tests {
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
+                progress: false,
             })
         );
         assert_eq!(
@@ -762,6 +838,7 @@ mod tests {
                     path: None,
                     overwrite: false,
                 },
+                progress: false,
             })
         );
         assert_eq!(
@@ -791,6 +868,7 @@ mod tests {
                     path: Some(PathBuf::from("transcript.md")),
                     overwrite: true,
                 },
+                progress: false,
             })
         );
         assert_eq!(
@@ -802,7 +880,8 @@ mod tests {
                 "--model",
                 "whisper-large-v3-turbo",
                 "--cache-root",
-                "/models"
+                "/models",
+                "--progress"
             ])),
             Ok(Command::Transcribe {
                 path: PathBuf::from("speech.ogg"),
@@ -815,6 +894,7 @@ mod tests {
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
+                progress: true,
             })
         );
     }

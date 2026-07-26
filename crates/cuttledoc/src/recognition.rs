@@ -8,8 +8,9 @@ use cuttledoc_apple_speech::{
 
 use crate::{
     BackendId, BackendSelection, CancellationToken, CuttledocError, ErrorCode, ModelId, PcmBuffer,
-    Result, Stability, TimeRange, TranscribeOptions, TranscriptReducer, TranscriptionResult,
-    TranscriptionSegment, TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,
+    ProgressEvent, ProgressPhase, Result, Stability, TimeRange, TranscribeOptions,
+    TranscriptReducer, TranscriptionResult, TranscriptionSegment, TranscriptionUpdate,
+    TranscriptionUpdateKind, WordTimestamp,
 };
 
 const INPUT_CHUNK_DURATION_MS: u32 = 200;
@@ -27,14 +28,23 @@ pub fn transcribe_pcm_with_cancellation(
     options: &TranscribeOptions,
     cancellation: &CancellationToken,
 ) -> Result<TranscriptionResult> {
+    transcribe_pcm_with_progress(input, options, cancellation, |_| {})
+}
+
+pub fn transcribe_pcm_with_progress(
+    input: &PcmBuffer,
+    options: &TranscribeOptions,
+    cancellation: &CancellationToken,
+    mut on_progress: impl FnMut(ProgressEvent),
+) -> Result<TranscriptionResult> {
     let backend = select_backend(options)?;
     ensure_not_cancelled(cancellation, &backend)?;
 
     if backend == BackendId::apple_speech() {
-        return transcribe_apple_speech(input, options, cancellation, backend);
+        return transcribe_apple_speech(input, options, cancellation, backend, &mut on_progress);
     }
     if backend == BackendId::whisper() {
-        return transcribe_whisper(input, options, cancellation, backend);
+        return transcribe_whisper(input, options, cancellation, backend, &mut on_progress);
     }
     Err(CuttledocError::new(
         ErrorCode::BackendUnavailable,
@@ -48,6 +58,7 @@ fn transcribe_apple_speech(
     options: &TranscribeOptions,
     cancellation: &CancellationToken,
     backend: BackendId,
+    on_progress: &mut dyn FnMut(ProgressEvent),
 ) -> Result<TranscriptionResult> {
     validate_apple_request(input, options, &backend)?;
     let started_at = Instant::now();
@@ -55,11 +66,20 @@ fn transcribe_apple_speech(
         .language
         .as_deref()
         .expect("request validation requires an explicit language");
+    on_progress(progress(ProgressPhase::Loading, 0, Some(1)));
     let mut session = SpeechSession::create(requested_locale, input.format.sample_rate)
         .map_err(CuttledocError::from)?;
+    on_progress(progress(ProgressPhase::Loading, 1, Some(1)));
     let resolved_locale = session.resolved_locale().map(str::to_owned);
     let mut accumulator = UpdateAccumulator::default();
     let chunk_size = input_chunk_size(input.format.sample_rate);
+    let total_samples = u64::try_from(input.samples.len()).unwrap_or(u64::MAX);
+    let mut completed_samples = 0_u64;
+    on_progress(progress(
+        ProgressPhase::Transcribing,
+        completed_samples,
+        Some(total_samples),
+    ));
 
     for chunk in input.samples.chunks(chunk_size) {
         loop {
@@ -76,12 +96,20 @@ fn transcribe_apple_speech(
             session.take_updates().map_err(CuttledocError::from)?,
             &backend,
         )?;
+        completed_samples =
+            completed_samples.saturating_add(u64::try_from(chunk.len()).unwrap_or(u64::MAX));
+        on_progress(progress(
+            ProgressPhase::Transcribing,
+            completed_samples,
+            Some(total_samples),
+        ));
     }
 
     if cancellation.is_cancelled() {
         session.cancel();
         return Err(cancelled_error(&backend));
     }
+    on_progress(progress(ProgressPhase::Finalizing, 0, Some(1)));
     accumulator.apply(session.finish().map_err(CuttledocError::from)?, &backend)?;
     session.close();
 
@@ -93,6 +121,7 @@ fn transcribe_apple_speech(
     }
 
     let text = accumulator.reducer.final_text();
+    on_progress(progress(ProgressPhase::Finalizing, 1, Some(1)));
     Ok(TranscriptionResult {
         raw_text: text.clone(),
         text,
@@ -111,6 +140,7 @@ fn transcribe_whisper(
     options: &TranscribeOptions,
     cancellation: &CancellationToken,
     backend: BackendId,
+    on_progress: &mut dyn FnMut(ProgressEvent),
 ) -> Result<TranscriptionResult> {
     validate_whisper_request(input, options, &backend)?;
     let model =
@@ -133,17 +163,31 @@ fn transcribe_whisper(
     let language = whisper_language(options.language.as_deref(), &backend)?;
 
     let started_at = Instant::now();
+    on_progress(progress(ProgressPhase::Loading, 0, Some(1)));
     let mut engine = cuttledoc_whisper::WhisperEngine::create(&cuttledoc_whisper::EngineOptions {
         model_path,
         language,
         threads: 4,
     })
     .map_err(CuttledocError::from)?;
+    on_progress(progress(ProgressPhase::Loading, 1, Some(1)));
+    let total_samples = u64::try_from(input.samples.len()).unwrap_or(u64::MAX);
+    on_progress(progress(
+        ProgressPhase::Transcribing,
+        0,
+        Some(total_samples),
+    ));
     let native = engine
         .transcribe(&input.samples, || cancellation.is_cancelled())
         .map_err(CuttledocError::from)?;
     ensure_not_cancelled(cancellation, &backend)?;
+    on_progress(progress(
+        ProgressPhase::Transcribing,
+        total_samples,
+        Some(total_samples),
+    ));
 
+    on_progress(progress(ProgressPhase::Finalizing, 0, Some(1)));
     let media_duration = media_duration(input);
     let media_end_ms = u64::try_from(media_duration.as_millis()).unwrap_or(u64::MAX);
     let mut previous_end = None;
@@ -172,6 +216,7 @@ fn transcribe_whisper(
         .collect::<Vec<_>>()
         .join(" ");
 
+    on_progress(progress(ProgressPhase::Finalizing, 1, Some(1)));
     Ok(TranscriptionResult {
         raw_text: text.clone(),
         text,
@@ -183,6 +228,15 @@ fn transcribe_whisper(
         segments,
         enhancement: None,
     })
+}
+
+fn progress(phase: ProgressPhase, completed: u64, total: Option<u64>) -> ProgressEvent {
+    ProgressEvent {
+        phase,
+        completed,
+        total,
+        message: None,
+    }
 }
 
 fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
