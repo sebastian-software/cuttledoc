@@ -584,37 +584,65 @@ type CuttledocErrorCode =
 
 ## CLI contract
 
-Proposed commands:
+The Phase 4 native CLI implements:
 
 ```text
 cuttledoc transcribe <input>
                      [--backend auto|apple-speech|whisper]
+                     [--model <id>]
                      [--model-path <path>]
+                     [--cache-root <path>]
                      [--language <code|auto>]
                      [--ffmpeg-path <path>]
+                     [--enhance off|local|gemini]
+                     [--enhancement-model-path <path>]
+                     [--format text|markdown|json]
+                     [--output <path>] [--force] [--progress]
 
 cuttledoc transcribe-pcm <input>
                          --sample-rate <hz>
                          [--backend auto|apple-speech|whisper]
+                         [--model <id>]
                          [--model-path <path>]
+                         [--cache-root <path>]
                          [--language <code|auto>]
+                         [--enhance off|local|gemini]
+                         [--enhancement-model-path <path>]
+                         [--format text|markdown|json]
+                         [--output <path>] [--force] [--progress]
 
 cuttledoc backends list
-```
-
-Issue #27 adds the remaining compatibility commands and formats:
-
-```text
-cuttledoc transcribe ... [--output <path>] [--format text|markdown|json]
-cuttledoc models list
-cuttledoc models download <model|all|asr>
-cuttledoc models verify <model|all>
+cuttledoc models list [--format text|json] [--cache-root <path>]
+cuttledoc models install <model|asr|all> [--cache-root <path>]
+cuttledoc models verify <model|asr|all> [--cache-root <path>]
 cuttledoc models remove <model>
-cuttledoc doctor
-cuttledoc benchmark <input> --reference <text>
+cuttledoc models cache-root [--cache-root <path>]
 ```
 
-Compatibility aliases from Cuttledoc 2 should be retained where they do not compromise the new model.
+`models download` remains a compatibility alias for `models install`, and
+`--json` remains an alias for `--format json`. Managed model IDs resolve
+against the default or selected cache without requiring an artifact path.
+Apple Speech assets appear in `models list` under the same provisioning
+vocabulary, but their file operations are capability-gated because macOS owns
+them.
+
+Text is the default stdout format. `--output` writes through a sibling
+temporary file, refuses an existing destination before recognition, and
+requires `--force` for atomic replacement. JSON transcription and model-list
+documents carry schema version `1.0.0`; transcription output always preserves
+`raw_text` separately from `text`. Progress is a typed, tab-separated stderr
+stream so stdout remains machine-readable.
+
+Diagnostics use `error[CODE]` plus separate remediation. CLI syntax exits with
+status 2, refused overwrites with status 3, and runtime/model failures with
+status 1. Exact human messages may evolve while the code and exit-category
+contract remains stable.
+
+Directory batching, `doctor`, reference benchmarking, and a GUI remain future
+commands rather than incomplete parts of the Phase 4 contract.
+
+Compatibility aliases from Cuttledoc 2 should be retained where they do not
+compromise the new model.
 
 ## Low-level exposure policy
 

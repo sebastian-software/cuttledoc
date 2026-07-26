@@ -28,7 +28,7 @@ Unsupported local inference must be represented as capability absence. Installin
 | Surface                  | Current baseline                                      | v3 target                           | Status   |
 | ------------------------ | ----------------------------------------------------- | ----------------------------------- | -------- |
 | Rust library             | None                                                  | Stable `cuttledoc` crate            | New      |
-| Native CLI               | Node launcher                                         | Standalone Rust binary              | Required |
+| Native CLI               | Node launcher                                         | Standalone Rust binary; macOS arm64 archive implemented | Required |
 | Node versions            | 22+ in Cuttledoc; 20+ in native packages              | Node 22 and 24 initially            | Required |
 | Node ESM                 | Advertised, native packages currently broken          | Packed-artifact import test         | Required |
 | Node CommonJS            | Supported                                             | Packed-artifact require test        | Required |
@@ -167,21 +167,37 @@ review trigger for multi-hour inputs rather than an unmeasured release blocker.
 | Removal/verification | Limited                        | First-class API and CLI                  | New      |
 | System-managed Speech assets | N/A                    | AssetInventory install/status surfaced through model API | New      |
 
+The Phase 4 checkpoint implements the two accepted Cuttledoc-managed
+snapshots: Whisper `large-v3-turbo` (2.90 GB) and Gemma 4 26B-A4B 4-bit
+(15.37 GB). Their immutable manifests pin every artifact URL, byte size, and
+SHA-256 digest. Installation uses a per-model lock, verified staging tree, and
+atomic rename; replacement and removal first detach the previous tree.
+`missing`, `partial`, `ready`, and `invalid` are observable without mutating
+the cache. Explicit installation can reuse the legacy Whisper cache after full
+manifest verification. Apple Speech is listed as a system-managed asset and
+does not pretend to support file install, verification, or removal.
+
 ## CLI compatibility
 
-Release-blocking workflows:
+Implemented Phase 4 workflows:
 
 - transcribe a single media path;
 - choose backend and language;
-- choose OpenAI model and key through environment;
-- write output file;
-- plain text and Markdown/JSON decisions documented;
-- list and download models;
-- benchmark against a reference;
+- choose a managed model or an explicit artifact path;
+- choose local Gemma or explicit hosted Gemini enhancement;
+- write text, Markdown, or schema-versioned JSON to stdout or a safe output
+  file;
+- list, install, verify, remove, and locate managed models;
+- inspect Apple system assets through the same model vocabulary;
 - meaningful version and help output;
-- nonzero exit with actionable error for invalid input.
+- typed progress on stderr;
+- stable nonzero errors with remediation for invalid input and unsupported
+  operations.
 
-Human-readable output may change. Machine-readable JSON receives a schema version and snapshot tests.
+Reference benchmarking, directory batching, and `doctor` are separate future
+work, not hidden dependencies of the single-file replacement. Human-readable
+output may change. Machine-readable JSON has schema version `1.0.0` and
+snapshot tests; raw and enhanced/fallback text remain distinct.
 
 ## Transcript enhancement
 
@@ -219,6 +235,14 @@ Every release candidate must test the final artifacts rather than workspace link
 | Real system Speech transcription | Yes (macOS 26 runner) |          N/A |                N/A |
 | OpenAI contract test        | Mocked/live-gated |  Mocked/live-gated |  Mocked/live-gated |
 | No local compiler invoked   |               Yes |                Yes |                Yes |
+
+The current standalone CLI archive is implemented and artifact-tested for
+macOS arm64. Its test extracts the final 41.8 MB archive and exercises success
+and stable failure paths with Cargo, Rust, C/C++, CMake, and Xcode build
+commands blocked. A real local checkpoint additionally transcribed the same
+German Opus fixture through both Apple Speech and the packaged Whisper runtime.
+Linux and Windows archives remain tied to the later cloud-only platform work
+in the target matrix.
 
 ## Release evidence
 

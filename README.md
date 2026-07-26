@@ -107,7 +107,7 @@ cargo test --workspace --locked
 bash scripts/check-dependency-policy.sh
 ```
 
-## Development CLI
+## Native CLI
 
 The native CLI accepts ordinary audio or video through an explicitly configured
 or system FFmpeg executable. The owned Rust boundary selects the first audio
@@ -145,9 +145,52 @@ CUTTLEDOC_WHISPER_CPP_DIR="$PWD/target/vendor/whisper.cpp-v1.8.2" \
 ```
 
 The `.bin` file must be accompanied by
-`ggml-large-v3-turbo-encoder.mlmodelc`. Cargo and npm installation never
-download source or models implicitly. The complete model-management workflow
-is tracked separately in issue #27.
+`ggml-large-v3-turbo-encoder.mlmodelc`. Installed CLI users normally select
+the managed model instead of passing either path:
+
+```sh
+cuttledoc models list
+cuttledoc models install asr
+cuttledoc models verify whisper-large-v3-turbo
+
+cuttledoc transcribe input.ogg \
+  --backend whisper \
+  --model whisper-large-v3-turbo \
+  --language auto
+```
+
+The default cache root is `~/.cache/cuttledoc`; override it with
+`CUTTLEDOC_CACHE_ROOT` or `--cache-root`. `models install all` installs both
+the 2.90 GB Whisper snapshot and the 15.37 GB Gemma snapshot. Every file is
+size- and SHA-256-verified in a staging directory before the complete snapshot
+is committed atomically. Existing legacy Whisper files are reused only after
+the same verification. `models remove <model>` atomically detaches a snapshot
+before deleting it. `models list --format json` also reports Apple Speech as
+the system-managed `apple-speech-assets` entry; file operations remain
+unsupported for those macOS-owned assets.
+
+Cargo, npm installation, and ordinary transcription never download source or
+models implicitly. Only an explicit `models install` command accesses the
+model hosts.
+
+Results default to text on standard output. Markdown and schema-versioned JSON
+can be written to stdout or an explicit file:
+
+```sh
+cuttledoc transcribe input.ogg \
+  --language de-DE \
+  --format json \
+  --output transcript.json \
+  --progress
+```
+
+Existing output files are refused before recognition starts. `--force` opts
+into atomic replacement. JSON schema `1.0.0` keeps `raw_text` separate from
+the accepted or fallback `text`; `--json` remains a short alias for
+`--format json`. `--progress` writes tab-separated typed phases to standard
+error, leaving result output clean. Usage errors exit with status 2, refused
+overwrites with status 3, and runtime/model failures with status 1; diagnostics
+use stable `error[CODE]` labels and separate remediation text.
 
 Enhancement is explicit until the 32 GB gate is complete:
 
@@ -156,7 +199,6 @@ Enhancement is explicit until the 32 GB gate is complete:
 cuttledoc transcribe input.ogg \
   --language de-DE \
   --enhance local \
-  --enhancement-model-path /path/to/gemma-4-26b-a4b-it-4bit \
   --json
 
 # Hosted Gemini through the pinned OpenRouter route
@@ -173,6 +215,17 @@ enhancement metadata. Configuring a key does not activate hosted processing;
 
 Local recognition requires Apple Silicon with macOS 26 or newer. Apple Speech
 also requires normal access to the macOS Speech service.
+
+Build and exercise the standalone macOS arm64 archive with:
+
+```sh
+bash scripts/test-cuttledoc-cli-package.sh
+```
+
+The test installs the archive into a temporary directory and executes happy
+and failure paths with compiler commands blocked. The archive contains the
+CLI, the repository-owned Gemma adapter, the pinned MLX Metal library, and the
+license, but no model weights.
 
 ## Development Node API
 

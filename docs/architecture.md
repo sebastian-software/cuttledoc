@@ -137,12 +137,19 @@ Every descriptor reports supported install, verify, and remove operations.
 System and remote models do not receive fake file trees merely to satisfy the
 local artifact API.
 
-Compatibility baseline model set (the bakeoff decides what ships initially):
+The accepted initial managed set is:
 
-- Parakeet Preprocessor, Encoder, Decoder, JointDecision, vocabulary;
-- Silero VAD `silero-vad-unified-v6.0.0.mlmodelc`;
-- Whisper `ggml-large-v3-turbo.bin`;
-- Whisper `ggml-large-v3-turbo-encoder.mlmodelc`.
+- Whisper `large-v3-turbo` as one manifest spanning
+  `ggml-large-v3-turbo.bin` and its complete Core ML encoder tree; and
+- Gemma 4 26B-A4B 4-bit as one manifest spanning configuration, tokenizer, and
+  all three safetensor shards.
+
+Each manifest pins immutable provider revisions, exact byte lengths, and
+SHA-256 digests. Installation serializes by model ID, downloads or reuses
+legacy files into a unique staging tree, verifies every file, and atomically
+renames only the complete tree into service. Invalid or interrupted staging
+trees never masquerade as ready models. System-managed Apple Speech assets
+share the descriptor vocabulary but not the local artifact implementation.
 
 ### `cuttledoc-audio`
 
@@ -304,11 +311,12 @@ Only `cuttledoc-managed` models use the local root:
 ```text
 ~/.cache/cuttledoc/
 ├── models/
-│   ├── parakeet-tdt-0.6b-v3/
-│   ├── silero-vad-v6/
-│   └── whisper-large-v3-turbo/
-├── manifests/
-└── downloads/
+│   ├── whisper-large-v3-turbo/
+│   └── gemma-4-26b-a4b-it-4bit/
+├── .locks/
+├── .staging/
+├── .backup/
+└── .trash/
 ```
 
 Existing roots:
@@ -317,9 +325,11 @@ Existing roots:
 - `~/.cache/parakeet-coreml/vad`
 - `~/.cache/whisper-coreml/models`
 
-The model manager should detect complete existing caches and either reuse them
-read-only, adopt them after verification, or provide an explicit migration. It
-must not redownload several gigabytes without explanation.
+The CLI's explicit install path detects complete legacy Whisper files, verifies
+them against the current manifest, and hard-links or copies them into staging.
+It must not redownload several gigabytes without first attempting that verified
+reuse. Other legacy caches remain reference inputs until their backends are
+selected for the managed product set.
 
 The `~/.cache` root is a deliberate decision: it matches the existing
 Parakeet/Whisper cache convention and keeps one path scheme across macOS and
