@@ -383,10 +383,10 @@ fn parse_response(
         reason: EnhancementFallbackReason::InvalidOutput,
         detail: "response must be a JSON object".to_owned(),
     })?;
-    if object.len() != 1 || !object.contains_key("sections") {
+    if !object.contains_key("sections") {
         return Err(Fallback {
             reason: EnhancementFallbackReason::InvalidOutput,
-            detail: "response must contain only the sections field".to_owned(),
+            detail: "response must contain the sections field".to_owned(),
         });
     }
     let output_sections = object["sections"].as_array().ok_or_else(|| Fallback {
@@ -417,10 +417,10 @@ fn parse_section(
         reason: EnhancementFallbackReason::InvalidOutput,
         detail: "every response section must be an object".to_owned(),
     })?;
-    if object.len() != 2 || !object.contains_key("id") || !object.contains_key("text") {
+    if !object.contains_key("id") || !object.contains_key("text") {
         return Err(Fallback {
             reason: EnhancementFallbackReason::InvalidOutput,
-            detail: "every response section must contain only id and text".to_owned(),
+            detail: "every response section must contain id and text".to_owned(),
         });
     }
     if object["id"].as_str() != Some(input.id.as_str()) {
@@ -722,7 +722,7 @@ mod tests {
     #[test]
     fn redundant_comma_after_terminal_punctuation_is_repaired_locally() {
         let mut engine = engine_with_text(
-            r#"{"sections":[{"id":"section-1","text":"Das ist ein Test mit MLX 25?, fragt Mara."},{"id":"section-2","text":"Noch ein Satz!,"}]}"#,
+            r#"{"diagnostic":"ignored","sections":[{"id":"section-1","text":"Das ist ein Test mit MLX 25?, fragt Mara.","reason":"ignored"},{"id":"section-2","text":"Noch ein Satz!,","confidence":0.9}]}"#,
         );
         let result = enhance_transcript(&request(), &mut engine, &CancellationToken::new())
             .expect("surface repair must remain valid");
