@@ -190,6 +190,16 @@ fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
     let whisper = BackendId::whisper();
     match &options.backend {
         BackendSelection::Auto => {
+            if let Some(model) = &options.model {
+                if model.as_str() == cuttledoc_whisper::MODEL_ID {
+                    return Ok(whisper);
+                }
+                return Err(CuttledocError::new(
+                    ErrorCode::InvalidInput,
+                    format!("no recognition backend supports model {model}"),
+                )
+                .with_model(model.clone()));
+            }
             let capabilities = crate::recognition_capabilities();
             if options.language.as_deref().is_some_and(|language| {
                 capabilities.iter().any(|capability| {
@@ -639,6 +649,29 @@ mod tests {
         assert_eq!(
             select_backend(&options).expect("explicit backend"),
             BackendId::whisper()
+        );
+    }
+
+    #[test]
+    fn explicit_model_selects_its_backend_or_fails_deliberately() {
+        let options = TranscribeOptions {
+            model: Some(ModelId::new(cuttledoc_whisper::MODEL_ID).expect("Whisper model ID")),
+            ..TranscribeOptions::default()
+        };
+        assert_eq!(
+            select_backend(&options).expect("model selects Whisper"),
+            BackendId::whisper()
+        );
+
+        let options = TranscribeOptions {
+            model: Some(ModelId::new("unsupported-model").expect("model ID")),
+            ..TranscribeOptions::default()
+        };
+        assert_eq!(
+            select_backend(&options)
+                .expect_err("unknown model must fail")
+                .code,
+            ErrorCode::InvalidInput
         );
     }
 

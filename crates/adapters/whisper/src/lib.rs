@@ -133,6 +133,12 @@ pub fn configured_model_path() -> Option<PathBuf> {
     if let Some(path) = std::env::var_os(MODEL_PATH_ENV).map(PathBuf::from) {
         return Some(path);
     }
+    if let Some(root) = std::env::var_os("CUTTLEDOC_CACHE_ROOT").map(PathBuf::from) {
+        let path = root.join("models/whisper-large-v3-turbo/ggml-large-v3-turbo.bin");
+        if path.is_file() {
+            return Some(path);
+        }
+    }
     let home = std::env::var_os("HOME").map(PathBuf::from)?;
     let primary =
         home.join(".cache/cuttledoc/models/whisper-large-v3-turbo/ggml-large-v3-turbo.bin");

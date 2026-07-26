@@ -5,10 +5,10 @@ use std::process::ExitCode;
 
 use cuttledoc::{
     AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
-    MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptEnhancementContext,
-    TranscriptEnhancementMode, TranscriptionResult, apply_transcript_enhancement,
-    recognition_asset_inventory, recognition_capabilities, text_generation_capabilities,
-    transcribe_file, transcribe_pcm,
+    MediaDecodeOptions, ModelId, ModelManager, PcmBuffer, TranscribeOptions,
+    TranscriptEnhancementContext, TranscriptEnhancementMode, TranscriptionResult,
+    apply_transcript_enhancement, recognition_asset_inventory, recognition_capabilities,
+    text_generation_capabilities, transcribe_file, transcribe_pcm,
 };
 
 mod model_commands;
@@ -29,8 +29,8 @@ Usage:
   cuttledoc models verify <model|asr|all> [--cache-root <path>]
   cuttledoc models remove <model> [--cache-root <path>]
   cuttledoc models cache-root [--cache-root <path>]
-  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
-  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model-path <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
+  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
+  cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
@@ -50,10 +50,21 @@ enum EnhancementSelection {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 struct SharedTranscriptionArguments {
     selection: Option<EnhancementSelection>,
-    model_path: Option<PathBuf>,
+    enhancement_model_path: Option<PathBuf>,
+    recognition_model: Option<ModelId>,
+    cache_root: Option<PathBuf>,
     output_format: Option<OutputFormat>,
     output_path: Option<PathBuf>,
     overwrite: bool,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct ResolvedSharedTranscriptionArguments {
+    enhancement: EnhancementSelection,
+    enhancement_model_path: Option<PathBuf>,
+    recognition_model: Option<ModelId>,
+    cache_root: Option<PathBuf>,
+    output: OutputOptions,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -66,7 +77,9 @@ enum Command {
         path: PathBuf,
         language: String,
         backend: BackendSelection,
+        model: Option<ModelId>,
         model_path: Option<PathBuf>,
+        cache_root: Option<PathBuf>,
         ffmpeg_path: Option<PathBuf>,
         enhancement: EnhancementSelection,
         enhancement_model_path: Option<PathBuf>,
@@ -76,7 +89,9 @@ enum Command {
         path: PathBuf,
         language: String,
         backend: BackendSelection,
+        model: Option<ModelId>,
         model_path: Option<PathBuf>,
+        cache_root: Option<PathBuf>,
         sample_rate: u32,
         enhancement: EnhancementSelection,
         enhancement_model_path: Option<PathBuf>,
@@ -175,17 +190,18 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
             option => return Err(format!("unsupported transcribe option: {option}")),
         }
     }
-    let (enhancement, enhancement_model_path, output) =
-        finish_shared_transcription_arguments(shared_arguments)?;
+    let shared = finish_shared_transcription_arguments(shared_arguments)?;
     Ok(Command::Transcribe {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe requires --language <tag>")?,
         backend: backend.unwrap_or_default(),
+        model: shared.recognition_model,
         model_path,
+        cache_root: shared.cache_root,
         ffmpeg_path,
-        enhancement,
-        enhancement_model_path,
-        output,
+        enhancement: shared.enhancement,
+        enhancement_model_path: shared.enhancement_model_path,
+        output: shared.output,
     })
 }
 
@@ -254,17 +270,18 @@ fn parse_transcribe_pcm(arguments: &[String]) -> Result<Command, String> {
             option => return Err(format!("unsupported transcribe-pcm option: {option}")),
         }
     }
-    let (enhancement, enhancement_model_path, output) =
-        finish_shared_transcription_arguments(shared_arguments)?;
+    let shared = finish_shared_transcription_arguments(shared_arguments)?;
     Ok(Command::TranscribePcm {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe-pcm requires --language <tag>")?,
         backend: backend.unwrap_or_default(),
+        model: shared.recognition_model,
         model_path,
+        cache_root: shared.cache_root,
         sample_rate: sample_rate.unwrap_or(16_000),
-        enhancement,
-        enhancement_model_path,
-        output,
+        enhancement: shared.enhancement,
+        enhancement_model_path: shared.enhancement_model_path,
+        output: shared.output,
     })
 }
 
@@ -310,8 +327,33 @@ fn parse_shared_transcription_argument(
                 .get(index + 1)
                 .filter(|value| !value.is_empty())
                 .ok_or("--enhancement-model-path requires a model directory")?;
-            if parsed.model_path.replace(PathBuf::from(value)).is_some() {
+            if parsed
+                .enhancement_model_path
+                .replace(PathBuf::from(value))
+                .is_some()
+            {
                 return Err("--enhancement-model-path may only be specified once".to_owned());
+            }
+            Ok(Some(index + 2))
+        }
+        "--model" => {
+            let value = arguments
+                .get(index + 1)
+                .filter(|value| !value.is_empty())
+                .ok_or("--model requires a model identifier")?;
+            let model = ModelId::new(value.clone()).map_err(|error| error.to_string())?;
+            if parsed.recognition_model.replace(model).is_some() {
+                return Err("--model may only be specified once".to_owned());
+            }
+            Ok(Some(index + 2))
+        }
+        "--cache-root" => {
+            let value = arguments
+                .get(index + 1)
+                .filter(|value| !value.is_empty())
+                .ok_or("--cache-root requires a directory path")?;
+            if parsed.cache_root.replace(PathBuf::from(value)).is_some() {
+                return Err("--cache-root may only be specified once".to_owned());
             }
             Ok(Some(index + 2))
         }
@@ -357,23 +399,25 @@ fn parse_shared_transcription_argument(
 
 fn finish_shared_transcription_arguments(
     parsed: SharedTranscriptionArguments,
-) -> Result<(EnhancementSelection, Option<PathBuf>, OutputOptions), String> {
+) -> Result<ResolvedSharedTranscriptionArguments, String> {
     let selection = parsed.selection.unwrap_or_default();
-    if parsed.model_path.is_some() && selection != EnhancementSelection::Local {
+    if parsed.enhancement_model_path.is_some() && selection != EnhancementSelection::Local {
         return Err("--enhancement-model-path requires --enhance local".to_owned());
     }
     if parsed.overwrite && parsed.output_path.is_none() {
         return Err("--force requires --output".to_owned());
     }
-    Ok((
-        selection,
-        parsed.model_path,
-        OutputOptions {
+    Ok(ResolvedSharedTranscriptionArguments {
+        enhancement: selection,
+        enhancement_model_path: parsed.enhancement_model_path,
+        recognition_model: parsed.recognition_model,
+        cache_root: parsed.cache_root,
+        output: OutputOptions {
             format: parsed.output_format.unwrap_or_default(),
             path: parsed.output_path,
             overwrite: parsed.overwrite,
         },
-    ))
+    })
 }
 
 fn run(command: Command) -> Result<(), String> {
@@ -432,19 +476,32 @@ fn run(command: Command) -> Result<(), String> {
             path,
             language,
             backend,
+            model,
             model_path,
+            cache_root,
             ffmpeg_path,
             enhancement,
             enhancement_model_path,
             output,
         } => {
+            let model_path = resolve_recognition_model_path(
+                &backend,
+                model.as_ref(),
+                model_path,
+                cache_root.as_ref(),
+            )?;
+            let enhancement_model_path = resolve_enhancement_model_path(
+                enhancement,
+                enhancement_model_path,
+                cache_root.as_ref(),
+            )?;
             let result = transcribe_file(
                 &path,
                 &TranscribeOptions {
                     backend,
+                    model,
                     language: Some(language.clone()),
                     model_path,
-                    ..TranscribeOptions::default()
                 },
                 &MediaDecodeOptions { ffmpeg_path },
             )
@@ -456,12 +513,25 @@ fn run(command: Command) -> Result<(), String> {
             path,
             language,
             backend,
+            model,
             model_path,
+            cache_root,
             sample_rate,
             enhancement,
             enhancement_model_path,
             output,
         } => {
+            let model_path = resolve_recognition_model_path(
+                &backend,
+                model.as_ref(),
+                model_path,
+                cache_root.as_ref(),
+            )?;
+            let enhancement_model_path = resolve_enhancement_model_path(
+                enhancement,
+                enhancement_model_path,
+                cache_root.as_ref(),
+            )?;
             let bytes = fs::read(&path)
                 .map_err(|error| format!("could not read {}: {error}", path.display()))?;
             let format = AudioFormat::new(sample_rate, 1).map_err(|error| error.to_string())?;
@@ -471,9 +541,9 @@ fn run(command: Command) -> Result<(), String> {
                 &input,
                 &TranscribeOptions {
                     backend,
+                    model,
                     language: Some(language.clone()),
                     model_path,
-                    ..TranscribeOptions::default()
                 },
             )
             .map_err(|error| error.to_string())?;
@@ -482,6 +552,45 @@ fn run(command: Command) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+fn resolve_recognition_model_path(
+    backend: &BackendSelection,
+    model: Option<&ModelId>,
+    explicit: Option<PathBuf>,
+    cache_root: Option<&PathBuf>,
+) -> Result<Option<PathBuf>, String> {
+    if explicit.is_some() || cache_root.is_none() {
+        return Ok(explicit);
+    }
+    let uses_whisper = matches!(
+        backend,
+        BackendSelection::Id(backend) if backend == &BackendId::whisper()
+    ) || model.is_some_and(|model| model.as_str() == "whisper-large-v3-turbo");
+    if !uses_whisper {
+        return Ok(None);
+    }
+    let manager = ModelManager::new(cache_root.expect("checked cache root"));
+    Ok(Some(
+        manager
+            .model_directory("whisper-large-v3-turbo")
+            .map_err(|error| error.to_string())?
+            .join("ggml-large-v3-turbo.bin"),
+    ))
+}
+
+fn resolve_enhancement_model_path(
+    enhancement: EnhancementSelection,
+    explicit: Option<PathBuf>,
+    cache_root: Option<&PathBuf>,
+) -> Result<Option<PathBuf>, String> {
+    if explicit.is_some() || cache_root.is_none() || enhancement != EnhancementSelection::Local {
+        return Ok(explicit);
+    }
+    ModelManager::new(cache_root.expect("checked cache root"))
+        .model_directory("gemma-4-26b-a4b-it-4bit")
+        .map(Some)
+        .map_err(|error| error.to_string())
 }
 
 fn enhance_result(
@@ -564,7 +673,9 @@ mod tests {
                 path: PathBuf::from("speech.ogg"),
                 language: "de-DE".to_owned(),
                 backend: BackendSelection::Id(BackendId::whisper()),
+                model: None,
                 model_path: Some(PathBuf::from("/models/whisper.bin")),
+                cache_root: None,
                 ffmpeg_path: Some(PathBuf::from("/opt/ffmpeg")),
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
@@ -582,7 +693,9 @@ mod tests {
                 path: PathBuf::from("speech.f32le"),
                 language: "de-DE".to_owned(),
                 backend: BackendSelection::Auto,
+                model: None,
                 model_path: None,
+                cache_root: None,
                 sample_rate: 16_000,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
@@ -602,7 +715,9 @@ mod tests {
                 path: PathBuf::from("speech.f32le"),
                 language: "en-US".to_owned(),
                 backend: BackendSelection::Auto,
+                model: None,
                 model_path: None,
+                cache_root: None,
                 sample_rate: 48_000,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
@@ -625,7 +740,9 @@ mod tests {
                 path: PathBuf::from("speech.ogg"),
                 language: "de-DE".to_owned(),
                 backend: BackendSelection::Auto,
+                model: None,
                 model_path: None,
+                cache_root: None,
                 ffmpeg_path: None,
                 enhancement: EnhancementSelection::Local,
                 enhancement_model_path: Some(PathBuf::from("/models/gemma")),
@@ -652,7 +769,9 @@ mod tests {
                 path: PathBuf::from("speech.ogg"),
                 language: "en-US".to_owned(),
                 backend: BackendSelection::Auto,
+                model: None,
                 model_path: None,
+                cache_root: None,
                 ffmpeg_path: None,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
@@ -661,6 +780,30 @@ mod tests {
                     path: Some(PathBuf::from("transcript.md")),
                     overwrite: true,
                 },
+            })
+        );
+        assert_eq!(
+            parse(arguments(&[
+                "transcribe",
+                "speech.ogg",
+                "--language",
+                "auto",
+                "--model",
+                "whisper-large-v3-turbo",
+                "--cache-root",
+                "/models"
+            ])),
+            Ok(Command::Transcribe {
+                path: PathBuf::from("speech.ogg"),
+                language: "auto".to_owned(),
+                backend: BackendSelection::Auto,
+                model: Some(ModelId::new("whisper-large-v3-turbo").expect("model ID")),
+                model_path: None,
+                cache_root: Some(PathBuf::from("/models")),
+                ffmpeg_path: None,
+                enhancement: EnhancementSelection::Off,
+                enhancement_model_path: None,
+                output: OutputOptions::default(),
             })
         );
     }
@@ -762,6 +905,44 @@ mod tests {
                 "json"
             ]))
             .is_err()
+        );
+    }
+
+    #[test]
+    fn custom_cache_root_resolves_managed_runtime_paths() {
+        let cache_root = PathBuf::from("/srv/cuttledoc");
+        assert_eq!(
+            resolve_recognition_model_path(
+                &BackendSelection::Id(BackendId::whisper()),
+                None,
+                None,
+                Some(&cache_root),
+            )
+            .expect("Whisper path"),
+            Some(PathBuf::from(
+                "/srv/cuttledoc/models/whisper-large-v3-turbo/ggml-large-v3-turbo.bin"
+            ))
+        );
+        assert_eq!(
+            resolve_enhancement_model_path(
+                EnhancementSelection::Local,
+                None,
+                Some(&cache_root),
+            )
+            .expect("Gemma path"),
+            Some(PathBuf::from(
+                "/srv/cuttledoc/models/gemma-4-26b-a4b-it-4bit"
+            ))
+        );
+        assert_eq!(
+            resolve_recognition_model_path(
+                &BackendSelection::Auto,
+                None,
+                None,
+                Some(&cache_root),
+            )
+            .expect("automatic path"),
+            None
         );
     }
 }

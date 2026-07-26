@@ -316,6 +316,12 @@ pub fn configured_model_directory() -> Option<PathBuf> {
     if let Some(path) = std::env::var_os(MODEL_PATH_ENV).map(PathBuf::from) {
         return Some(path);
     }
+    if let Some(root) = std::env::var_os("CUTTLEDOC_CACHE_ROOT").map(PathBuf::from) {
+        let path = root.join("models/gemma-4-26b-a4b-it-4bit");
+        if path.is_dir() {
+            return Some(path);
+        }
+    }
     let home = std::env::var_os("HOME").map(PathBuf::from)?;
     let path = home.join(".cache/cuttledoc/models/gemma-4-26b-a4b-it-4bit");
     path.is_dir().then_some(path)
