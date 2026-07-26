@@ -171,6 +171,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cuttledoc-openrouter"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "cuttledoc-whisper"
 version = "0.1.0"
 

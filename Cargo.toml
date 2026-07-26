@@ -2,6 +2,7 @@
 members = [
   "crates/adapters/apple-speech",
   "crates/adapters/gemma-mlx",
+  "crates/adapters/openrouter",
   "crates/adapters/whisper",
   "crates/cuttledoc-audio",
   "crates/cuttledoc",

@@ -1,0 +1,15 @@
+[package]
+name = "cuttledoc-openrouter"
+description = "Private pinned OpenRouter text-generation boundary for Cuttledoc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+serde_json = "=1.0.151"
+
+[lints]
+workspace = true
