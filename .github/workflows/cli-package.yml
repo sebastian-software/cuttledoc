@@ -1,0 +1,52 @@
+name: CLI package
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cli-package.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/adapters/apple-speech/**"
+      - "crates/adapters/gemma-mlx/**"
+      - "crates/adapters/openrouter/**"
+      - "crates/adapters/whisper/**"
+      - "crates/cuttledoc-audio/**"
+      - "crates/cuttledoc-models/**"
+      - "crates/cuttledoc/**"
+      - "crates/cuttledoc-cli/**"
+      - "scripts/fetch-official-mlx.sh"
+      - "scripts/fetch-whisper-cpp.sh"
+      - "scripts/pack-cuttledoc-cli.sh"
+      - "scripts/test-cuttledoc-cli-package.sh"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cli-package.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/adapters/apple-speech/**"
+      - "crates/adapters/gemma-mlx/**"
+      - "crates/adapters/openrouter/**"
+      - "crates/adapters/whisper/**"
+      - "crates/cuttledoc-audio/**"
+      - "crates/cuttledoc-models/**"
+      - "crates/cuttledoc/**"
+      - "crates/cuttledoc-cli/**"
+      - "scripts/fetch-official-mlx.sh"
+      - "scripts/fetch-whisper-cpp.sh"
+      - "scripts/pack-cuttledoc-cli.sh"
+      - "scripts/test-cuttledoc-cli-package.sh"
+
+permissions:
+  contents: read
+
+jobs:
+  packed-artifact:
+    name: Packed artifact / macOS 26 arm64
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Build, pack, install, and test
+        run: bash scripts/test-cuttledoc-cli-package.sh
