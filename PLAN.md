@@ -284,10 +284,11 @@ decoder `Vec` into the public `Arc<[f32]>` buffer. This is acceptable for the
 first 16 GB file slice; multi-hour and streaming measurements remain the
 trigger for chunked decoding.
 
-Issue #23 completed the general media-file path. Issue #26 owns hosted
-transcription and cloud-only platform support; issue #27 owns the remaining CLI
-output and model-management parity. These are separate so provider security,
-user-facing CLI behavior, and model provisioning can be reviewed independently.
+Issues #23 and #27 completed the general media-file path and remaining CLI
+output/model-management parity. Issue #26 now owns hosted transcription and
+cloud-only platform support. Its executable plan is
+`docs/plans/hosted-openai-transcription.md`; provider security and portable
+artifact evidence remain isolated from the completed local and CLI work.
 
 Scope:
 
@@ -436,16 +437,15 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-Evidence snapshot: 2026-07-26 at implementation checkpoint `18b3153`.
+Evidence snapshot: 2026-07-27 at implementation checkpoint `24754cb`.
 
-1. Complete #25: add provider-neutral transcript enhancement, Gemma locally on
-   capable machines, and Gemini only through explicit OpenRouter
-   configuration. Raw text always remains available.
-2. Complete #26: add hosted transcription and the Linux/Windows cloud-only
-   path without automatic remote fallback.
-3. Complete #27: finish output-file, Markdown/JSON, capability, and
-   model-management CLI parity.
-4. Complete #28: build, sign, notarize, attest, and clean-machine-test the
+1. Complete #26 using `docs/plans/hosted-openai-transcription.md`: add explicit
+   OpenAI transcription and Linux/Windows cloud-only artifacts without
+   automatic remote fallback.
+2. Complete #28: build, sign, notarize, attest, and clean-machine-test the
    reproducible v3 release artifacts.
-5. Run the TTS vertical slice in #13 after the transcription release gates; it
+3. Run the remaining physical 32 GB Apple Silicon packaged Gemma smoke from
+   #25 opportunistically; the implementation and conservative disabled default
+   are already complete.
+4. Run the TTS vertical slice in #13 after the transcription release gates; it
    remains a strategic but non-blocking product direction.
