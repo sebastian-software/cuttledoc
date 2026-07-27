@@ -40,7 +40,7 @@
     "benchmark:tts": "tsx scripts/benchmark-tts.ts"
   },
   "dependencies": {
-    "node-llama-cpp": "^3.19.0"
+    "node-llama-cpp": "^3.19.1"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.10",

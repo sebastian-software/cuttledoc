@@ -29,15 +29,15 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "22.20.1",
-    "eslint": "^10.7.0",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.7.0",
+    "globals": "^17.8.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.8",
-    "prettier": "^3.9.5",
-    "turbo": "^2.10.5",
+    "lint-staged": "^17.2.0",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.7",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.64.0"
+    "typescript-eslint": "^8.65.0"
   },
   "packageManager": "pnpm@11.13.1+sha512.b2fc7683b8a6525414e7d13e1ba28caaddde96bf66ec540bfaeb7e702b81f3e0be4d1f295edf7f9fe0396740a8dce4509c582ddf79891f4543fea32d37645f25"
 }
