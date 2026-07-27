@@ -8,7 +8,8 @@
 - Issue: #26
 - Depends on: #23 and #27, both complete
 - Planned at: `24754cb`, 2026-07-27
-- Working state: clean
+- Implementation checkpoint: `c7b7cc7`, 2026-07-27
+- Working state: live provider dispatch pending a repository secret
 
 ## Why this matters
 
@@ -194,8 +195,14 @@ by the CLI and Node crates. Their `--no-default-features` graphs exclude Apple
 Speech, Whisper, Gemma/MLX, and tokenizers while retaining the portable hosted
 boundary. The shared artifact harness builds, packs, installs, and exercises
 that flavor. A local arm64 macOS diagnostic produced a 1,653,864-byte CLI
-archive and a 1,580,776-byte Node tarball; this validates the harness but does
-not substitute for the required Linux x64 and Windows x64 runner evidence.
+archive and a 1,580,776-byte Node tarball.
+
+The required x64 runner matrix passed at `0786192` in
+[CI run 30275880627](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30275880627).
+Linux produced a 1,768,205-byte CLI archive and a 1,814,029-byte Node tarball;
+Windows produced a 1,416,434-byte CLI archive and a 1,461,203-byte Node
+tarball. Both installed and exercised the final artifacts with compiler
+commands blocked and no local-runtime or FFmpeg payload.
 
 Verify: platform artifact harnesses and CI matrix.
 
@@ -209,6 +216,16 @@ fixture digest, platform, success state, and bounded timing evidence.
 Reconcile `PLAN.md`, `docs/compatibility-matrix.md`, public/package docs, and
 issue #26. Do not claim #28 release completion.
 
+Harness checkpoint: `c7b7cc7` adds a manual workflow around the committed
+400,967-byte English Opus fixture with SHA-256
+`646f5351df3b2e169ee8ab95d1c740c572c530439b26448fb79d7b5c74665f71`.
+Its validator self-test passed locally and in
+[CI run 30276405034](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30276405034).
+The workflow retains no audio, result, or diagnostics artifact and emits only
+bounded non-content evidence. The repository does not currently have an
+`OPENAI_API_KEY` secret, so the live provider dispatch remains deliberately
+unexecuted under the stop condition below.
+
 ## Done criteria
 
 - [x] Mocked contract tests cover request, response, provider errors, timeout,
@@ -221,12 +238,13 @@ issue #26. Do not claim #28 release completion.
 - [x] A configured credential never changes `auto` selection.
 - [x] No credential appears in `Debug`, errors, CLI arguments, logs, output, or
       persisted configuration.
-- [ ] Linux and Windows final CLI/Node artifacts install, load, and exercise
+- [x] Linux and Windows final CLI/Node artifacts install, load, and exercise
       hosted transcription without Apple/local-model artifacts or compilers.
 - [ ] The live smoke is opt-in, fixture-pinned, secret-safe, and retains no
       credential or audio.
-- [ ] Workspace format, lint, tests, dependency policy, and platform CI pass.
-- [ ] Documentation and issue #26 reflect verified artifact evidence.
+- [x] Workspace format, lint, tests, dependency policy, and platform CI pass.
+- [ ] Documentation reflects verified artifact evidence and issue #26 is
+      closed after the live dispatch.
 
 ## Stop conditions
 

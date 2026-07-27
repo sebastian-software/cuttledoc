@@ -79,6 +79,7 @@ crates/
 ├── adapters/
 │   ├── apple-speech/    # private Swift C ABI boundary
 │   ├── gemma-mlx/       # private official-MLX C++ task boundary
+│   ├── openai-transcription/ # private portable OpenAI HTTP boundary
 │   ├── openrouter/      # private Foundation HTTP boundary
 │   └── whisper/         # private whisper.cpp C++/C ABI boundary
 ├── cuttledoc-audio/     # owned external media-decoding boundary
@@ -129,6 +130,23 @@ availability, followed by the local and hosted text-generation capabilities.
 `auto` remains strictly local: it selects Apple Speech when the
 requested locale is available and otherwise uses Whisper only when its pinned
 model pair is available. It never sends audio to a hosted service.
+
+OpenAI transcription is a separate, explicit file backend. It uploads the
+original supported media file without invoking FFmpeg:
+
+```sh
+# Supply OPENAI_API_KEY through the environment or a secret manager.
+cuttledoc transcribe podcast.m4a \
+  --backend openai-transcription \
+  --model gpt-4o-transcribe \
+  --language en-US
+```
+
+The CLI deliberately has no API-key argument. The initial model set is
+`gpt-4o-transcribe` (default), `gpt-4o-mini-transcribe`, and `whisper-1`.
+Uploads are limited to 25 MB. GPT transcription results contain text without
+invented timestamps; `whisper-1` maps provider-reported duration and segments.
+Configuring `OPENAI_API_KEY` never changes local-only `auto` selection.
 
 Whisper is an explicit quality/language-coverage fallback. Development builds
 prepare the pinned upstream source before enabling the adapter:
@@ -253,6 +271,21 @@ const result = await transcribeFile('/path/to/podcast.m4a', {
 });
 ```
 
+Explicit hosted transcription uses the same file operation:
+
+```js
+const result = await transcribeFile('/path/to/podcast.m4a', {
+  backend: 'openai-transcription',
+  language: 'en-US',
+  model: 'gpt-4o-transcribe',
+  credential: process.env.OPENAI_API_KEY,
+  timeoutMs: 300_000,
+});
+```
+
+Omit `credential` to let the native core read `OPENAI_API_KEY`. The credential
+is held only in memory and is redacted from debug output and errors.
+
 `transcribePcm` remains the advanced decoder bypass. `AbortSignal` cancels
 FFmpeg, recognition, or enhancement through the shared Rust cancellation
 token. `enhancement: 'gemini'` reads `OPENROUTER_API_KEY` only after explicit
@@ -266,6 +299,12 @@ Build and exercise the exact npm tarball through both ESM and CommonJS with:
 ```sh
 bash scripts/test-cuttledoc-node-package.sh
 ```
+
+Separate cloud-only CLI and Node artifacts have also passed packed install and
+load tests on Linux x64 and Windows x64. They contain the portable hosted
+boundary but no Apple frameworks, Whisper, Gemma/MLX, FFmpeg, model weights, or
+install-time compiler lifecycle. Final release publication remains tracked by
+issue #28.
 
 ## First proof
 

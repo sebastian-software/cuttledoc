@@ -184,6 +184,12 @@ pub struct TranscribeOptions {
     pub model: Option<ModelId>,
     pub model_path: Option<PathBuf>,
     pub language: Option<String>,
+    pub hosted: HostedTranscriptionOptions,
+}
+
+pub struct HostedTranscriptionOptions {
+    pub credential: Option<HostedCredential>,
+    pub timeout: Duration,
 }
 
 pub struct TranscriptionResult {
@@ -207,11 +213,12 @@ pub struct TranscriptionSegment {
 }
 ```
 
-The current implemented recognition IDs are `apple-speech` and `whisper`.
-Generation exposes `gemma-mlx` and `openrouter`; OpenRouter is pinned to the
-selected Gemini route rather than being an automatic cloud fallback. Planned
-Parakeet or other provider IDs are added only with their product vertical
-slices. Runtime evidence alone does not define product identity.
+The current implemented recognition IDs are `apple-speech`, `whisper`, and
+`openai-transcription`. Generation exposes `gemma-mlx` and `openrouter`;
+OpenRouter is pinned to the selected Gemini route rather than being an
+automatic cloud fallback. Planned Parakeet or other provider IDs are added only
+with their product vertical slices. Runtime evidence alone does not define
+product identity.
 
 TypeScript uses the same open policy rather than a closed union that makes
 widening a breaking change:
@@ -219,44 +226,79 @@ widening a breaking change:
 ```ts
 type KnownBackend =
   | "apple-speech"
-  | "whisper";
+  | "whisper"
+  | "openai-transcription";
 type BackendId = KnownBackend | (string & {});
 type BackendSelection = "auto" | BackendId;
 ```
 
-`model_path` / `modelPath` is the current explicit provisioning escape hatch
-for the pinned Whisper GGML/Core ML pair. It is not a runtime handle and does
-not weaken the model identity. The model manager in #27 will make the common
-case path-free while retaining explicit paths for controlled deployments.
+`model_path` / `modelPath` is the explicit provisioning escape hatch for the
+pinned Whisper GGML/Core ML pair. It is not a runtime handle and does not
+weaken the model identity. The model manager makes the common case path-free
+while retaining explicit paths for controlled deployments.
 
-Credentials and provider-specific connection settings belong on the
-`Cuttledoc` context/provider configuration, not in common transcription
-options. Capability discovery, not a constant list, is the source of truth for
-availability.
+Hosted credentials are provider-neutral, redacting values held only for one
+operation. Rust and Node may pass an ephemeral in-memory credential; explicit
+OpenAI transcription otherwise reads `OPENAI_API_KEY`. The CLI accepts only
+the environment path and deliberately exposes no key argument. Capability
+discovery, not a constant list, remains the source of truth for availability.
 
 Time is strongly typed in Rust. Node conversions use seconds consistently at the public boundary rather than mixing Parakeet seconds and Whisper milliseconds.
 
 ## Rust one-shot API
 
 ```rust
-use cuttledoc::{transcribe, BackendSelection, TranscribeOptions};
+use cuttledoc::{
+    transcribe_file, BackendSelection, MediaDecodeOptions, TranscribeOptions,
+};
 
-let result = transcribe(
+let result = transcribe_file(
     "meeting.mp4",
-    TranscribeOptions {
+    &TranscribeOptions {
         backend: BackendSelection::Auto,
         language: Some("de".into()),
         ..Default::default()
     },
-)
-.await?;
+    &MediaDecodeOptions::default(),
+)?;
 
 println!("{}", result.text);
 ```
 
-The top-level one-shot API owns an ephemeral context and closes its engine
-before returning. Applications that need warm reuse create an explicit
-`Cuttledoc` context; no hidden process-global engine cache exists.
+The current one-shot file API owns the complete decode/recognition operation
+and returns after its engine is released. Applications that need warm reuse
+will create an explicit `Cuttledoc` context; no hidden process-global engine
+cache exists.
+
+Explicit hosted recognition branches before media decoding and uploads the
+original file:
+
+```rust
+use std::time::Duration;
+use cuttledoc::{
+    transcribe_file, BackendId, BackendSelection, HostedCredential,
+    HostedTranscriptionOptions, MediaDecodeOptions, ModelId, TranscribeOptions,
+};
+
+let result = transcribe_file(
+    "podcast.m4a",
+    &TranscribeOptions {
+        backend: BackendSelection::Id(BackendId::new("openai-transcription")?),
+        model: Some(ModelId::new("gpt-4o-transcribe")?),
+        language: Some("en-US".into()),
+        hosted: HostedTranscriptionOptions {
+            credential: Some(HostedCredential::new(api_key)?),
+            timeout: Duration::from_secs(300),
+        },
+        ..Default::default()
+    },
+    &MediaDecodeOptions::default(),
+)?;
+```
+
+The initial provider contract accepts `gpt-4o-transcribe`,
+`gpt-4o-mini-transcribe`, and timestamp-capable `whisper-1`, with a 25 MB
+upload bound. A hosted credential never changes `BackendSelection::Auto`.
 
 ## Rust reusable engine API
 
@@ -539,6 +581,25 @@ await engine.close();
 await cuttledoc.close();
 ```
 
+The currently implemented one-shot Node surface exposes explicit hosted
+transcription without persisting the credential:
+
+```ts
+import { transcribeFile } from "cuttledoc";
+
+const result = await transcribeFile("podcast.m4a", {
+  backend: "openai-transcription",
+  language: "en-US",
+  model: "gpt-4o-transcribe",
+  credential: process.env.OPENAI_API_KEY,
+  timeoutMs: 300_000,
+});
+```
+
+Omitting `credential` reads `OPENAI_API_KEY` in the native core. `AbortSignal`
+cancels the active HTTP operation. Hosted-only options are rejected unless the
+file backend is explicitly `openai-transcription`; PCM input remains local.
+
 Advanced PCM input uses `Float32Array`. The Node boundary may borrow it only
 for a synchronous call; the engine owns or copies accepted data before that
 call returns, and a native adapter may convert formats internally:
@@ -588,12 +649,13 @@ The Phase 4 native CLI implements:
 
 ```text
 cuttledoc transcribe <input>
-                     [--backend auto|apple-speech|whisper]
+                     [--backend auto|apple-speech|whisper|openai-transcription]
                      [--model <id>]
                      [--model-path <path>]
                      [--cache-root <path>]
                      [--language <code|auto>]
                      [--ffmpeg-path <path>]
+                     [--timeout-seconds <seconds>]
                      [--enhance off|local|gemini]
                      [--enhancement-model-path <path>]
                      [--format text|markdown|json]
@@ -625,6 +687,12 @@ against the default or selected cache without requiring an artifact path.
 Apple Speech assets appear in `models list` under the same provisioning
 vocabulary, but their file operations are capability-gated because macOS owns
 them.
+
+`--timeout-seconds` is valid only with explicit
+`--backend openai-transcription`. The hosted CLI path reads `OPENAI_API_KEY`,
+uploads the original supported file, and never invokes FFmpeg. `auto` is
+strictly local, including in cloud-only builds where it reports that no local
+recognition backend is available.
 
 Text is the default stdout format. `--output` writes through a sibling
 temporary file, refuses an existing destination before recognition, and

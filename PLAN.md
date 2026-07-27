@@ -285,10 +285,16 @@ first 16 GB file slice; multi-hour and streaming measurements remain the
 trigger for chunked decoding.
 
 Issues #23 and #27 completed the general media-file path and remaining CLI
-output/model-management parity. Issue #26 now owns hosted transcription and
-cloud-only platform support. Its executable plan is
-`docs/plans/hosted-openai-transcription.md`; provider security and portable
-artifact evidence remain isolated from the completed local and CLI work.
+output/model-management parity. Issue #26 now has a complete explicit OpenAI
+file path across Rust, CLI, and Node plus cloud-only packed artifact evidence
+on Linux x64 and Windows x64. The repository-owned portable HTTP boundary
+enforces model/file/body bounds, timeout and active cancellation, stable
+errors, and credential redaction. `auto` remains strictly local.
+
+The manual live-smoke harness is fixture-pinned and validated, but its provider
+dispatch remains pending because the repository has no `OPENAI_API_KEY` secret.
+That single external gate is tracked in
+`docs/plans/hosted-openai-transcription.md`; release publication remains #28.
 
 Scope:
 
@@ -437,11 +443,10 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-Evidence snapshot: 2026-07-27 at implementation checkpoint `24754cb`.
+Evidence snapshot: 2026-07-27 at implementation checkpoint `c7b7cc7`.
 
-1. Complete #26 using `docs/plans/hosted-openai-transcription.md`: add explicit
-   OpenAI transcription and Linux/Windows cloud-only artifacts without
-   automatic remote fallback.
+1. Configure the repository `OPENAI_API_KEY`, dispatch the bounded live smoke,
+   record its non-content evidence, and close #26.
 2. Complete #28: build, sign, notarize, attest, and clean-machine-test the
    reproducible v3 release artifacts.
 3. Run the remaining physical 32 GB Apple Silicon packaged Gemma smoke from

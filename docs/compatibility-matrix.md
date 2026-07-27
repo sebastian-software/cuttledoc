@@ -16,8 +16,10 @@ Status values:
 | ------------------------------- | --------: | -----: | -------: | -------: | ---------------------------- |
 | macOS Apple Silicon (macOS 26+) |       Yes |    Yes |      Yes |      Yes | Required                     |
 | macOS Intel / macOS < 26        |        No |     No |       No |       No | Dropped in v3 (ADR-0007)     |
-| Linux x64/arm64                 |        No |    Yes |      Yes |      Yes | Cloud-only required          |
-| Windows x64/arm64               |        No |    Yes |      Yes |      Yes | Cloud-only required          |
+| Linux x64                       |        No |    Yes |      Yes |      Yes | Cloud-only artifacts implemented |
+| Linux arm64                     |        No |    Yes |      Yes |      Yes | Cloud-only artifact required |
+| Windows x64                     |        No |    Yes |      Yes |      Yes | Cloud-only artifacts implemented |
+| Windows arm64                   |        No |    Yes |      Yes |      Yes | Cloud-only artifact required |
 
 Local ASR covers the selected Apple-local backends (Parakeet, Whisper, system Speech per the bakeoff). Cuttledoc 2 remains the product for Intel Macs and macOS releases before 26.
 
@@ -41,13 +43,13 @@ Unsupported local inference must be represented as capability absence. Installin
 | Capability           |                      Parakeet |                       Whisper |          Apple Speech |            OpenAI | Status                             |
 | -------------------- | ----------------------------: | ----------------------------: | ---------------------: | ----------------: | ---------------------------------- |
 | Explicit selection   |                           Yes |                           Yes |                    Yes |               Yes | Required                           |
-| Automatic selection  |                           Yes |                           Yes |               Evaluate |               Yes | Required                           |
+| Automatic selection  |                           Yes |                           Yes |               Evaluate | No (explicit only) | Required                           |
 | Reusable engine      |                           Yes |                           Yes |                    Yes |    Service client | Required                           |
 | Structured segments  |                           Yes |                           Yes |                    Yes |   Model-dependent | Required                           |
 | Language detection   |                Model behavior |                           Yes |               Evaluate |   Model-dependent | Required where currently available |
 | Confidence           |         Not currently exposed | Legacy constant deliberately omitted |                    Yes |   Model-dependent | Preserve only measured confidence  |
 | Arbitrary media path |                Through FFmpeg |                Through FFmpeg |         Through FFmpeg |       Upload path | Required                           |
-| Direct PCM input     |                   16 kHz mono |                   16 kHz mono |              Supported |       Not primary | Required for advanced API          |
+| Direct PCM input     |                   16 kHz mono |                   16 kHz mono |              Supported |     No (file only) | Required for advanced local API    |
 | Cancellation         |                       Limited |                       Limited |                    Yes | HTTP cancellation | New                                |
 | Structured progress  | Download callbacks/CLI output | Download callbacks/CLI output |                    New |           Limited | New unified API                    |
 | Streaming results    |  Final segments (VAD-chunked) |       Final segments (chunks) |       Volatile + final |   Model-dependent | New, capability-gated (ADR-0008)   |
@@ -184,6 +186,7 @@ Implemented Phase 4 workflows:
 - transcribe a single media path;
 - choose backend and language;
 - choose a managed model or an explicit artifact path;
+- explicitly select hosted OpenAI file transcription and its model/timeout;
 - choose local Gemma or explicit hosted Gemini enhancement;
 - write text, Markdown, or schema-versioned JSON to stdout or a safe output
   file;
@@ -198,6 +201,21 @@ Reference benchmarking, directory batching, and `doctor` are separate future
 work, not hidden dependencies of the single-file replacement. Human-readable
 output may change. Machine-readable JSON has schema version `1.0.0` and
 snapshot tests; raw and enhanced/fallback text remain distinct.
+
+## Hosted transcription
+
+The `openai-transcription` backend is implemented behind a private portable
+Hyper/Rustls adapter. It accepts only explicit file requests, uploads the
+original supported media without FFmpeg, and is never considered by `auto`.
+Rust and Node accept an ephemeral in-memory credential or `OPENAI_API_KEY`; the
+CLI reads only `OPENAI_API_KEY` and exposes no key argument.
+
+The fixed initial model set is `gpt-4o-transcribe`,
+`gpt-4o-mini-transcribe`, and `whisper-1`. Uploads are bounded to 25 MB.
+GPT-model results do not invent timestamps or media duration; `whisper-1` maps
+provider-reported duration and segments. Hermetic contract tests cover request
+shape, response mapping, provider errors, timeout, active cancellation, body
+bounds, and credential redaction.
 
 ## Transcript enhancement
 
@@ -241,8 +259,15 @@ macOS arm64. Its test extracts the final 41.8 MB archive and exercises success
 and stable failure paths with Cargo, Rust, C/C++, CMake, and Xcode build
 commands blocked. A real local checkpoint additionally transcribed the same
 German Opus fixture through both Apple Speech and the packaged Whisper runtime.
-Linux and Windows archives remain tied to the later cloud-only platform work
-in the target matrix.
+
+The cloud-only matrix passed on Linux x64 and Windows x64 at commit `0786192`
+in [CI run 30275880627](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30275880627).
+Both final archives installed and exercised CLI plus ESM/CommonJS Node
+preflight with compiler lifecycles blocked. The Linux archives measured
+1,768,205 bytes (CLI) and 1,814,029 bytes (Node); Windows measured 1,416,434
+bytes (CLI) and 1,461,203 bytes (Node). They contain no Apple framework,
+Whisper, Gemma/MLX, model, or FFmpeg artifact. Linux arm64 and Windows arm64
+remain future artifact targets.
 
 ## Release evidence
 
