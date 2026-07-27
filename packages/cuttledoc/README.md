@@ -1,9 +1,9 @@
 # cuttledoc
 
-Local-first speech transcription for Apple Silicon. This package is the thin
-Node.js surface over Cuttledoc's Rust core. Apple Speech is the default local
-backend on macOS 26 or newer; Whisper `large-v3-turbo` is the opt-in local
-quality and language-detection fallback.
+Local-first speech transcription with an explicit hosted escape hatch. This
+package is the thin Node.js surface over Cuttledoc's Rust core. Apple Speech is
+the default local backend on macOS 26 or newer; Whisper `large-v3-turbo` is the
+opt-in local quality and language-detection fallback.
 
 ```js
 import { transcribeFile } from 'cuttledoc';
@@ -24,6 +24,26 @@ File input uses an explicitly configured FFmpeg executable, `FFMPEG_PATH`, or
 `modelPath` when the managed cache is not populated. Pass an `AbortSignal` as
 `signal` to cancel decoding or recognition. The package contains a prebuilt
 macOS arm64 Node-API artifact and does not compile code during installation.
+
+OpenAI transcription is file-only and must be selected explicitly. It uploads
+the original supported media file, never changes `auto`, and does not invoke
+FFmpeg:
+
+```js
+const result = await transcribeFile('/path/to/podcast.m4a', {
+  language: 'en-US',
+  backend: 'openai-transcription',
+  model: 'gpt-4o-transcribe',
+  credential: process.env.OPENAI_API_KEY,
+  timeoutMs: 300_000,
+});
+```
+
+Omit `credential` to let the native core read `OPENAI_API_KEY`. The credential
+is ephemeral and is never returned, logged, or persisted by the native
+boundary. Supported initial models are `gpt-4o-transcribe`,
+`gpt-4o-mini-transcribe`, and timestamp-capable `whisper-1`; files are bounded
+to 25 MB by the provider contract.
 
 Transcript enhancement is provider-neutral in JavaScript:
 

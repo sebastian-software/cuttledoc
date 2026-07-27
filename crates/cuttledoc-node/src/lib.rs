@@ -1,10 +1,13 @@
+use std::fmt;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use cuttledoc::{
     AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
-    ErrorCode, MediaDecodeOptions, PcmBuffer, TranscribeOptions, TranscriptEnhancementContext,
-    TranscriptEnhancementMode, TranscriptionResult, apply_transcript_enhancement,
-    recognition_capabilities, text_generation_capabilities, transcribe_file_with_cancellation,
+    ErrorCode, HostedCredential, HostedTranscriptionOptions, MediaDecodeOptions, ModelId,
+    PcmBuffer, TranscribeOptions, TranscriptEnhancementContext, TranscriptEnhancementMode,
+    TranscriptionResult, apply_transcript_enhancement, recognition_capabilities,
+    text_generation_capabilities, transcribe_file_with_cancellation,
     transcribe_pcm_with_cancellation,
 };
 use napi::bindgen_prelude::{AbortSignal, AsyncTask, Buffer};
@@ -25,6 +28,7 @@ pub struct BackendCapability {
 pub struct PcmTranscriptionOptions {
     pub language: String,
     pub backend: Option<String>,
+    pub model: Option<String>,
     #[napi(js_name = "modelPath")]
     pub model_path: Option<String>,
     #[napi(js_name = "sampleRate")]
@@ -35,17 +39,41 @@ pub struct PcmTranscriptionOptions {
 }
 
 #[napi(object)]
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct FileTranscriptionOptions {
     pub language: String,
     pub backend: Option<String>,
+    pub model: Option<String>,
     #[napi(js_name = "modelPath")]
     pub model_path: Option<String>,
+    pub credential: Option<String>,
+    #[napi(js_name = "timeoutMs")]
+    pub timeout_ms: Option<u32>,
     #[napi(js_name = "ffmpegPath")]
     pub ffmpeg_path: Option<String>,
     pub enhancement: Option<String>,
     #[napi(js_name = "enhancementModelPath")]
     pub enhancement_model_path: Option<String>,
+}
+
+impl fmt::Debug for FileTranscriptionOptions {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("FileTranscriptionOptions")
+            .field("language", &self.language)
+            .field("backend", &self.backend)
+            .field("model", &self.model)
+            .field("model_path", &self.model_path)
+            .field(
+                "credential",
+                &self.credential.as_ref().map(|_| "[REDACTED]"),
+            )
+            .field("timeout_ms", &self.timeout_ms)
+            .field("ffmpeg_path", &self.ffmpeg_path)
+            .field("enhancement", &self.enhancement)
+            .field("enhancement_model_path", &self.enhancement_model_path)
+            .finish()
+    }
 }
 
 #[napi(object)]
@@ -129,7 +157,10 @@ impl Task for PcmTranscriptionTask {
         let options = transcribe_options(
             &self.options.language,
             self.options.backend.as_deref(),
+            self.options.model.as_deref(),
             self.options.model_path.as_deref(),
+            None,
+            None,
         )?;
         let result = transcribe_pcm_with_cancellation(&input, &options, &self.cancellation)
             .map_err(node_error)?;
@@ -156,7 +187,10 @@ impl Task for FileTranscriptionTask {
         let transcribe_options = transcribe_options(
             &self.options.language,
             self.options.backend.as_deref(),
+            self.options.model.as_deref(),
             self.options.model_path.as_deref(),
+            self.options.credential.as_deref(),
+            self.options.timeout_ms,
         )?;
         let result = transcribe_file_with_cancellation(
             &self.path,
@@ -185,7 +219,10 @@ impl Task for FileTranscriptionTask {
 fn transcribe_options(
     language: &str,
     backend: Option<&str>,
+    model: Option<&str>,
     model_path: Option<&str>,
+    credential: Option<&str>,
+    timeout_ms: Option<u32>,
 ) -> Result<TranscribeOptions> {
     let backend = match backend {
         None | Some("auto") => BackendSelection::Auto,
@@ -194,11 +231,51 @@ fn transcribe_options(
                 .map_err(|error| Error::new(Status::InvalidArg, error.to_string()))?,
         ),
     };
+    if (credential.is_some() || timeout_ms.is_some())
+        && !matches!(
+            &backend,
+            BackendSelection::Id(backend) if backend == &BackendId::openai_transcription()
+        )
+    {
+        return Err(Error::new(
+            Status::InvalidArg,
+            "credential and timeoutMs require backend: openai-transcription".to_owned(),
+        ));
+    }
+    let model = model
+        .map(|value| {
+            ModelId::new(value).map_err(|error| Error::new(Status::InvalidArg, error.to_string()))
+        })
+        .transpose()?;
+    let credential = credential
+        .map(|value| {
+            HostedCredential::new(value).map_err(|_| {
+                Error::new(
+                    Status::InvalidArg,
+                    "hosted transcription credential is missing or invalid".to_owned(),
+                )
+            })
+        })
+        .transpose()?;
+    let timeout = match timeout_ms {
+        Some(0) => {
+            return Err(Error::new(
+                Status::InvalidArg,
+                "timeoutMs must be greater than zero".to_owned(),
+            ));
+        }
+        Some(value) => Duration::from_millis(u64::from(value)),
+        None => HostedTranscriptionOptions::default().timeout,
+    };
     Ok(TranscribeOptions {
         backend,
+        model,
         model_path: model_path.map(PathBuf::from),
         language: Some(language.to_owned()),
-        ..TranscribeOptions::default()
+        hosted: HostedTranscriptionOptions {
+            credential,
+            timeout,
+        },
     })
 }
 
@@ -420,7 +497,7 @@ mod tests {
             Availability::Unavailable { reason, .. } => (false, Some(reason.as_str().to_owned())),
         };
         let backends = recognition_backends();
-        assert_eq!(backends.len(), 2);
+        assert_eq!(backends.len(), 3);
         assert_eq!(
             backends[0],
             BackendCapability {
@@ -430,6 +507,7 @@ mod tests {
             }
         );
         assert_eq!(backends[1].id, "whisper");
+        assert_eq!(backends[2].id, "openai-transcription");
         assert_eq!(
             text_generation_backends()
                 .into_iter()
@@ -476,6 +554,7 @@ mod tests {
             options: PcmTranscriptionOptions {
                 language: "en-US".to_owned(),
                 backend: None,
+                model: None,
                 model_path: None,
                 sample_rate: None,
                 enhancement: None,
@@ -495,7 +574,10 @@ mod tests {
             options: FileTranscriptionOptions {
                 language: "en-US".to_owned(),
                 backend: None,
+                model: None,
                 model_path: None,
+                credential: None,
+                timeout_ms: None,
                 ffmpeg_path: Some("/definitely/missing/ffmpeg".to_owned()),
                 enhancement: None,
                 enhancement_model_path: None,
@@ -505,5 +587,92 @@ mod tests {
         let error = task.compute().expect_err("missing media must fail");
         assert_eq!(error.status, Status::InvalidArg);
         assert!(error.reason.contains("INVALID_INPUT"));
+    }
+
+    #[test]
+    fn hosted_node_options_map_model_credential_and_timeout_without_exposing_the_secret() {
+        let secret = "sk-test-secret";
+        let js_options = FileTranscriptionOptions {
+            language: "en-US".to_owned(),
+            backend: Some("openai-transcription".to_owned()),
+            model: Some("gpt-4o-mini-transcribe".to_owned()),
+            model_path: None,
+            credential: Some(secret.to_owned()),
+            timeout_ms: Some(45_000),
+            ffmpeg_path: None,
+            enhancement: None,
+            enhancement_model_path: None,
+        };
+        let debug = format!("{js_options:?}");
+        assert!(debug.contains("[REDACTED]"));
+        assert!(!debug.contains(secret));
+
+        let options = transcribe_options(
+            &js_options.language,
+            js_options.backend.as_deref(),
+            js_options.model.as_deref(),
+            js_options.model_path.as_deref(),
+            js_options.credential.as_deref(),
+            js_options.timeout_ms,
+        )
+        .expect("valid hosted options");
+        assert_eq!(
+            options.model.as_ref().map(ModelId::as_str),
+            Some("gpt-4o-mini-transcribe")
+        );
+        assert_eq!(options.hosted.timeout, Duration::from_secs(45));
+        let core_debug = format!("{options:?}");
+        assert!(core_debug.contains("[REDACTED]"));
+        assert!(!core_debug.contains(secret));
+    }
+
+    #[test]
+    fn hosted_node_options_require_explicit_selection_and_positive_timeout() {
+        let error = transcribe_options(
+            "en-US",
+            Some("auto"),
+            None,
+            None,
+            Some("sk-test-secret"),
+            None,
+        )
+        .expect_err("credentials must not influence auto selection");
+        assert_eq!(error.status, Status::InvalidArg);
+
+        let error = transcribe_options(
+            "en-US",
+            Some("openai-transcription"),
+            None,
+            None,
+            None,
+            Some(0),
+        )
+        .expect_err("zero timeout must fail");
+        assert_eq!(error.status, Status::InvalidArg);
+    }
+
+    #[test]
+    fn pre_cancelled_hosted_file_task_never_starts_a_request() {
+        let cancellation = CancellationToken::new();
+        cancellation.cancel();
+        let mut task = FileTranscriptionTask {
+            path: PathBuf::from("audio.wav"),
+            options: FileTranscriptionOptions {
+                language: "en-US".to_owned(),
+                backend: Some("openai-transcription".to_owned()),
+                model: Some("gpt-4o-transcribe".to_owned()),
+                model_path: None,
+                credential: Some("sk-test-secret".to_owned()),
+                timeout_ms: Some(1_000),
+                ffmpeg_path: None,
+                enhancement: None,
+                enhancement_model_path: None,
+            },
+            cancellation,
+        };
+
+        let error = task.compute().expect_err("cancelled task must fail");
+        assert_eq!(error.status, Status::Cancelled);
+        assert!(!error.reason.contains("sk-test-secret"));
     }
 }

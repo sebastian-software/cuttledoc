@@ -13,7 +13,7 @@ async function main() {
   assert.equal(version(), '0.1.0');
   assert.deepEqual(
     recognitionBackends().map(({ id }) => id),
-    ['apple-speech', 'whisper'],
+    ['apple-speech', 'whisper', 'openai-transcription'],
   );
   assert.deepEqual(
     textGenerationBackends().map(({ id }) => id),
@@ -35,6 +35,15 @@ async function main() {
         enhancement: 'automatic',
       }),
     /enhancement must be/,
+  );
+  assert.throws(
+    () =>
+      transcribeFile('/tmp/input.ogg', {
+        language: 'en-US',
+        backend: 'openai-transcription',
+        credential: '',
+      }),
+    /credential must be a non-empty/,
   );
 
   const controller = new AbortController();

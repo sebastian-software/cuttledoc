@@ -11,7 +11,7 @@ import {
 assert.equal(version(), '0.1.0');
 assert.deepEqual(
   recognitionBackends().map(({ id }) => id),
-  ['apple-speech', 'whisper'],
+  ['apple-speech', 'whisper', 'openai-transcription'],
 );
 assert.deepEqual(
   textGenerationBackends().map(({ id }) => id),
@@ -70,6 +70,23 @@ assert.throws(
       enhancementModelPath: '/models/gemma',
     }),
   /enhancementModelPath requires/,
+);
+assert.throws(
+  () =>
+    transcribeFile('/tmp/input.ogg', {
+      language: 'en-US',
+      credential: 'secret',
+    }),
+  /require backend: openai-transcription/,
+);
+assert.throws(
+  () =>
+    transcribeFile('/tmp/input.ogg', {
+      language: 'en-US',
+      backend: 'openai-transcription',
+      timeoutMs: 0,
+    }),
+  /timeoutMs must be a positive/,
 );
 
 const controller = new AbortController();

@@ -28,7 +28,7 @@ function textGenerationBackends() {
   return native.textGenerationBackends();
 }
 
-function validateOptions(options) {
+function validateOptions(options, allowHosted) {
   if (options === null || typeof options !== 'object') {
     throw new TypeError('options must be an object');
   }
@@ -37,13 +37,22 @@ function validateOptions(options) {
       'options.language must be a non-empty BCP 47 language tag or auto',
     );
   }
+  const backends = allowHosted
+    ? ['auto', 'apple-speech', 'whisper', 'openai-transcription']
+    : ['auto', 'apple-speech', 'whisper'];
   if (
     options.backend !== undefined &&
-    !['auto', 'apple-speech', 'whisper'].includes(options.backend)
+    !backends.includes(options.backend)
   ) {
     throw new TypeError(
-      'options.backend must be auto, apple-speech, or whisper',
+      `options.backend must be ${backends.join(', ')}`,
     );
+  }
+  if (
+    options.model !== undefined &&
+    (typeof options.model !== 'string' || options.model.trim() === '')
+  ) {
+    throw new TypeError('options.model must be a non-empty model identifier');
   }
   if (
     options.modelPath !== undefined &&
@@ -82,6 +91,31 @@ function validateOptions(options) {
       'options.enhancementModelPath requires enhancement: local',
     );
   }
+  if (
+    options.credential !== undefined &&
+    (typeof options.credential !== 'string' ||
+      options.credential.trim() === '')
+  ) {
+    throw new TypeError(
+      'options.credential must be a non-empty hosted credential',
+    );
+  }
+  if (
+    options.timeoutMs !== undefined &&
+    (!Number.isInteger(options.timeoutMs) ||
+      options.timeoutMs <= 0 ||
+      options.timeoutMs > 0xffffffff)
+  ) {
+    throw new TypeError('options.timeoutMs must be a positive 32-bit integer');
+  }
+  if (
+    (options.credential !== undefined || options.timeoutMs !== undefined) &&
+    (!allowHosted || options.backend !== 'openai-transcription')
+  ) {
+    throw new TypeError(
+      'options.credential and options.timeoutMs require backend: openai-transcription',
+    );
+  }
 }
 
 function cancelledPromise() {
@@ -95,7 +129,7 @@ function transcribePcm(pcm, options) {
   if (!(pcm instanceof Uint8Array)) {
     throw new TypeError('pcm must be a Uint8Array containing little-endian f32 samples');
   }
-  validateOptions(options);
+  validateOptions(options, false);
   if (
     options.sampleRate !== undefined &&
     (!Number.isInteger(options.sampleRate) ||
@@ -115,6 +149,7 @@ function transcribePcm(pcm, options) {
     {
       language: options.language,
       backend: options.backend,
+      model: options.model,
       modelPath: options.modelPath,
       sampleRate: options.sampleRate,
       enhancement: options.enhancement,
@@ -128,7 +163,7 @@ function transcribeFile(path, options) {
   if (typeof path !== 'string' || path.trim() === '') {
     throw new TypeError('path must be a non-empty file path');
   }
-  validateOptions(options);
+  validateOptions(options, true);
   if (
     options.ffmpegPath !== undefined &&
     (typeof options.ffmpegPath !== 'string' ||
@@ -145,7 +180,10 @@ function transcribeFile(path, options) {
     {
       language: options.language,
       backend: options.backend,
+      model: options.model,
       modelPath: options.modelPath,
+      credential: options.credential,
+      timeoutMs: options.timeoutMs,
       ffmpegPath: options.ffmpegPath,
       enhancement: options.enhancement,
       enhancementModelPath: options.enhancementModelPath,

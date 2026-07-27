@@ -2,14 +2,15 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::time::Duration;
 
 use cuttledoc::{
     AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
-    MediaDecodeOptions, ModelId, ModelManager, PcmBuffer, ProgressEvent, TranscribeOptions,
-    TranscriptEnhancementContext, TranscriptEnhancementMode, TranscriptionResult,
-    apply_transcript_enhancement, recognition_asset_inventory, recognition_capabilities,
-    text_generation_capabilities, transcribe_file, transcribe_file_with_progress, transcribe_pcm,
-    transcribe_pcm_with_progress,
+    HostedTranscriptionOptions, MediaDecodeOptions, ModelId, ModelManager, PcmBuffer,
+    ProgressEvent, TranscribeOptions, TranscriptEnhancementContext, TranscriptEnhancementMode,
+    TranscriptionResult, apply_transcript_enhancement, recognition_asset_inventory,
+    recognition_capabilities, text_generation_capabilities, transcribe_file,
+    transcribe_file_with_progress, transcribe_pcm, transcribe_pcm_with_progress,
 };
 
 mod cli_error;
@@ -32,14 +33,17 @@ Usage:
   cuttledoc models verify <model|asr|all> [--cache-root <path>]
   cuttledoc models remove <model> [--cache-root <path>]
   cuttledoc models cache-root [--cache-root <path>]
-  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
+  cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
   cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
 decoding and accepts mono little-endian f32 PCM. Enhancement defaults to off
 until the ADR-0014 32 GB host gate is complete. Gemini reads OPENROUTER_API_KEY
-only after transcription has released its recognition runtime.
+only after transcription has released its recognition runtime. Explicit
+openai-transcription file requests upload the original supported media file,
+read OPENAI_API_KEY, and default to a 300-second timeout. No API-key flag is
+accepted.
 ";
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -86,6 +90,7 @@ enum Command {
         model_path: Option<PathBuf>,
         cache_root: Option<PathBuf>,
         ffmpeg_path: Option<PathBuf>,
+        timeout_seconds: Option<u64>,
         enhancement: EnhancementSelection,
         enhancement_model_path: Option<PathBuf>,
         output: OutputOptions,
@@ -145,6 +150,7 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
     let mut backend = None;
     let mut model_path = None;
     let mut ffmpeg_path = None;
+    let mut timeout_seconds = None;
     let mut shared_arguments = SharedTranscriptionArguments::default();
     let mut index = 1;
     while index < arguments.len() {
@@ -175,6 +181,17 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
                 }
                 index += 2;
             }
+            "--timeout-seconds" => {
+                let value = arguments
+                    .get(index + 1)
+                    .and_then(|value| value.parse::<u64>().ok())
+                    .filter(|value| *value > 0)
+                    .ok_or("--timeout-seconds requires a positive integer")?;
+                if timeout_seconds.replace(value).is_some() {
+                    return Err("--timeout-seconds may only be specified once".to_owned());
+                }
+                index += 2;
+            }
             "--backend" => {
                 let value = arguments
                     .get(index + 1)
@@ -199,14 +216,24 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
         }
     }
     let shared = finish_shared_transcription_arguments(shared_arguments)?;
+    let backend = backend.unwrap_or_default();
+    if timeout_seconds.is_some()
+        && !matches!(
+            &backend,
+            BackendSelection::Id(backend) if backend == &BackendId::openai_transcription()
+        )
+    {
+        return Err("--timeout-seconds requires --backend openai-transcription".to_owned());
+    }
     Ok(Command::Transcribe {
         path: PathBuf::from(path),
         language: language.ok_or("transcribe requires --language <tag>")?,
-        backend: backend.unwrap_or_default(),
+        backend,
         model: shared.recognition_model,
         model_path,
         cache_root: shared.cache_root,
         ffmpeg_path,
+        timeout_seconds,
         enhancement: shared.enhancement,
         enhancement_model_path: shared.enhancement_model_path,
         output: shared.output,
@@ -444,30 +471,33 @@ fn run(command: Command) -> CliResult<()> {
         Command::Version => println!("cuttledoc {}", cuttledoc::VERSION),
         Command::ListBackends => {
             for capability in recognition_capabilities() {
+                let model = capability.model.as_ref().map_or("-", ModelId::as_str);
                 match capability.availability {
                     Availability::Available => {
                         match recognition_asset_inventory(&capability.backend) {
                             Ok(inventory) => println!(
-                                "{}\tavailable\tlanguages={}\tlocales={}\tinstalled={}\treserved={}\treservation_limit={}",
+                                "{}\tavailable\ttask=transcription\tmodel={model}\tfile_input={}\tlanguages={}\tlocales={}\tinstalled={}\treserved={}\treservation_limit={}",
                                 capability.backend,
+                                capability.file_input,
                                 capability.languages.len(),
                                 inventory.supported_locales.len(),
                                 inventory.installed_locales.len(),
                                 inventory.reserved_locales.len(),
                                 inventory.maximum_reserved_locales
                             ),
-                            Err(error) => println!(
-                                "{}\tavailable\tinventory_error={}",
-                                capability.backend, error
+                            Err(_) => println!(
+                                "{}\tavailable\ttask=transcription\tmodel={model}\tfile_input={}",
+                                capability.backend, capability.file_input
                             ),
                         }
                     }
                     Availability::Unavailable { reason, detail, .. } => {
                         println!(
-                            "{}\tunavailable\t{}\t{}",
+                            "{}\tunavailable\t{}\t{}\ttask=transcription\tmodel={model}\tfile_input={}",
                             capability.backend,
                             reason.as_str(),
-                            detail
+                            detail,
+                            capability.file_input
                         );
                     }
                 }
@@ -498,6 +528,7 @@ fn run(command: Command) -> CliResult<()> {
             model_path,
             cache_root,
             ffmpeg_path,
+            timeout_seconds,
             enhancement,
             enhancement_model_path,
             output,
@@ -520,7 +551,12 @@ fn run(command: Command) -> CliResult<()> {
                 model,
                 language: Some(language.clone()),
                 model_path,
-                ..TranscribeOptions::default()
+                hosted: HostedTranscriptionOptions {
+                    timeout: timeout_seconds
+                        .map(Duration::from_secs)
+                        .unwrap_or_else(|| HostedTranscriptionOptions::default().timeout),
+                    ..HostedTranscriptionOptions::default()
+                },
             };
             let decode_options = MediaDecodeOptions { ffmpeg_path };
             let result = if progress {
@@ -763,6 +799,7 @@ mod tests {
                 model_path: Some(PathBuf::from("/models/whisper.bin")),
                 cache_root: None,
                 ffmpeg_path: Some(PathBuf::from("/opt/ffmpeg")),
+                timeout_seconds: None,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
@@ -833,6 +870,7 @@ mod tests {
                 model_path: None,
                 cache_root: None,
                 ffmpeg_path: None,
+                timeout_seconds: None,
                 enhancement: EnhancementSelection::Local,
                 enhancement_model_path: Some(PathBuf::from("/models/gemma")),
                 output: OutputOptions {
@@ -863,6 +901,7 @@ mod tests {
                 model_path: None,
                 cache_root: None,
                 ffmpeg_path: None,
+                timeout_seconds: None,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions {
@@ -893,16 +932,47 @@ mod tests {
                 model_path: None,
                 cache_root: Some(PathBuf::from("/models")),
                 ffmpeg_path: None,
+                timeout_seconds: None,
                 enhancement: EnhancementSelection::Off,
                 enhancement_model_path: None,
                 output: OutputOptions::default(),
                 progress: true,
             })
         );
+        assert_eq!(
+            parse(arguments(&[
+                "transcribe",
+                "speech.webm",
+                "--language",
+                "en-US",
+                "--backend",
+                "openai-transcription",
+                "--model",
+                "gpt-4o-mini-transcribe",
+                "--timeout-seconds",
+                "45"
+            ])),
+            Ok(Command::Transcribe {
+                path: PathBuf::from("speech.webm"),
+                language: "en-US".to_owned(),
+                backend: BackendSelection::Id(BackendId::openai_transcription()),
+                model: Some(ModelId::new("gpt-4o-mini-transcribe").expect("model ID")),
+                model_path: None,
+                cache_root: None,
+                ffmpeg_path: None,
+                timeout_seconds: Some(45),
+                enhancement: EnhancementSelection::Off,
+                enhancement_model_path: None,
+                output: OutputOptions::default(),
+                progress: false,
+            })
+        );
     }
 
     #[test]
     fn parser_rejects_invalid_commands() {
+        assert!(HELP.contains("OPENAI_API_KEY"));
+        assert!(!HELP.contains("--api-key"));
         assert!(parse(arguments(&["transcribe", "audio.wav"])).is_err());
         assert!(
             parse(arguments(&[
@@ -914,6 +984,43 @@ mod tests {
                 "/one",
                 "--ffmpeg-path",
                 "/two"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--backend",
+                "openai-transcription",
+                "--api-key",
+                "secret"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--timeout-seconds",
+                "30"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe",
+                "audio.wav",
+                "--language",
+                "en-US",
+                "--backend",
+                "openai-transcription",
+                "--timeout-seconds",
+                "0"
             ]))
             .is_err()
         );
