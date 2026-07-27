@@ -54,9 +54,14 @@ if (platformConfiguration === undefined) {
 }
 
 function run(command, args, options = {}) {
-  const executable =
-    process.platform === 'win32' && command === 'npm' ? 'npm.cmd' : command;
-  const result = spawnSync(executable, args, {
+  const invocation =
+    process.platform === 'win32' && command === 'npm'
+      ? {
+          executable: process.env.ComSpec ?? 'cmd.exe',
+          args: ['/d', '/s', '/c', 'npm.cmd', ...args],
+        }
+      : { executable: command, args };
+  const result = spawnSync(invocation.executable, invocation.args, {
     cwd: repoRoot,
     encoding: 'utf8',
     stdio: options.capture ? 'pipe' : 'inherit',

@@ -18,14 +18,15 @@ const workDirectory = mkdtempSync(join(tmpdir(), 'cuttledoc-cloud-test-'));
 process.on('exit', () => rmSync(workDirectory, { recursive: true, force: true }));
 const outputDirectory = join(workDirectory, 'artifacts');
 
-function executable(command) {
-  return process.platform === 'win32' && command === 'npm'
-    ? 'npm.cmd'
-    : command;
-}
-
 function run(command, args, options = {}) {
-  const result = spawnSync(executable(command), args, {
+  const invocation =
+    process.platform === 'win32' && command === 'npm'
+      ? {
+          executable: process.env.ComSpec ?? 'cmd.exe',
+          args: ['/d', '/s', '/c', 'npm.cmd', ...args],
+        }
+      : { executable: command, args };
+  const result = spawnSync(invocation.executable, invocation.args, {
     cwd: options.cwd ?? repoRoot,
     env: options.env ?? process.env,
     encoding: 'utf8',
