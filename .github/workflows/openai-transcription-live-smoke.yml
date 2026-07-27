@@ -1,0 +1,97 @@
+name: OpenAI transcription live smoke
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/openai-transcription-live-smoke.yml"
+      - "scripts/validate-openai-transcription-live-smoke.mjs"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/openai-transcription-live-smoke.yml"
+      - "scripts/validate-openai-transcription-live-smoke.mjs"
+  workflow_dispatch:
+    inputs:
+      model:
+        description: OpenAI transcription model
+        required: true
+        default: gpt-4o-transcribe
+        type: choice
+        options:
+          - gpt-4o-transcribe
+          - gpt-4o-mini-transcribe
+          - whisper-1
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate live-smoke harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+      - name: Test the secret-safe result validator
+        run: node scripts/validate-openai-transcription-live-smoke.mjs --self-test
+
+  live-smoke:
+    name: Transcribe the pinned fixture
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Verify the pinned fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="benchmarks/assets/synthetic/en-US/qwen3-tts-1.7b-voicedesign-warm/synthetic-en-native/audio.opus"
+          expected="646f5351df3b2e169ee8ab95d1c740c572c530439b26448fb79d7b5c74665f71"
+          actual="$(sha256sum "$fixture" | cut -d ' ' -f 1)"
+          test "$actual" = "$expected"
+      - name: Build the cloud-only CLI
+        run: cargo build --release --locked -p cuttledoc-cli --no-default-features
+      - name: Run the secret-safe live smoke
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CUTTLEDOC_LIVE_SMOKE_MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$OPENAI_API_KEY" ]]; then
+            echo "::error::Configure the OPENAI_API_KEY repository secret before dispatching this workflow."
+            exit 1
+          fi
+
+          fixture="benchmarks/assets/synthetic/en-US/qwen3-tts-1.7b-voicedesign-warm/synthetic-en-native/audio.opus"
+          result="$RUNNER_TEMP/openai-transcription-result.json"
+          diagnostics="$RUNNER_TEMP/openai-transcription-diagnostics.log"
+          cleanup() {
+            rm -f "$result" "$diagnostics"
+          }
+          trap cleanup EXIT
+
+          started="$(date +%s)"
+          target/release/cuttledoc transcribe "$fixture" \
+            --language en-US \
+            --backend openai-transcription \
+            --model "$CUTTLEDOC_LIVE_SMOKE_MODEL" \
+            --timeout-seconds 120 \
+            --format json \
+            --output "$result" \
+            2>"$diagnostics"
+          finished="$(date +%s)"
+          export CUTTLEDOC_LIVE_SMOKE_ELAPSED_SECONDS="$((finished - started))"
+
+          node scripts/validate-openai-transcription-live-smoke.mjs \
+            "$result" \
+            "$diagnostics"
