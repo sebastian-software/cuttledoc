@@ -35,11 +35,12 @@ pub use enhancement::{
 };
 pub use error::{CuttledocError, ErrorCode, Result};
 pub use generation::{
-    FinishReason, GemmaGenerationEngine, GemmaGenerationOptions, GenerationMessage,
-    GenerationOptions, GenerationOutputFormat, GenerationRequest, GenerationResult, GenerationRole,
-    GenerationUpdate, GenerationUsage, OpenRouterGenerationEngine, OpenRouterGenerationOptions,
-    TextGenerationEngine,
+    FinishReason, GenerationMessage, GenerationOptions, GenerationOutputFormat, GenerationRequest,
+    GenerationResult, GenerationRole, GenerationUpdate, GenerationUsage,
+    OpenRouterGenerationEngine, OpenRouterGenerationOptions, TextGenerationEngine,
 };
+#[cfg(feature = "local-runtimes")]
+pub use generation::{GemmaGenerationEngine, GemmaGenerationOptions};
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{
     MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation,

@@ -8,11 +8,15 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+default = ["local-runtimes"]
+local-runtimes = ["cuttledoc/local-runtimes"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cuttledoc = { path = "../cuttledoc", version = "=0.1.0" }
+cuttledoc = { path = "../cuttledoc", version = "=0.1.0", default-features = false }
 napi = { version = "=3.10.3", features = ["napi8"] }
 napi-derive = "=3.5.9"
 

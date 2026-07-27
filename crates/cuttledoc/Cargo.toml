@@ -8,14 +8,22 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+default = ["local-runtimes"]
+local-runtimes = [
+  "dep:cuttledoc-apple-speech",
+  "dep:cuttledoc-gemma-mlx",
+  "dep:cuttledoc-whisper",
+]
+
 [dependencies]
-cuttledoc-apple-speech = { path = "../adapters/apple-speech", version = "=0.1.0" }
+cuttledoc-apple-speech = { path = "../adapters/apple-speech", version = "=0.1.0", optional = true }
 cuttledoc-audio = { path = "../cuttledoc-audio", version = "=0.1.0" }
-cuttledoc-gemma-mlx = { path = "../adapters/gemma-mlx", version = "=0.1.0" }
+cuttledoc-gemma-mlx = { path = "../adapters/gemma-mlx", version = "=0.1.0", optional = true }
 cuttledoc-models = { path = "../cuttledoc-models", version = "=0.1.0" }
 cuttledoc-openai-transcription = { path = "../adapters/openai-transcription", version = "=0.1.0" }
 cuttledoc-openrouter = { path = "../adapters/openrouter", version = "=0.1.0" }
-cuttledoc-whisper = { path = "../adapters/whisper", version = "=0.1.0" }
+cuttledoc-whisper = { path = "../adapters/whisper", version = "=0.1.0", optional = true }
 serde_json = "=1.0.151"
 
 [lints]

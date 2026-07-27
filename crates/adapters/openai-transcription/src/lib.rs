@@ -186,19 +186,7 @@ impl OpenAiTranscriptionEngine {
                     "OpenAI HTTP runtime could not be created",
                 )
             })?;
-        let connector = HttpsConnectorBuilder::new()
-            .with_native_roots()
-            .map_err(|_| {
-                AdapterError::new(
-                    AdapterErrorKind::TransportFailed,
-                    "OpenAI TLS certificate roots could not be loaded",
-                )
-            })?
-            .https_or_http()
-            .enable_http1()
-            .build();
-        let client = Client::builder(TokioExecutor::new()).build(connector);
-
+        let client = http_client()?;
         Ok(Self {
             credential: options.credential,
             timeout: options.timeout,
@@ -206,6 +194,29 @@ impl OpenAiTranscriptionEngine {
             runtime,
             client,
         })
+    }
+
+    pub fn validate_file(path: impl AsRef<Path>) -> Result<(), AdapterError> {
+        let path = path.as_ref();
+        supported_file_type(path)?;
+        let metadata = File::open(path)
+            .and_then(|file| file.metadata())
+            .map_err(|_| {
+                AdapterError::new(
+                    AdapterErrorKind::InvalidInput,
+                    "OpenAI transcription input could not be read",
+                )
+            })?;
+        if metadata.len() > MAXIMUM_UPLOAD_BYTES {
+            return Err(upload_too_large());
+        }
+        if metadata.len() == 0 {
+            return Err(AdapterError::new(
+                AdapterErrorKind::InvalidInput,
+                "OpenAI transcription input must not be empty",
+            ));
+        }
+        Ok(())
     }
 
     pub fn transcribe_file(
@@ -265,6 +276,21 @@ impl OpenAiTranscriptionEngine {
                 )
             })
     }
+}
+
+fn http_client() -> Result<HttpClient, AdapterError> {
+    let connector = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .map_err(|_| {
+            AdapterError::new(
+                AdapterErrorKind::TransportFailed,
+                "OpenAI TLS certificate roots could not be loaded",
+            )
+        })?
+        .https_or_http()
+        .enable_http1()
+        .build();
+    Ok(Client::builder(TokioExecutor::new()).build(connector))
 }
 
 async fn execute_request(

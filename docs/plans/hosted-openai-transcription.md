@@ -189,6 +189,14 @@ archives and Node packages, and exercise each final artifact against a local
 mock endpoint or equivalent hermetic provider fixture. Installation must not
 invoke native compilers.
 
+Implementation checkpoint: `local-runtimes` is now a default feature forwarded
+by the CLI and Node crates. Their `--no-default-features` graphs exclude Apple
+Speech, Whisper, Gemma/MLX, and tokenizers while retaining the portable hosted
+boundary. The shared artifact harness builds, packs, installs, and exercises
+that flavor. A local arm64 macOS diagnostic produced a 1,653,864-byte CLI
+archive and a 1,580,776-byte Node tarball; this validates the harness but does
+not substitute for the required Linux x64 and Windows x64 runner evidence.
+
 Verify: platform artifact harnesses and CI matrix.
 
 ### 6. Run the opt-in live smoke and close the issue

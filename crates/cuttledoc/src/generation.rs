@@ -1,3 +1,4 @@
+#[cfg(feature = "local-runtimes")]
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -84,18 +85,21 @@ pub trait TextGenerationEngine {
     ) -> Result<GenerationResult>;
 }
 
+#[cfg(feature = "local-runtimes")]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GemmaGenerationOptions {
     pub model_directory: PathBuf,
     pub metallib_path: Option<PathBuf>,
 }
 
+#[cfg(feature = "local-runtimes")]
 pub struct GemmaGenerationEngine {
     inner: cuttledoc_gemma_mlx::GemmaEngine,
     backend: BackendId,
     model: ModelId,
 }
 
+#[cfg(feature = "local-runtimes")]
 impl GemmaGenerationEngine {
     pub fn create(options: &GemmaGenerationOptions) -> Result<Self> {
         let inner = cuttledoc_gemma_mlx::GemmaEngine::create(&cuttledoc_gemma_mlx::EngineOptions {
@@ -113,6 +117,7 @@ impl GemmaGenerationEngine {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 impl TextGenerationEngine for GemmaGenerationEngine {
     fn backend(&self) -> BackendId {
         self.backend.clone()
@@ -361,6 +366,7 @@ fn openrouter_error(
         .with_model(model.clone())
 }
 
+#[cfg(feature = "local-runtimes")]
 fn validate_gemma_request(
     request: &GenerationRequest,
     backend: &BackendId,
@@ -385,6 +391,7 @@ fn validate_gemma_request(
     Ok(())
 }
 
+#[cfg(feature = "local-runtimes")]
 fn gemma_error(
     code: ErrorCode,
     message: impl Into<String>,
@@ -410,6 +417,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "local-runtimes")]
     fn gemma_rejects_sampler_behavior_outside_the_pinned_contract() {
         let backend = BackendId::gemma_mlx();
         let model =

@@ -95,6 +95,7 @@ impl From<ContractError> for CuttledocError {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 impl From<cuttledoc_apple_speech::AdapterError> for CuttledocError {
     fn from(error: cuttledoc_apple_speech::AdapterError) -> Self {
         use cuttledoc_apple_speech::AdapterErrorKind;
@@ -127,6 +128,7 @@ impl From<cuttledoc_audio::AudioDecodeError> for CuttledocError {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 impl From<cuttledoc_whisper::AdapterError> for CuttledocError {
     fn from(error: cuttledoc_whisper::AdapterError) -> Self {
         use cuttledoc_whisper::AdapterErrorKind;
@@ -170,6 +172,7 @@ impl From<cuttledoc_openai_transcription::AdapterError> for CuttledocError {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 impl From<cuttledoc_gemma_mlx::AdapterError> for CuttledocError {
     fn from(error: cuttledoc_gemma_mlx::AdapterError) -> Self {
         use cuttledoc_gemma_mlx::AdapterErrorKind;

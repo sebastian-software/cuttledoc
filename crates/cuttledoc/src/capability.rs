@@ -103,6 +103,7 @@ pub struct TextGenerationCapabilities {
     pub required_available_memory_bytes: Option<u64>,
 }
 
+#[cfg(feature = "local-runtimes")]
 pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
     vec![
         apple_speech_capabilities(),
@@ -111,28 +112,51 @@ pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
     ]
 }
 
+#[cfg(not(feature = "local-runtimes"))]
+pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
+    vec![openai_transcription_capabilities()]
+}
+
+#[cfg(feature = "local-runtimes")]
 pub fn text_generation_capabilities() -> Vec<TextGenerationCapabilities> {
     vec![gemma_mlx_capabilities(), openrouter_capabilities()]
 }
 
-pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
-    if backend != &BackendId::apple_speech() {
-        return Err(CuttledocError::new(
-            ErrorCode::BackendUnavailable,
-            format!("recognition backend {backend} is not implemented"),
-        )
-        .with_backend(backend.clone()));
-    }
-    let inventory = cuttledoc_apple_speech::locale_inventory().map_err(CuttledocError::from)?;
-    Ok(RecognitionAssetInventory {
-        backend: backend.clone(),
-        supported_locales: inventory.supported,
-        installed_locales: inventory.installed,
-        reserved_locales: inventory.reserved,
-        maximum_reserved_locales: inventory.maximum_reserved,
-    })
+#[cfg(not(feature = "local-runtimes"))]
+pub fn text_generation_capabilities() -> Vec<TextGenerationCapabilities> {
+    vec![openrouter_capabilities()]
 }
 
+pub fn recognition_asset_inventory(backend: &BackendId) -> Result<RecognitionAssetInventory> {
+    #[cfg(not(feature = "local-runtimes"))]
+    {
+        Err(CuttledocError::new(
+            ErrorCode::BackendUnavailable,
+            format!("recognition backend {backend} is not included in this cloud-only build"),
+        )
+        .with_backend(backend.clone()))
+    }
+    #[cfg(feature = "local-runtimes")]
+    {
+        if backend != &BackendId::apple_speech() {
+            return Err(CuttledocError::new(
+                ErrorCode::BackendUnavailable,
+                format!("recognition backend {backend} is not implemented"),
+            )
+            .with_backend(backend.clone()));
+        }
+        let inventory = cuttledoc_apple_speech::locale_inventory().map_err(CuttledocError::from)?;
+        Ok(RecognitionAssetInventory {
+            backend: backend.clone(),
+            supported_locales: inventory.supported,
+            installed_locales: inventory.installed,
+            reserved_locales: inventory.reserved,
+            maximum_reserved_locales: inventory.maximum_reserved,
+        })
+    }
+}
+
+#[cfg(feature = "local-runtimes")]
 fn apple_speech_capabilities() -> RecognitionCapabilities {
     use cuttledoc_apple_speech::BuildSupport;
 
@@ -202,6 +226,7 @@ fn apple_speech_capabilities() -> RecognitionCapabilities {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 fn whisper_capabilities() -> RecognitionCapabilities {
     use cuttledoc_whisper::{AdapterErrorKind, BuildSupport};
 
@@ -306,6 +331,7 @@ fn openai_transcription_capabilities() -> RecognitionCapabilities {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 fn gemma_mlx_capabilities() -> TextGenerationCapabilities {
     use cuttledoc_gemma_mlx::{AdapterErrorKind, BuildSupport, MemoryGate};
 
@@ -440,6 +466,7 @@ fn openrouter_capabilities() -> TextGenerationCapabilities {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 fn language_identifiers(locales: &[String]) -> Vec<String> {
     let mut languages = locales
         .iter()
@@ -457,6 +484,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "local-runtimes")]
     fn capability_state_matches_the_runtime_inventory() {
         let apple = recognition_capabilities()
             .into_iter()
@@ -485,6 +513,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "local-runtimes")]
     fn language_identifiers_are_unique_and_normalized() {
         assert_eq!(
             language_identifiers(&["en_US".to_owned(), "de-DE".to_owned(), "en_GB".to_owned()]),
@@ -493,6 +522,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "local-runtimes")]
     fn whisper_capability_matches_the_pinned_language_table() {
         let whisper = recognition_capabilities()
             .into_iter()
@@ -541,22 +571,28 @@ mod tests {
     #[test]
     fn generation_capabilities_publish_local_and_hosted_gates() {
         let capabilities = text_generation_capabilities();
+        #[cfg(feature = "local-runtimes")]
         assert_eq!(capabilities.len(), 2);
-        let gemma = capabilities
-            .iter()
-            .find(|capability| capability.backend == BackendId::gemma_mlx())
-            .expect("Gemma is a known generation backend");
-        assert_eq!(gemma.backend, BackendId::gemma_mlx());
-        assert!(gemma.local);
-        assert_eq!(gemma.maximum_concurrent_requests, 1);
-        assert_eq!(
-            gemma.minimum_unified_memory_bytes,
-            Some(cuttledoc_gemma_mlx::MINIMUM_UNIFIED_MEMORY_BYTES)
-        );
-        assert_eq!(
-            gemma.required_available_memory_bytes,
-            Some(cuttledoc_gemma_mlx::REQUIRED_AVAILABLE_MEMORY_BYTES)
-        );
+        #[cfg(not(feature = "local-runtimes"))]
+        assert_eq!(capabilities.len(), 1);
+        #[cfg(feature = "local-runtimes")]
+        {
+            let gemma = capabilities
+                .iter()
+                .find(|capability| capability.backend == BackendId::gemma_mlx())
+                .expect("Gemma is a known generation backend");
+            assert_eq!(gemma.backend, BackendId::gemma_mlx());
+            assert!(gemma.local);
+            assert_eq!(gemma.maximum_concurrent_requests, 1);
+            assert_eq!(
+                gemma.minimum_unified_memory_bytes,
+                Some(cuttledoc_gemma_mlx::MINIMUM_UNIFIED_MEMORY_BYTES)
+            );
+            assert_eq!(
+                gemma.required_available_memory_bytes,
+                Some(cuttledoc_gemma_mlx::REQUIRED_AVAILABLE_MEMORY_BYTES)
+            );
+        }
 
         let openrouter = capabilities
             .iter()

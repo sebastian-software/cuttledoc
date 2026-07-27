@@ -224,7 +224,6 @@ mod tests {
             vec![
                 (ProgressPhase::Preparing, 0, Some(1)),
                 (ProgressPhase::Preparing, 1, Some(1)),
-                (ProgressPhase::Transcribing, 0, Some(1)),
             ]
         );
     }

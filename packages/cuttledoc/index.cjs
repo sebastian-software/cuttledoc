@@ -1,17 +1,24 @@
 'use strict';
 
-if (process.platform !== 'darwin' || process.arch !== 'arm64') {
+const platformId = `${process.platform}-${process.arch}`;
+const nativeArtifact = {
+  'darwin-arm64': 'cuttledoc.darwin-arm64.node',
+  'linux-x64': 'cuttledoc.linux-x64-gnu.node',
+  'win32-x64': 'cuttledoc.win32-x64-msvc.node',
+}[platformId];
+
+if (nativeArtifact === undefined) {
   throw new Error(
-    `cuttledoc currently supports darwin-arm64, received ${process.platform}-${process.arch}`,
+    `cuttledoc does not provide a prebuilt artifact for ${platformId}`,
   );
 }
 
 let native;
 try {
-  native = require('./cuttledoc.darwin-arm64.node');
+  native = require(`./${nativeArtifact}`);
 } catch (cause) {
   throw new Error(
-    'cuttledoc could not load its prebuilt darwin-arm64 artifact; reinstall the package for this platform instead of rebuilding it locally',
+    `cuttledoc could not load its prebuilt ${platformId} artifact; reinstall the package for this platform instead of rebuilding it locally`,
     { cause },
   );
 }

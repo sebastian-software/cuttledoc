@@ -1,0 +1,61 @@
+name: Cloud-only artifacts
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cloud-artifacts.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/adapters/openai-transcription/**"
+      - "crates/adapters/openrouter/**"
+      - "crates/cuttledoc-audio/**"
+      - "crates/cuttledoc-models/**"
+      - "crates/cuttledoc/**"
+      - "crates/cuttledoc-cli/**"
+      - "crates/cuttledoc-node/**"
+      - "packages/cuttledoc/**"
+      - "scripts/check-cloud-only-graph.mjs"
+      - "scripts/pack-cloud-artifacts.mjs"
+      - "scripts/test-cloud-artifacts.mjs"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cloud-artifacts.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "crates/adapters/openai-transcription/**"
+      - "crates/adapters/openrouter/**"
+      - "crates/cuttledoc-audio/**"
+      - "crates/cuttledoc-models/**"
+      - "crates/cuttledoc/**"
+      - "crates/cuttledoc-cli/**"
+      - "crates/cuttledoc-node/**"
+      - "packages/cuttledoc/**"
+      - "scripts/check-cloud-only-graph.mjs"
+      - "scripts/pack-cloud-artifacts.mjs"
+      - "scripts/test-cloud-artifacts.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  packed-artifact:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-latest
+          - name: Windows x64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+      - name: Install the pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Build, pack, install, and test without local runtimes
+        run: node scripts/test-cloud-artifacts.mjs

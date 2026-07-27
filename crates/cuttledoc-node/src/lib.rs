@@ -488,32 +488,54 @@ mod tests {
     #[test]
     fn node_boundary_uses_the_rust_capability_source() {
         assert_eq!(version(), env!("CARGO_PKG_VERSION"));
-        let capability = recognition_capabilities()
-            .into_iter()
-            .find(|capability| capability.backend.as_str() == "apple-speech")
-            .expect("Apple Speech is a known backend");
-        let (available, unavailable_reason) = match capability.availability {
-            Availability::Available => (true, None),
-            Availability::Unavailable { reason, .. } => (false, Some(reason.as_str().to_owned())),
-        };
         let backends = recognition_backends();
-        assert_eq!(backends.len(), 3);
+        #[cfg(feature = "local-runtimes")]
+        {
+            let capability = recognition_capabilities()
+                .into_iter()
+                .find(|capability| capability.backend.as_str() == "apple-speech")
+                .expect("Apple Speech is a known backend");
+            let (available, unavailable_reason) = match capability.availability {
+                Availability::Available => (true, None),
+                Availability::Unavailable { reason, .. } => {
+                    (false, Some(reason.as_str().to_owned()))
+                }
+            };
+            assert_eq!(backends.len(), 3);
+            assert_eq!(
+                backends[0],
+                BackendCapability {
+                    id: "apple-speech".to_owned(),
+                    available,
+                    unavailable_reason,
+                }
+            );
+            assert_eq!(backends[1].id, "whisper");
+            assert_eq!(backends[2].id, "openai-transcription");
+        }
+        #[cfg(not(feature = "local-runtimes"))]
         assert_eq!(
-            backends[0],
-            BackendCapability {
-                id: "apple-speech".to_owned(),
-                available,
-                unavailable_reason,
-            }
+            backends
+                .iter()
+                .map(|backend| backend.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["openai-transcription"]
         );
-        assert_eq!(backends[1].id, "whisper");
-        assert_eq!(backends[2].id, "openai-transcription");
         assert_eq!(
             text_generation_backends()
                 .into_iter()
                 .map(|backend| backend.id)
                 .collect::<Vec<_>>(),
-            vec!["gemma-mlx", "openrouter"]
+            {
+                #[cfg(feature = "local-runtimes")]
+                {
+                    vec!["gemma-mlx", "openrouter"]
+                }
+                #[cfg(not(feature = "local-runtimes"))]
+                {
+                    vec!["openrouter"]
+                }
+            }
         );
     }
 

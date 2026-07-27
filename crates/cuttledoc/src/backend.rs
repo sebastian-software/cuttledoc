@@ -14,11 +14,11 @@ impl BackendId {
     }
 
     pub fn apple_speech() -> Self {
-        Self(cuttledoc_apple_speech::BACKEND_ID.to_owned())
+        Self("apple-speech".to_owned())
     }
 
     pub fn whisper() -> Self {
-        Self(cuttledoc_whisper::BACKEND_ID.to_owned())
+        Self("whisper".to_owned())
     }
 
     pub fn openai_transcription() -> Self {
@@ -26,7 +26,7 @@ impl BackendId {
     }
 
     pub fn gemma_mlx() -> Self {
-        Self(cuttledoc_gemma_mlx::BACKEND_ID.to_owned())
+        Self("gemma-mlx".to_owned())
     }
 
     pub fn openrouter() -> Self {

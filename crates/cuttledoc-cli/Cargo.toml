@@ -8,12 +8,16 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+default = ["local-runtimes"]
+local-runtimes = ["cuttledoc/local-runtimes"]
+
 [[bin]]
 name = "cuttledoc"
 path = "src/main.rs"
 
 [dependencies]
-cuttledoc = { path = "../cuttledoc", version = "=0.1.0" }
+cuttledoc = { path = "../cuttledoc", version = "=0.1.0", default-features = false }
 serde_json = "=1.0.151"
 
 [lints]

@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use crate::enhancement::fallback_from_engine_error;
 use crate::{
-    BackendId, CancellationToken, CuttledocError, EnhancementSection, ErrorCode,
-    GemmaGenerationEngine, GemmaGenerationOptions, ModelId, OpenRouterGenerationEngine,
-    OpenRouterGenerationOptions, Result, TextGenerationEngine, TranscriptEnhancementRequest,
-    TranscriptionResult, enhance_transcript,
+    BackendId, CancellationToken, CuttledocError, EnhancementSection, ErrorCode, ModelId,
+    OpenRouterGenerationEngine, OpenRouterGenerationOptions, Result, TextGenerationEngine,
+    TranscriptEnhancementRequest, TranscriptionResult, enhance_transcript,
 };
+#[cfg(feature = "local-runtimes")]
+use crate::{GemmaGenerationEngine, GemmaGenerationOptions};
 
 pub struct TranscriptEnhancementMode(TranscriptEnhancementModeKind);
 
@@ -147,26 +148,43 @@ fn create_engine(
             model_directory,
             metallib_path,
         } => {
-            let backend = BackendId::gemma_mlx();
-            let model = ModelId::new(cuttledoc_gemma_mlx::MODEL_ID)
-                .expect("the built-in Gemma model ID is valid");
-            let Some(model_directory) =
-                model_directory.or_else(cuttledoc_gemma_mlx::configured_model_directory)
-            else {
+            #[cfg(feature = "local-runtimes")]
+            {
+                let backend = BackendId::gemma_mlx();
+                let model = ModelId::new(cuttledoc_gemma_mlx::MODEL_ID)
+                    .expect("the built-in Gemma model ID is valid");
+                let Some(model_directory) =
+                    model_directory.or_else(cuttledoc_gemma_mlx::configured_model_directory)
+                else {
+                    let error = CuttledocError::new(
+                        ErrorCode::ModelMissing,
+                        "Gemma 4 26B-A4B 4-bit is not installed",
+                    )
+                    .with_backend(backend.clone())
+                    .with_model(model.clone());
+                    return (backend, model, Err(error));
+                };
+                let engine = GemmaGenerationEngine::create(&GemmaGenerationOptions {
+                    model_directory,
+                    metallib_path,
+                })
+                .map(|engine| Box::new(engine) as Box<dyn TextGenerationEngine>);
+                (backend, model, engine)
+            }
+            #[cfg(not(feature = "local-runtimes"))]
+            {
+                let _ = (model_directory, metallib_path);
+                let backend = BackendId::gemma_mlx();
+                let model = ModelId::new("gemma-4-26b-a4b-it-4bit")
+                    .expect("the built-in Gemma model ID is valid");
                 let error = CuttledocError::new(
-                    ErrorCode::ModelMissing,
-                    "Gemma 4 26B-A4B 4-bit is not installed",
+                    ErrorCode::BackendUnavailable,
+                    "Gemma MLX is not included in this cloud-only build",
                 )
                 .with_backend(backend.clone())
                 .with_model(model.clone());
-                return (backend, model, Err(error));
-            };
-            let engine = GemmaGenerationEngine::create(&GemmaGenerationOptions {
-                model_directory,
-                metallib_path,
-            })
-            .map(|engine| Box::new(engine) as Box<dyn TextGenerationEngine>);
-            (backend, model, engine)
+                (backend, model, Err(error))
+            }
         }
         TranscriptEnhancementModeKind::GeminiOpenRouter { credential } => {
             let backend = BackendId::openrouter();

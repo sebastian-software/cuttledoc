@@ -1,7 +1,9 @@
 use std::path::Path;
+#[cfg(feature = "local-runtimes")]
 use std::thread;
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "local-runtimes")]
 use cuttledoc_apple_speech::{
     NativeSegment, NativeStability, NativeTimeRange, NativeTranscriptionUpdate, NativeUpdateKind,
     PushOutcome, SpeechSession,
@@ -9,13 +11,19 @@ use cuttledoc_apple_speech::{
 
 use crate::{
     BackendId, BackendSelection, CancellationToken, CuttledocError, ErrorCode, ModelId, PcmBuffer,
-    ProgressEvent, ProgressPhase, Result, Stability, TimeRange, TranscribeOptions,
-    TranscriptReducer, TranscriptionResult, TranscriptionSegment, TranscriptionUpdate,
-    TranscriptionUpdateKind, WordTimestamp,
+    ProgressEvent, ProgressPhase, Result, TimeRange, TranscribeOptions, TranscriptionResult,
+    TranscriptionSegment,
+};
+#[cfg(feature = "local-runtimes")]
+use crate::{
+    Stability, TranscriptReducer, TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,
 };
 
+#[cfg(feature = "local-runtimes")]
 const INPUT_CHUNK_DURATION_MS: u32 = 200;
+#[cfg(feature = "local-runtimes")]
 const BACKPRESSURE_RETRY_DELAY: Duration = Duration::from_millis(2);
+const WHISPER_MODEL_ID: &str = "whisper-large-v3-turbo";
 
 pub fn transcribe_pcm(
     input: &PcmBuffer,
@@ -88,6 +96,9 @@ pub(crate) fn transcribe_openai_file_with_progress(
         ModelId::new(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
             .expect("the built-in OpenAI transcription model ID is valid")
     });
+    cuttledoc_openai_transcription::OpenAiTranscriptionEngine::validate_file(path)
+        .map_err(CuttledocError::from)
+        .map_err(|error| error.with_model(model.clone()))?;
     let credential = match &options.hosted.credential {
         Some(credential) => {
             cuttledoc_openai_transcription::Credential::new(credential.expose().to_owned())
@@ -143,6 +154,7 @@ pub(crate) fn transcribe_openai_file_with_progress(
     Ok(transcription)
 }
 
+#[cfg(feature = "local-runtimes")]
 fn transcribe_apple_speech(
     input: &PcmBuffer,
     options: &TranscribeOptions,
@@ -232,6 +244,22 @@ fn transcribe_apple_speech(
     })
 }
 
+#[cfg(not(feature = "local-runtimes"))]
+fn transcribe_apple_speech(
+    _input: &PcmBuffer,
+    _options: &TranscribeOptions,
+    _cancellation: &CancellationToken,
+    backend: BackendId,
+    _on_progress: &mut dyn FnMut(ProgressEvent),
+) -> Result<TranscriptionResult> {
+    Err(CuttledocError::new(
+        ErrorCode::BackendUnavailable,
+        "Apple Speech is not included in this cloud-only build",
+    )
+    .with_backend(backend))
+}
+
+#[cfg(feature = "local-runtimes")]
 fn transcribe_whisper(
     input: &PcmBuffer,
     options: &TranscribeOptions,
@@ -327,6 +355,21 @@ fn transcribe_whisper(
     })
 }
 
+#[cfg(not(feature = "local-runtimes"))]
+fn transcribe_whisper(
+    _input: &PcmBuffer,
+    _options: &TranscribeOptions,
+    _cancellation: &CancellationToken,
+    backend: BackendId,
+    _on_progress: &mut dyn FnMut(ProgressEvent),
+) -> Result<TranscriptionResult> {
+    Err(CuttledocError::new(
+        ErrorCode::BackendUnavailable,
+        "Whisper is not included in this cloud-only build",
+    )
+    .with_backend(backend))
+}
+
 fn progress(phase: ProgressPhase, completed: u64, total: Option<u64>) -> ProgressEvent {
     ProgressEvent {
         phase,
@@ -343,7 +386,7 @@ fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
     match &options.backend {
         BackendSelection::Auto => {
             if let Some(model) = &options.model {
-                if model.as_str() == cuttledoc_whisper::MODEL_ID {
+                if model.as_str() == WHISPER_MODEL_ID {
                     return Ok(whisper);
                 }
                 return Err(CuttledocError::new(
@@ -402,6 +445,7 @@ fn apple_supports_language(capability: &crate::RecognitionCapabilities, requeste
         .any(|language| language == &requested)
 }
 
+#[cfg(feature = "local-runtimes")]
 fn explicit_whisper_model_is_available(options: &TranscribeOptions) -> bool {
     cuttledoc_whisper::build_support() == cuttledoc_whisper::BuildSupport::Native
         && options
@@ -410,6 +454,12 @@ fn explicit_whisper_model_is_available(options: &TranscribeOptions) -> bool {
             .is_some_and(|path| cuttledoc_whisper::validate_model(path).is_ok())
 }
 
+#[cfg(not(feature = "local-runtimes"))]
+fn explicit_whisper_model_is_available(_options: &TranscribeOptions) -> bool {
+    false
+}
+
+#[cfg(feature = "local-runtimes")]
 fn validate_apple_request(
     input: &PcmBuffer,
     options: &TranscribeOptions,
@@ -447,6 +497,7 @@ fn validate_apple_request(
     Ok(())
 }
 
+#[cfg(feature = "local-runtimes")]
 fn validate_whisper_request(
     input: &PcmBuffer,
     options: &TranscribeOptions,
@@ -472,6 +523,7 @@ fn validate_whisper_request(
     Ok(())
 }
 
+#[cfg(feature = "local-runtimes")]
 fn whisper_language(language: Option<&str>, backend: &BackendId) -> Result<Option<String>> {
     let Some(language) = language.filter(|value| !value.is_empty() && *value != "auto") else {
         return Ok(None);
@@ -503,15 +555,18 @@ fn cancelled_error(backend: &BackendId) -> CuttledocError {
         .with_backend(backend.clone())
 }
 
+#[cfg(feature = "local-runtimes")]
 fn input_chunk_size(sample_rate: u32) -> usize {
     let frames = (u64::from(sample_rate) * u64::from(INPUT_CHUNK_DURATION_MS) / 1_000).max(1);
     usize::try_from(frames).unwrap_or(usize::MAX)
 }
 
+#[cfg(feature = "local-runtimes")]
 fn media_duration(input: &PcmBuffer) -> Duration {
     Duration::from_secs_f64(input.frame_count() as f64 / f64::from(input.format.sample_rate))
 }
 
+#[cfg(feature = "local-runtimes")]
 #[derive(Debug, Default)]
 struct UpdateAccumulator {
     reducer: TranscriptReducer,
@@ -520,6 +575,7 @@ struct UpdateAccumulator {
     saw_final: bool,
 }
 
+#[cfg(feature = "local-runtimes")]
 impl UpdateAccumulator {
     fn apply(
         &mut self,
@@ -565,6 +621,7 @@ impl UpdateAccumulator {
     }
 }
 
+#[cfg(feature = "local-runtimes")]
 fn map_native_update(
     update: NativeTranscriptionUpdate,
     affected_range: TimeRange,
@@ -599,6 +656,7 @@ fn map_native_update(
     })
 }
 
+#[cfg(feature = "local-runtimes")]
 fn map_words(
     segments: Vec<NativeSegment>,
     affected_range: TimeRange,
@@ -641,15 +699,17 @@ fn map_words(
     Ok(words)
 }
 
+#[cfg(feature = "local-runtimes")]
 fn map_range(range: NativeTimeRange) -> TimeRange {
     TimeRange::from_millis(range.start_ms, range.end_ms)
 }
 
+#[cfg(feature = "local-runtimes")]
 fn contract_error(backend: &BackendId, message: &str) -> CuttledocError {
     CuttledocError::new(ErrorCode::BackendContractViolation, message).with_backend(backend.clone())
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "local-runtimes"))]
 mod tests {
     use super::*;
     use crate::{
