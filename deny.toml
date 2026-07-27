@@ -36,6 +36,10 @@ deny = [
   { name = "mistralrs", reason = "Phase 5 reference-only candidate." },
   { name = "candle-core", reason = "Phase 5 reference-only candidate." },
 ]
+skip = [
+  { crate = "getrandom@0.2.17", reason = "ring 0.17.14 retains getrandom 0.2 while tokenizers 0.23.1 uses 0.3; both are exact transitive pins and the exception is reviewed with #26 HTTP upgrades." },
+  { crate = "windows-sys@0.52.0", reason = "ring 0.17.14 has not converged on Tokio 1.53.1's windows-sys 0.61 line; both are exact transitive pins and the exception is reviewed with #26 HTTP upgrades." },
+]
 
 [sources]
 unknown-registry = "deny"

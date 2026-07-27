@@ -63,10 +63,13 @@ providers are outside this issue.
    HTTP endpoint, multipart schema, accepted model table, response parsing,
    timeout/cancellation behavior, and secret-safe errors. No OpenAI SDK type
    enters the public API.
-2. Use pinned `reqwest` `0.13.4` with its Rustls and multipart features plus
-   pinned Tokio `1.52.3` runtime/time features. Both are mature,
-   cross-platform, replaceable behind the owned adapter, and must enter the
-   dependency inventory and allowlist before their manifests change.
+2. Use the pinned Hyper/Rustls HTTP/1 stack admitted in
+   `docs/dependency-policy.md`: `bytes` `1.12.1`, `http-body-util` `0.1.4`,
+   `hyper` `1.11.0`, `hyper-rustls` `0.27.9`, `hyper-util` `0.1.20`, and Tokio
+   `1.53.1`. Only HTTP/1, the current-thread Tokio runtime, bounded body
+   utilities, native certificate roots, TLS 1.2/1.3, and the `ring` Rustls
+   provider are enabled. The adapter owns the fixed URI and small multipart
+   encoder rather than admitting a generic high-level web client.
 3. Keep the public operation synchronous. The adapter runs one bounded
    current-thread async HTTP operation internally so dropping the request
    future cancels in-flight I/O without imposing an async runtime on callers.

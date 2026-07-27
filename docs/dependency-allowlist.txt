@@ -3,6 +3,11 @@
 # Add a package here only in the same reviewed change that adds its inventory
 # row, pin, scope, and replacement plan. Keep the list sorted. Workspace path
 # dependencies are product-owned and therefore do not need separate admission.
+bytes
+http-body-util
+hyper
+hyper-rustls
+hyper-util
 napi
 napi-build
 napi-derive
@@ -12,3 +17,4 @@ objc2-foundation
 serde_json
 sha2
 tokenizers
+tokio
