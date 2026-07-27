@@ -460,20 +460,10 @@ mod tests {
     }
 
     #[test]
-    fn decoder_rejects_incomplete_pcm() {
-        let directory = TestDirectory::new();
-        let input = directory.input();
-        let executable = directory.executable("printf '\\001\\002\\003'");
-        let error = decode_file(
-            &input,
-            &DecodeOptions {
-                ffmpeg_path: Some(executable),
-            },
-            || false,
-        )
-        .expect_err("incomplete PCM must fail");
-        assert_eq!(error.kind, AudioDecodeErrorKind::InvalidOutput);
-        assert!(error.message.contains("trailing PCM bytes"));
+    fn pcm_reader_rejects_incomplete_samples() {
+        let error = read_f32le(Cursor::new([1_u8, 2, 3])).expect_err("incomplete PCM must fail");
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("trailing PCM bytes"));
     }
 
     #[test]
