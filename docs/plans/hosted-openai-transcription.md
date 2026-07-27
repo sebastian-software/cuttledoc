@@ -205,12 +205,12 @@ issue #26. Do not claim #28 release completion.
 
 - [x] Mocked contract tests cover request, response, provider errors, timeout,
       active cancellation, body bounds, and credential redaction.
-- [ ] Rust accepts an explicit in-memory credential or `OPENAI_API_KEY`.
+- [x] Rust accepts an explicit in-memory credential or `OPENAI_API_KEY`.
 - [ ] CLI accepts credentials only through `OPENAI_API_KEY`.
 - [ ] Node accepts an optional ephemeral in-memory credential.
-- [ ] Explicit model selection covers both GPT transcription models and
+- [x] Explicit model selection covers both GPT transcription models and
       timestamp-capable `whisper-1`.
-- [ ] A configured credential never changes `auto` selection.
+- [x] A configured credential never changes `auto` selection.
 - [ ] No credential appears in `Debug`, errors, CLI arguments, logs, output, or
       persisted configuration.
 - [ ] Linux and Windows final CLI/Node artifacts install, load, and exercise

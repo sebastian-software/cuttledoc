@@ -53,8 +53,9 @@ pub use recognition::{
     transcribe_pcm, transcribe_pcm_with_cancellation, transcribe_pcm_with_progress,
 };
 pub use transcript::{
-    ContractError, Stability, TimeRange, TranscribeOptions, TranscriptReducer, TranscriptionResult,
-    TranscriptionSegment, TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,
+    ContractError, HostedCredential, HostedTranscriptionOptions, Stability, TimeRange,
+    TranscribeOptions, TranscriptReducer, TranscriptionResult, TranscriptionSegment,
+    TranscriptionUpdate, TranscriptionUpdateKind, WordTimestamp,
 };
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

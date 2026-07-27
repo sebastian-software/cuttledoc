@@ -104,7 +104,11 @@ pub struct TextGenerationCapabilities {
 }
 
 pub fn recognition_capabilities() -> Vec<RecognitionCapabilities> {
-    vec![apple_speech_capabilities(), whisper_capabilities()]
+    vec![
+        apple_speech_capabilities(),
+        whisper_capabilities(),
+        openai_transcription_capabilities(),
+    ]
 }
 
 pub fn text_generation_capabilities() -> Vec<TextGenerationCapabilities> {
@@ -262,6 +266,43 @@ fn whisper_capabilities() -> RecognitionCapabilities {
         volatile_results: false,
         max_concurrent_requests: 1,
         cancellation_boundary: CancellationBoundary::DecoderStep,
+    }
+}
+
+fn openai_transcription_capabilities() -> RecognitionCapabilities {
+    let availability = match cuttledoc_openai_transcription::Credential::from_environment() {
+        Ok(_) => Availability::Available,
+        Err(_) => Availability::Unavailable {
+            reason: AvailabilityReason::CredentialsMissing,
+            detail: "an OpenAI transcription credential is not configured in the environment"
+                .to_owned(),
+            remediation: Some(format!(
+                "set {} or provide an in-memory credential when explicitly selecting hosted transcription",
+                cuttledoc_openai_transcription::API_KEY_ENV
+            )),
+        },
+    };
+
+    RecognitionCapabilities {
+        backend: BackendId::openai_transcription(),
+        model: Some(
+            ModelId::new(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
+                .expect("the built-in OpenAI transcription model ID is valid"),
+        ),
+        availability,
+        file_input: true,
+        bounded_pcm_input: false,
+        streaming_pcm_input: false,
+        dynamic_locales: true,
+        languages: Vec::new(),
+        locales: Vec::new(),
+        segment_timestamps: false,
+        word_timestamps: false,
+        confidence: false,
+        incremental_finals: false,
+        volatile_results: false,
+        max_concurrent_requests: 1,
+        cancellation_boundary: CancellationBoundary::Request,
     }
 }
 
@@ -468,6 +509,33 @@ mod tests {
         assert!(whisper.segment_timestamps);
         assert!(!whisper.confidence);
         assert!(!whisper.streaming_pcm_input);
+    }
+
+    #[test]
+    fn hosted_transcription_capability_is_explicit_file_input_only() {
+        let hosted = recognition_capabilities()
+            .into_iter()
+            .find(|capability| capability.backend == BackendId::openai_transcription())
+            .expect("OpenAI transcription is a known backend");
+
+        assert_eq!(
+            hosted.model.as_ref().map(ModelId::as_str),
+            Some(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
+        );
+        assert!(hosted.file_input);
+        assert!(!hosted.bounded_pcm_input);
+        assert!(!hosted.streaming_pcm_input);
+        assert!(hosted.dynamic_locales);
+        assert!(!hosted.segment_timestamps);
+        assert_eq!(hosted.cancellation_boundary, CancellationBoundary::Request);
+        assert!(matches!(
+            hosted.availability,
+            Availability::Available
+                | Availability::Unavailable {
+                    reason: AvailabilityReason::CredentialsMissing,
+                    ..
+                }
+        ));
     }
 
     #[test]

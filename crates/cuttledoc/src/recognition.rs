@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -46,11 +47,100 @@ pub fn transcribe_pcm_with_progress(
     if backend == BackendId::whisper() {
         return transcribe_whisper(input, options, cancellation, backend, &mut on_progress);
     }
+    if backend == BackendId::openai_transcription() {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            "OpenAI transcription accepts original media files, not decoded PCM input",
+        )
+        .with_backend(backend));
+    }
     Err(CuttledocError::new(
         ErrorCode::BackendUnavailable,
         format!("recognition backend {backend} is not implemented"),
     )
     .with_backend(backend))
+}
+
+pub(crate) fn is_explicit_hosted_file_request(options: &TranscribeOptions) -> bool {
+    matches!(
+        &options.backend,
+        BackendSelection::Id(backend) if backend == &BackendId::openai_transcription()
+    )
+}
+
+pub(crate) fn transcribe_openai_file_with_progress(
+    path: &Path,
+    options: &TranscribeOptions,
+    cancellation: &CancellationToken,
+    on_progress: &mut dyn FnMut(ProgressEvent),
+) -> Result<TranscriptionResult> {
+    let backend = BackendId::openai_transcription();
+    ensure_not_cancelled(cancellation, &backend)?;
+    if options.model_path.is_some() {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            "OpenAI transcription does not accept a local model path",
+        )
+        .with_backend(backend));
+    }
+
+    let model = options.model.clone().unwrap_or_else(|| {
+        ModelId::new(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
+            .expect("the built-in OpenAI transcription model ID is valid")
+    });
+    let credential = match &options.hosted.credential {
+        Some(credential) => {
+            cuttledoc_openai_transcription::Credential::new(credential.expose().to_owned())
+        }
+        None => cuttledoc_openai_transcription::Credential::from_environment(),
+    }
+    .map_err(CuttledocError::from)
+    .map_err(|error| error.with_model(model.clone()))?;
+    let engine = cuttledoc_openai_transcription::OpenAiTranscriptionEngine::create(
+        cuttledoc_openai_transcription::EngineOptions {
+            credential,
+            timeout: options.hosted.timeout,
+        },
+    )
+    .map_err(CuttledocError::from)
+    .map_err(|error| error.with_model(model.clone()))?;
+    let request = cuttledoc_openai_transcription::TranscriptionRequest {
+        model: model.as_str().to_owned(),
+        language: options.language.clone(),
+    };
+
+    let started_at = Instant::now();
+    on_progress(progress(ProgressPhase::Transcribing, 0, Some(1)));
+    let result = engine
+        .transcribe_file(path, &request, || cancellation.is_cancelled())
+        .map_err(CuttledocError::from)
+        .map_err(|error| error.with_model(model.clone()))?;
+    on_progress(progress(ProgressPhase::Transcribing, 1, Some(1)));
+    on_progress(progress(ProgressPhase::Finalizing, 0, Some(1)));
+    let segments = result
+        .segments
+        .into_iter()
+        .map(|segment| TranscriptionSegment {
+            range: TimeRange::new(segment.start, segment.end),
+            text: segment.text,
+            confidence: None,
+            words: Vec::new(),
+        })
+        .collect();
+    let text = result.text;
+    let transcription = TranscriptionResult {
+        raw_text: text.clone(),
+        text,
+        language: result.language,
+        backend,
+        model: Some(model),
+        media_duration: result.duration.unwrap_or(Duration::ZERO),
+        processing_duration: started_at.elapsed(),
+        segments,
+        enhancement: None,
+    };
+    on_progress(progress(ProgressPhase::Finalizing, 1, Some(1)));
+    Ok(transcription)
 }
 
 fn transcribe_apple_speech(
@@ -249,6 +339,7 @@ fn progress(phase: ProgressPhase, completed: u64, total: Option<u64>) -> Progres
 fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
     let apple = BackendId::apple_speech();
     let whisper = BackendId::whisper();
+    let openai = BackendId::openai_transcription();
     match &options.backend {
         BackendSelection::Auto => {
             if let Some(model) = &options.model {
@@ -285,6 +376,7 @@ fn select_backend(options: &TranscribeOptions) -> Result<BackendId> {
         }
         BackendSelection::Id(backend) if backend == &apple => Ok(backend.clone()),
         BackendSelection::Id(backend) if backend == &whisper => Ok(backend.clone()),
+        BackendSelection::Id(backend) if backend == &openai => Ok(backend.clone()),
         BackendSelection::Id(backend) => Err(CuttledocError::new(
             ErrorCode::BackendUnavailable,
             format!("recognition backend {backend} is not implemented"),
@@ -711,6 +803,56 @@ mod tests {
             select_backend(&options).expect("explicit backend"),
             BackendId::whisper()
         );
+    }
+
+    #[test]
+    fn explicit_openai_selection_is_file_only() {
+        let options = TranscribeOptions {
+            backend: BackendSelection::Id(BackendId::openai_transcription()),
+            hosted: crate::HostedTranscriptionOptions {
+                credential: Some(
+                    crate::HostedCredential::new("sk-test-secret").expect("valid credential"),
+                ),
+                ..crate::HostedTranscriptionOptions::default()
+            },
+            ..TranscribeOptions::default()
+        };
+        assert_eq!(
+            select_backend(&options).expect("explicit backend"),
+            BackendId::openai_transcription()
+        );
+
+        let input = PcmBuffer::new(
+            AudioFormat::new(16_000, 1).expect("valid format"),
+            vec![0.0],
+        )
+        .expect("valid buffer");
+        let error = transcribe_pcm(&input, &options).expect_err("hosted PCM input must fail");
+        assert_eq!(error.code, ErrorCode::InvalidInput);
+        assert_eq!(error.backend, Some(BackendId::openai_transcription()));
+        assert!(error.message.contains("original media files"));
+    }
+
+    #[test]
+    fn auto_selection_never_promotes_hosted_credentials() {
+        let options = TranscribeOptions {
+            model: Some(
+                ModelId::new(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
+                    .expect("OpenAI model ID"),
+            ),
+            hosted: crate::HostedTranscriptionOptions {
+                credential: Some(
+                    crate::HostedCredential::new("sk-test-secret").expect("valid credential"),
+                ),
+                ..crate::HostedTranscriptionOptions::default()
+            },
+            ..TranscribeOptions::default()
+        };
+
+        let error = select_backend(&options).expect_err("auto must not select a hosted model");
+        assert_eq!(error.code, ErrorCode::InvalidInput);
+        assert_eq!(error.backend, None);
+        assert_eq!(error.model, options.model);
     }
 
     #[test]

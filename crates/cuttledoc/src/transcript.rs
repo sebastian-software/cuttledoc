@@ -1,7 +1,8 @@
+use std::fmt;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use crate::{BackendId, BackendSelection, ModelId};
+use crate::{BackendId, BackendSelection, CuttledocError, ErrorCode, ModelId};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TimeRange {
@@ -243,12 +244,54 @@ fn join_text<'a>(parts: impl Iterator<Item = &'a str>) -> String {
         .join(" ")
 }
 
+#[derive(Clone, Eq, PartialEq)]
+pub struct HostedCredential(String);
+
+impl HostedCredential {
+    pub fn new(value: impl Into<String>) -> crate::Result<Self> {
+        let value = value.into();
+        if value.trim().is_empty() || value.trim() != value || value.chars().any(char::is_control) {
+            return Err(CuttledocError::new(
+                ErrorCode::AuthenticationFailed,
+                "hosted transcription credential is missing or invalid",
+            ));
+        }
+        Ok(Self(value))
+    }
+
+    pub(crate) fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
+impl fmt::Debug for HostedCredential {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("HostedCredential([REDACTED])")
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HostedTranscriptionOptions {
+    pub credential: Option<HostedCredential>,
+    pub timeout: Duration,
+}
+
+impl Default for HostedTranscriptionOptions {
+    fn default() -> Self {
+        Self {
+            credential: None,
+            timeout: cuttledoc_openai_transcription::DEFAULT_TIMEOUT,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct TranscribeOptions {
     pub backend: BackendSelection,
     pub model: Option<ModelId>,
     pub model_path: Option<PathBuf>,
     pub language: Option<String>,
+    pub hosted: HostedTranscriptionOptions,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -295,5 +338,34 @@ mod tests {
         assert_eq!(reducer.next_sequence(), 1);
         assert_eq!(reducer.segment_count(), 0);
         assert_eq!(reducer.final_segments(), Vec::new());
+    }
+
+    #[test]
+    fn hosted_credentials_are_redacted_from_debug_output() {
+        let secret = "sk-test-secret";
+        let credential = HostedCredential::new(secret).expect("valid credential");
+        let options = TranscribeOptions {
+            hosted: HostedTranscriptionOptions {
+                credential: Some(credential),
+                ..HostedTranscriptionOptions::default()
+            },
+            ..TranscribeOptions::default()
+        };
+
+        let debug = format!("{options:?}");
+        assert!(debug.contains("[REDACTED]"));
+        assert!(!debug.contains(secret));
+    }
+
+    #[test]
+    fn hosted_credentials_reject_unsafe_values() {
+        for value in ["", " key", "key ", "key\nvalue"] {
+            assert_eq!(
+                HostedCredential::new(value)
+                    .expect_err("unsafe credential")
+                    .code,
+                ErrorCode::AuthenticationFailed
+            );
+        }
     }
 }

@@ -21,6 +21,10 @@ impl BackendId {
         Self(cuttledoc_whisper::BACKEND_ID.to_owned())
     }
 
+    pub fn openai_transcription() -> Self {
+        Self(cuttledoc_openai_transcription::BACKEND_ID.to_owned())
+    }
+
     pub fn gemma_mlx() -> Self {
         Self(cuttledoc_gemma_mlx::BACKEND_ID.to_owned())
     }
@@ -59,7 +63,11 @@ pub enum BackendSelection {
 }
 
 pub fn known_backend_ids() -> Vec<BackendId> {
-    vec![BackendId::apple_speech(), BackendId::whisper()]
+    vec![
+        BackendId::apple_speech(),
+        BackendId::whisper(),
+        BackendId::openai_transcription(),
+    ]
 }
 
 #[cfg(test)]

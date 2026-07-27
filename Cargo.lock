@@ -195,6 +195,7 @@ dependencies = [
  "cuttledoc-audio",
  "cuttledoc-gemma-mlx",
  "cuttledoc-models",
+ "cuttledoc-openai-transcription",
  "cuttledoc-openrouter",
  "cuttledoc-whisper",
  "serde_json",

@@ -520,6 +520,7 @@ fn run(command: Command) -> CliResult<()> {
                 model,
                 language: Some(language.clone()),
                 model_path,
+                ..TranscribeOptions::default()
             };
             let decode_options = MediaDecodeOptions { ffmpeg_path };
             let result = if progress {
@@ -584,6 +585,7 @@ fn run(command: Command) -> CliResult<()> {
                 model,
                 language: Some(language.clone()),
                 model_path,
+                ..TranscribeOptions::default()
             };
             let result = if progress {
                 transcribe_pcm_with_progress(

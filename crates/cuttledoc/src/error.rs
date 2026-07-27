@@ -151,6 +151,25 @@ impl From<cuttledoc_whisper::AdapterError> for CuttledocError {
     }
 }
 
+impl From<cuttledoc_openai_transcription::AdapterError> for CuttledocError {
+    fn from(error: cuttledoc_openai_transcription::AdapterError) -> Self {
+        use cuttledoc_openai_transcription::AdapterErrorKind;
+
+        let code = match error.kind {
+            AdapterErrorKind::CredentialsMissing | AdapterErrorKind::AuthenticationFailed => {
+                ErrorCode::AuthenticationFailed
+            }
+            AdapterErrorKind::InvalidInput => ErrorCode::InvalidInput,
+            AdapterErrorKind::ResponseInvalid => ErrorCode::BackendContractViolation,
+            AdapterErrorKind::Cancelled => ErrorCode::Cancelled,
+            AdapterErrorKind::RateLimited
+            | AdapterErrorKind::TimedOut
+            | AdapterErrorKind::TransportFailed => ErrorCode::TranscriptionFailed,
+        };
+        Self::new(code, error.message).with_backend(BackendId::openai_transcription())
+    }
+}
+
 impl From<cuttledoc_gemma_mlx::AdapterError> for CuttledocError {
     fn from(error: cuttledoc_gemma_mlx::AdapterError) -> Self {
         use cuttledoc_gemma_mlx::AdapterErrorKind;

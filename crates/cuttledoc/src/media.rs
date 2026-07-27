@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+use crate::recognition::{is_explicit_hosted_file_request, transcribe_openai_file_with_progress};
 use crate::{
     AudioFormat, CancellationToken, PcmBuffer, ProgressEvent, ProgressPhase, Result,
     TranscribeOptions, TranscriptionResult, transcribe_pcm_with_progress,
@@ -42,6 +43,22 @@ pub fn transcribe_file_with_progress(
         total: Some(1),
         message: None,
     });
+    if is_explicit_hosted_file_request(options) {
+        on_progress(ProgressEvent {
+            phase: ProgressPhase::Preparing,
+            completed: 1,
+            total: Some(1),
+            message: None,
+        });
+        let mut result = transcribe_openai_file_with_progress(
+            path.as_ref(),
+            options,
+            cancellation,
+            &mut on_progress,
+        )?;
+        result.processing_duration = started_at.elapsed();
+        return Ok(result);
+    }
     on_progress(ProgressEvent {
         phase: ProgressPhase::Decoding,
         completed: 0,
@@ -76,7 +93,9 @@ pub fn transcribe_file_with_progress(
 
 #[cfg(test)]
 mod tests {
-    use crate::ErrorCode;
+    use crate::{
+        BackendId, BackendSelection, ErrorCode, HostedCredential, HostedTranscriptionOptions,
+    };
 
     use super::*;
 
@@ -98,7 +117,7 @@ mod tests {
             },
         )
         .expect_err("missing media must fail");
-        assert_eq!(error.code, ErrorCode::InvalidInput);
+        assert_eq!(error.code, ErrorCode::InvalidInput, "{error:?}");
         assert!(error.message.contains("could not read media input"));
     }
 
@@ -114,7 +133,7 @@ mod tests {
             |event| events.push(event),
         )
         .expect_err("missing media must fail");
-        assert_eq!(error.code, ErrorCode::InvalidInput);
+        assert_eq!(error.code, ErrorCode::InvalidInput, "{error:?}");
         assert_eq!(
             events
                 .iter()
@@ -161,5 +180,52 @@ mod tests {
         )
         .expect_err("cancelled work must fail");
         assert_eq!(error.code, ErrorCode::Cancelled);
+    }
+
+    #[test]
+    fn explicit_hosted_file_bypasses_ffmpeg_and_keeps_the_original_input_boundary() {
+        let path =
+            std::env::temp_dir().join("cuttledoc-definitely-missing-hosted-transcription.media");
+        let options = TranscribeOptions {
+            backend: BackendSelection::Id(BackendId::openai_transcription()),
+            hosted: HostedTranscriptionOptions {
+                credential: Some(
+                    HostedCredential::new("sk-test-secret").expect("valid credential"),
+                ),
+                ..HostedTranscriptionOptions::default()
+            },
+            ..TranscribeOptions::default()
+        };
+        let mut events = Vec::new();
+
+        let error = transcribe_file_with_progress(
+            path,
+            &options,
+            &MediaDecodeOptions {
+                ffmpeg_path: Some(PathBuf::from("/definitely/missing/ffmpeg")),
+            },
+            &CancellationToken::new(),
+            |event| events.push(event),
+        )
+        .expect_err("missing hosted input must fail");
+
+        assert_eq!(error.code, ErrorCode::InvalidInput, "{error:?}");
+        assert_eq!(error.backend, Some(BackendId::openai_transcription()));
+        assert!(
+            events
+                .iter()
+                .all(|event| event.phase != ProgressPhase::Decoding)
+        );
+        assert_eq!(
+            events
+                .iter()
+                .map(|event| (event.phase, event.completed, event.total))
+                .collect::<Vec<_>>(),
+            vec![
+                (ProgressPhase::Preparing, 0, Some(1)),
+                (ProgressPhase::Preparing, 1, Some(1)),
+                (ProgressPhase::Transcribing, 0, Some(1)),
+            ]
+        );
     }
 }
