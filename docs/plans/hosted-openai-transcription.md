@@ -203,7 +203,7 @@ issue #26. Do not claim #28 release completion.
 
 ## Done criteria
 
-- [ ] Mocked contract tests cover request, response, provider errors, timeout,
+- [x] Mocked contract tests cover request, response, provider errors, timeout,
       active cancellation, body bounds, and credential redaction.
 - [ ] Rust accepts an explicit in-memory credential or `OPENAI_API_KEY`.
 - [ ] CLI accepts credentials only through `OPENAI_API_KEY`.
