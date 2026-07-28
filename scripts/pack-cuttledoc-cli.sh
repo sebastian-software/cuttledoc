@@ -79,7 +79,10 @@ fi
 strip -x "$package_dir/cuttledoc"
 
 archive_path="$output_dir/$archive_root.tar.gz"
-tar -C "$work_dir" -czf "$archive_path" "$archive_root"
+node "$repo_root/scripts/create-deterministic-tar-gz.mjs" \
+  "$package_dir" \
+  "$archive_path" \
+  >/dev/null
 archive_entries="$(tar -tzf "$archive_path")"
 for entry in \
   "$archive_root/cuttledoc" \

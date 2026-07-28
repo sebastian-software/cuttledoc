@@ -173,6 +173,14 @@ Add a release metadata generator/validator that binds:
 Verify the helper on the development host and in the existing package
 workflows.
 
+Implementation checkpoint (2026-07-28): a dependency-free Node USTAR/Gzip
+writer now fixes entry ordering, ownership, file modes, gzip metadata, and
+`SOURCE_DATE_EPOCH`. Both the complete macOS CLI harness and the portable
+cloud-only harness package twice and require byte-identical output. The local
+cloud-only macOS diagnostic now reproduces both its 1,644,146-byte CLI archive
+and 1,580,776-byte npm tarball exactly. Release metadata and the deterministic
+Windows ZIP convention remain open within this step.
+
 ### 2. Assemble the final npm package and CLI matrix
 
 Change platform jobs to upload native payloads, not independently publishable
@@ -285,3 +293,5 @@ actual tagged rehearsal has passed.
   byte-identical while the CLI gzip archive is not. Step 1 owns the gap.
 - 2026-07-28: repository secret-name audit found no Apple signing or
   notarization credentials. Credential-independent work proceeds first.
+- 2026-07-28: deterministic USTAR/Gzip generation and two-run package gates
+  close the observed CLI archive metadata gap on the local cloud-only path.

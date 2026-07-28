@@ -15,6 +15,7 @@ on:
       - "crates/cuttledoc-node/**"
       - "packages/cuttledoc/**"
       - "scripts/check-cloud-only-graph.mjs"
+      - "scripts/create-deterministic-tar-gz.mjs"
       - "scripts/pack-cloud-artifacts.mjs"
       - "scripts/test-cloud-artifacts.mjs"
   push:
@@ -32,6 +33,7 @@ on:
       - "crates/cuttledoc-node/**"
       - "packages/cuttledoc/**"
       - "scripts/check-cloud-only-graph.mjs"
+      - "scripts/create-deterministic-tar-gz.mjs"
       - "scripts/pack-cloud-artifacts.mjs"
       - "scripts/test-cloud-artifacts.mjs"
 

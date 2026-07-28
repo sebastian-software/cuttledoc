@@ -7,7 +7,14 @@ guard_source="$repo_root/packages/cuttledoc/tests/compiler-guard.sh"
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/cuttledoc-cli-test.XXXXXX")"
 trap 'rm -rf "$work_dir"' EXIT
 
-archive_path="$("$repo_root/scripts/pack-cuttledoc-cli.sh" "$work_dir")"
+first_output_dir="$work_dir/artifacts-first"
+second_output_dir="$work_dir/artifacts-second"
+archive_path="$("$repo_root/scripts/pack-cuttledoc-cli.sh" "$first_output_dir")"
+repeat_archive_path="$("$repo_root/scripts/pack-cuttledoc-cli.sh" "$second_output_dir")"
+if ! cmp -s "$archive_path" "$repeat_archive_path"; then
+  echo "repeated CLI packaging was not byte-identical" >&2
+  exit 1
+fi
 install_root="$work_dir/install"
 mkdir -p "$install_root"
 tar -C "$install_root" -xzf "$archive_path"

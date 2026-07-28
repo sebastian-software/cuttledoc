@@ -116,7 +116,11 @@ copyFileSync(
   join(cliPackageDirectory, 'README.md'),
 );
 const cliArchive = join(outputDirectory, `${archiveRoot}.tar.gz`);
-run('tar', ['-C', workDirectory, '-czf', cliArchive, archiveRoot]);
+run(process.execPath, [
+  join(repoRoot, 'scripts/create-deterministic-tar-gz.mjs'),
+  cliPackageDirectory,
+  cliArchive,
+], { capture: true });
 
 const npmPackageDirectory = join(workDirectory, 'package');
 mkdirSync(npmPackageDirectory);

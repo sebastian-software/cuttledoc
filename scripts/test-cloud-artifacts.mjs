@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   copyFileSync,
   mkdirSync,
@@ -53,6 +54,24 @@ const cliArchive = packOutput.match(/^CLI_ARTIFACT=(.+)$/m)?.[1];
 const nodeArchive = packOutput.match(/^NODE_ARTIFACT=(.+)$/m)?.[1];
 if (cliArchive === undefined || nodeArchive === undefined) {
   throw new Error(`artifact packer returned an invalid contract:\n${packOutput}`);
+}
+
+const repeatOutputDirectory = join(workDirectory, 'artifacts-repeat');
+const repeatPackOutput = run(process.execPath, [
+  join(repoRoot, 'scripts/pack-cloud-artifacts.mjs'),
+  repeatOutputDirectory,
+]);
+const repeatCliArchive =
+  repeatPackOutput.match(/^CLI_ARTIFACT=(.+)$/m)?.[1];
+const repeatNodeArchive =
+  repeatPackOutput.match(/^NODE_ARTIFACT=(.+)$/m)?.[1];
+if (
+  repeatCliArchive === undefined ||
+  repeatNodeArchive === undefined ||
+  sha256(cliArchive) !== sha256(repeatCliArchive) ||
+  sha256(nodeArchive) !== sha256(repeatNodeArchive)
+) {
+  throw new Error('repeated cloud-only packaging was not byte-identical');
 }
 
 const forbiddenArchivePattern =
@@ -165,4 +184,8 @@ function assertEqual(actual, expected) {
   if (actual !== expected) {
     throw new Error(`expected ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`);
   }
+}
+
+function sha256(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
