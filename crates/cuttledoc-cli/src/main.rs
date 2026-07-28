@@ -1,7 +1,9 @@
+use std::cell::RefCell;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use cuttledoc::{
@@ -17,11 +19,13 @@ mod batch;
 mod cli_error;
 mod model_commands;
 mod output;
+mod progress_output;
 
-use batch::{BatchEvent, BatchOptions, execute_batch, plan_batch};
+use batch::{BatchOptions, execute_batch, plan_batch};
 use cli_error::{CliError, CliResult};
 use model_commands::ModelCommand;
 use output::{OutputFormat, OutputOptions, emit_result, validate_output};
+use progress_output::{BatchProgressRenderer, ProgressFormat};
 
 const HELP: &str = "\
 Cuttledoc speech and text processing
@@ -36,14 +40,16 @@ Usage:
   cuttledoc models remove <model> [--cache-root <path>]
   cuttledoc models cache-root [--cache-root <path>]
   cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
-  cuttledoc transcribe-batch <directory> [--recursive] [--language <tag|auto>] [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|gemini>] [--format <text|markdown|json>] [--skip-existing|--force] [--report <path>] [--progress]
+  cuttledoc transcribe-batch <directory> [--recursive] [--language <tag|auto>] [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|gemini>] [--format <text|markdown|json>] [--skip-existing|--force] [--report <path>] [--progress] [--progress-format <auto|human|tsv>]
   cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
 decoding and accepts mono little-endian f32 PCM. transcribe-batch writes atomic
 sidecars, skips existing outputs by default, and reuses one recognition runtime.
-Its language defaults to auto, which uses Whisper language detection. Enhancement defaults to off
+Its language defaults to auto, which uses Whisper language detection. Interactive
+batch progress is human-readable; redirected progress remains stable TSV.
+Enhancement defaults to off
 until the ADR-0014 32 GB host gate is complete. Gemini reads OPENROUTER_API_KEY
 only after transcription has released its recognition runtime. Explicit
 openai-transcription file requests upload the original supported media file,
@@ -116,6 +122,7 @@ enum Command {
         overwrite: bool,
         report_path: PathBuf,
         progress: bool,
+        progress_format: ProgressFormat,
     },
     TranscribePcm {
         path: PathBuf,
@@ -283,6 +290,7 @@ fn parse_transcribe_batch(arguments: &[String]) -> Result<Command, String> {
     let mut skip_existing = false;
     let mut overwrite = false;
     let mut progress = false;
+    let mut progress_format = None;
     let mut index = 1;
 
     while index < arguments.len() {
@@ -429,6 +437,18 @@ fn parse_transcribe_batch(arguments: &[String]) -> Result<Command, String> {
                 progress = true;
                 index += 1;
             }
+            "--progress-format" => {
+                let value = arguments
+                    .get(index + 1)
+                    .ok_or("--progress-format requires auto, human, or tsv")?;
+                if progress_format
+                    .replace(ProgressFormat::parse(value)?)
+                    .is_some()
+                {
+                    return Err("--progress-format may only be specified once".to_owned());
+                }
+                index += 2;
+            }
             "--enhancement-model-path" => {
                 return Err(
                     "--enhancement-model-path is unavailable because transcribe-batch does not yet support local enhancement"
@@ -467,6 +487,7 @@ fn parse_transcribe_batch(arguments: &[String]) -> Result<Command, String> {
         overwrite,
         report_path,
         progress,
+        progress_format: progress_format.unwrap_or_default(),
     })
 }
 
@@ -806,6 +827,7 @@ fn run(command: Command) -> CliResult<()> {
                 enhancement,
                 enhancement_model_path,
                 progress,
+                render_transcription_progress,
             )?;
             emit_result(&result, &output)?;
         }
@@ -824,28 +846,33 @@ fn run(command: Command) -> CliResult<()> {
             overwrite,
             report_path,
             progress,
+            progress_format,
         } => {
             let batch_started_at = Instant::now();
             let plan = plan_batch(BatchOptions {
-                root,
+                root: root.clone(),
                 recursive,
                 format: output_format,
                 overwrite,
                 report_path,
             })?;
-            eprintln!(
-                "batch\tdiscovered\t{}\tpending={}\tskipped={}",
+            let renderer = Rc::new(RefCell::new(BatchProgressRenderer::stderr(
+                &root,
+                progress_format,
+            )));
+            renderer.borrow_mut().discovered(
                 plan.discovered(),
                 plan.pending.len(),
-                plan.skipped.len()
+                plan.skipped.len(),
             );
 
             let summary = if plan.pending.is_empty() {
+                let event_renderer = Rc::clone(&renderer);
                 execute_batch(
                     plan,
                     batch_started_at,
                     |_| unreachable!("an empty batch does not invoke its processor"),
-                    render_batch_event,
+                    move |event| event_renderer.borrow_mut().batch_event(event),
                 )?
             } else {
                 let model =
@@ -878,28 +905,34 @@ fn run(command: Command) -> CliResult<()> {
                     },
                 };
                 let decode_options = MediaDecodeOptions { ffmpeg_path };
-                eprintln!("batch\tloading\t0\t1\trecognition-runtime");
+                renderer.borrow_mut().loading(false);
+                let loading_renderer = Rc::clone(&renderer);
                 let mut session = FileTranscriptionSession::create_with_progress(
                     &options,
                     &decode_options,
-                    |event| {
+                    move |event| {
                         if progress {
-                            render_transcription_progress(event);
+                            loading_renderer.borrow_mut().transcription_progress(event);
                         }
                     },
                 )
                 .map_err(CliError::from)?;
-                eprintln!("batch\tloading\t1\t1\trecognition-runtime");
+                renderer.borrow_mut().loading(true);
 
+                let process_renderer = Rc::clone(&renderer);
+                let event_renderer = Rc::clone(&renderer);
                 execute_batch(
                     plan,
                     batch_started_at,
                     |path| {
                         let result = if progress {
+                            let file_renderer = Rc::clone(&process_renderer);
                             session.transcribe_file_with_progress(
                                 path,
                                 &CancellationToken::new(),
-                                render_transcription_progress,
+                                move |event| {
+                                    file_renderer.borrow_mut().transcription_progress(event);
+                                },
                             )
                         } else {
                             session.transcribe_file(path)
@@ -911,12 +944,15 @@ fn run(command: Command) -> CliResult<()> {
                             enhancement,
                             enhancement_model_path.clone(),
                             progress,
+                            |event| {
+                                process_renderer.borrow_mut().transcription_progress(event);
+                            },
                         )
                     },
-                    render_batch_event,
+                    move |event| event_renderer.borrow_mut().batch_event(event),
                 )?
             };
-            render_batch_summary(&summary);
+            renderer.borrow_mut().summary(&summary);
             if !summary.failures.is_empty() {
                 return Err(CliError::new(
                     "BATCH_PARTIAL_FAILURE",
@@ -993,6 +1029,7 @@ fn run(command: Command) -> CliResult<()> {
                 enhancement,
                 enhancement_model_path,
                 progress,
+                render_transcription_progress,
             )?;
             emit_result(&result, &output)?;
         }
@@ -1045,6 +1082,7 @@ fn enhance_result(
     selection: EnhancementSelection,
     model_directory: Option<PathBuf>,
     progress: bool,
+    mut on_progress: impl FnMut(ProgressEvent),
 ) -> CliResult<TranscriptionResult> {
     let mode = match selection {
         EnhancementSelection::Off => TranscriptEnhancementMode::disabled(),
@@ -1065,7 +1103,7 @@ fn enhance_result(
         .filter(|value| !value.is_empty() && *value != "auto")
         .unwrap_or("und");
     if progress && selection != EnhancementSelection::Off {
-        render_transcription_progress(ProgressEvent {
+        on_progress(ProgressEvent {
             phase: cuttledoc::ProgressPhase::Enhancing,
             completed: 0,
             total: Some(1),
@@ -1080,7 +1118,7 @@ fn enhance_result(
     )
     .map_err(CliError::from)?;
     if progress && selection != EnhancementSelection::Off {
-        render_transcription_progress(ProgressEvent {
+        on_progress(ProgressEvent {
             phase: cuttledoc::ProgressPhase::Enhancing,
             completed: 1,
             total: Some(1),
@@ -1107,46 +1145,6 @@ fn render_transcription_progress(progress: ProgressEvent) {
             .total
             .map_or_else(|| "-".to_owned(), |total| total.to_string()),
         progress.message.as_deref().unwrap_or("-")
-    );
-}
-
-fn render_batch_event(event: BatchEvent) {
-    match event {
-        BatchEvent::Starting { index, total, item } => eprintln!(
-            "batch\ttranscribing\t{index}\t{total}\t{}",
-            item.input_path.display()
-        ),
-        BatchEvent::Completed {
-            index,
-            total,
-            item,
-            language,
-        } => eprintln!(
-            "batch\tcompleted\t{index}\t{total}\t{}\tlanguage={}",
-            item.output_path.display(),
-            language.as_deref().unwrap_or("und")
-        ),
-        BatchEvent::Failed {
-            index,
-            total,
-            failure,
-        } => eprintln!(
-            "batch\tfailed\t{index}\t{total}\t{}\tcode={}\t{}",
-            failure.input_path.display(),
-            failure.code,
-            failure.message.replace(['\r', '\n', '\t'], " ")
-        ),
-    }
-}
-
-fn render_batch_summary(summary: &batch::BatchSummary) {
-    eprintln!(
-        "batch\tsummary\tcompleted={}\tskipped={}\tfailed={}\telapsed_ms={:.3}\treport={}",
-        summary.completed(),
-        summary.skipped(),
-        summary.failures.len(),
-        summary.elapsed.as_secs_f64() * 1_000.0,
-        summary.report_path.display()
     );
 }
 
@@ -1346,7 +1344,9 @@ mod tests {
                 "--skip-existing",
                 "--report",
                 "/courses/report.json",
-                "--progress"
+                "--progress",
+                "--progress-format",
+                "human"
             ])),
             Ok(Command::TranscribeBatch {
                 root: PathBuf::from("/courses"),
@@ -1363,6 +1363,7 @@ mod tests {
                 overwrite: false,
                 report_path: PathBuf::from("/courses/report.json"),
                 progress: true,
+                progress_format: ProgressFormat::Human,
             })
         );
         assert_eq!(
@@ -1452,6 +1453,26 @@ mod tests {
         );
         assert!(parse(arguments(&["transcribe-pcm", "speech.f32le"])).is_err());
         assert!(parse(arguments(&["transcribe-batch"])).is_err());
+        assert!(
+            parse(arguments(&[
+                "transcribe-batch",
+                "/courses",
+                "--progress-format",
+                "json"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe-batch",
+                "/courses",
+                "--progress-format",
+                "human",
+                "--progress-format",
+                "tsv"
+            ]))
+            .is_err()
+        );
         assert!(
             parse(arguments(&[
                 "transcribe-batch",

@@ -205,7 +205,11 @@ language, skipped paths, and any per-file failures.
 Use an explicit language such as `--language de` when the whole archive is
 known to use one language. Batch enhancement defaults to off; explicit hosted
 `--enhance gemini` is available, while local enhancement awaits a reusable
-two-phase runtime.
+two-phase runtime. In an interactive terminal, batch progress stays on one
+compact human-readable line instead of printing every internal phase. When
+standard error is redirected, it remains stable tab-separated output for
+automation. Use `--progress-format human` or `--progress-format tsv` to
+override that automatic choice.
 
 The default cache root is `~/.cache/cuttledoc`; override it with
 `CUTTLEDOC_CACHE_ROOT` or `--cache-root`. `models install all` installs both
@@ -235,10 +239,12 @@ cuttledoc transcribe input.ogg \
 Existing output files are refused before recognition starts. `--force` opts
 into atomic replacement. JSON schema `1.0.0` keeps `raw_text` separate from
 the accepted or fallback `text`; `--json` remains a short alias for
-`--format json`. `--progress` writes tab-separated typed phases to standard
-error, leaving result output clean. Usage errors exit with status 2, refused
-overwrites with status 3, and runtime/model failures with status 1; diagnostics
-use stable `error[CODE]` labels and separate remediation text.
+`--format json`. Single-file `--progress` writes tab-separated typed phases to
+standard error, leaving result output clean. Batch commands project those
+phases into the compact terminal status described above while retaining TSV
+for process consumers. Usage errors exit with status 2, refused overwrites
+with status 3, and runtime/model failures with status 1; diagnostics use stable
+`error[CODE]` labels and separate remediation text.
 
 Enhancement is explicit until the 32 GB gate is complete:
 

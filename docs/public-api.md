@@ -692,6 +692,7 @@ cuttledoc transcribe-batch <directory>
                            [--format text|markdown|json]
                            [--skip-existing|--force]
                            [--report <path>] [--progress]
+                           [--progress-format auto|human|tsv]
 
 cuttledoc transcribe-pcm <input>
                          --sample-rate <hz>
@@ -741,14 +742,19 @@ schema-versioned report defaults to `.cuttledoc-batch-report.json` below the
 input directory and records the current invocation's completed input/output
 paths, detected languages, skipped paths, and failures. Local enhancement is
 excluded until recognition and Gemma can run as a bounded two-phase batch;
-explicit Gemini enhancement remains available.
+explicit Gemini enhancement remains available. Batch progress defaults to a
+compact, continuously updated status line on an interactive terminal and to
+stable tab-separated events when standard error is redirected.
+`--progress-format human|tsv` overrides that detection.
 
 Text is the default stdout format. `--output` writes through a sibling
 temporary file, refuses an existing destination before recognition, and
 requires `--force` for atomic replacement. JSON transcription and model-list
 documents carry schema version `1.0.0`; transcription output always preserves
-`raw_text` separately from `text`. Progress is a typed, tab-separated stderr
-stream so stdout remains machine-readable.
+`raw_text` separately from `text`. Single-file progress and redirected batch
+progress are typed, tab-separated stderr streams so stdout remains
+machine-readable. Interactive batch output is a human-facing projection of the
+same events and is not a machine contract.
 
 Diagnostics use `error[CODE]` plus separate remediation. CLI syntax exits with
 status 2, refused overwrites with status 3, and runtime/model failures with

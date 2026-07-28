@@ -198,7 +198,7 @@ Implemented Phase 4 workflows:
 - list, install, verify, remove, and locate managed models;
 - inspect Apple system assets through the same model vocabulary;
 - meaningful version and help output;
-- typed progress on stderr;
+- typed process progress plus compact interactive batch progress on stderr;
 - stable nonzero errors with remediation for invalid input and unsupported
   operations.
 
