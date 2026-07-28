@@ -76,6 +76,23 @@ The Offcourse vertical slice must transcribe several downloaded media files,
 persist success/failure state, consume only machine-readable output, and
 measure startup, total duration, and peak memory.
 
+The first implemented slice validates the complete process boundary:
+
+- Offcourse owns a sequential SQLite-backed queue with bounded retries and
+  persists the executable version, selected settings, durations, outputs, and
+  errors per downloaded video.
+- Provider-neutral tests cover multiple files, partial failure, resume without
+  repeating completed work, and zero-work runs.
+- A real `offcourse -> cuttledoc 0.1.0 -> openai-transcription` run consumed the
+  checked-in JFK sample, parsed schema `1.0.0`, and wrote both JSON and Markdown
+  results. It measured 1,410 ms wall time, 1,402 ms reported processing time,
+  and approximately 8.5 ms of process overhead.
+
+This remote-backend measurement does not represent local model acquisition or
+peak memory. Retain local multi-file startup and memory measurement as the
+review trigger once the release-managed local ASR model is installed again; it
+does not block the process integration or initial CLI distribution.
+
 Add a batch worker when repeated startup is material relative to recognition
 time. Reconsider public Node-API artifacts when at least one real integration
 cannot reasonably use the process contract or measured in-process reuse
