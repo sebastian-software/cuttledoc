@@ -116,14 +116,15 @@ In scope:
 Out of scope:
 
 - automatic remote fallback;
-- hosted transcript enhancement from #25;
+- hosted transcript enhancement from
+  [#180](https://github.com/sebastian-software/cuttledoc/issues/180);
 - PCM upload, Realtime transcription, diarization, translation, or streaming
   transcript deltas;
 - automatic compression or splitting above 25 MB;
 - bundled FFmpeg or local ASR/LLM artifacts on Linux and Windows;
 - a generic OpenAI-compatible endpoint or user-configurable base URL;
 - release signing, notarization, SBOM, provenance, and final publication from
-  #28.
+  [#181](https://github.com/sebastian-software/cuttledoc/issues/181).
 
 ## Verification commands
 
@@ -214,7 +215,7 @@ scan captured logs for the credential before success. Record only model,
 fixture digest, platform, success state, and bounded timing evidence.
 
 Reconcile `PLAN.md`, `docs/compatibility-matrix.md`, public/package docs, and
-issue #26. Do not claim #28 release completion.
+historical issue #26. Do not claim #181 release completion.
 
 Harness checkpoint: `71516fc` provides a manual workflow around the committed
 400,967-byte English Opus fixture with SHA-256

@@ -1,7 +1,7 @@
 # Direct Gemma 4 adapter over official MLX
 
 **Status:** The first issue
-[#25](https://github.com/sebastian-software/cuttledoc-rs/issues/25) local-runtime
+[#180](https://github.com/sebastian-software/cuttledoc/issues/180) local-runtime
 gate is complete. The repository-owned adapter loads the pinned Gemma 4
 26B-A4B 4-bit snapshot, generates incrementally through official MLX C++, and
 matches the pinned Python MLX-LM oracle exactly for the fixed greedy smoke

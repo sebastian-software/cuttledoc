@@ -5,7 +5,9 @@
 This document began as the Phase 0 boundary decision and is not yet a published
 compatibility promise. Task separation, worker ownership, open backend IDs,
 capability discovery, and streaming semantics are settled by ADR-0010. The
-issue-#25 generation and transcript-enhancement vertical slice now implements
+issue
+[#180](https://github.com/sebastian-software/cuttledoc/issues/180) generation
+and transcript-enhancement vertical slice now implements
 the core contracts described here.
 
 ## API layers

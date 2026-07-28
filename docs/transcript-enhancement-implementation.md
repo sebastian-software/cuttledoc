@@ -2,7 +2,7 @@
 
 **Status:** The Rust, CLI, Node, local Gemma, explicit Gemini, correction-policy,
 and packed-artifact slices of issue
-[#25](https://github.com/sebastian-software/cuttledoc-rs/issues/25) are
+[#180](https://github.com/sebastian-software/cuttledoc/issues/180) are
 implemented. A direct 32 GB Apple-Silicon lifecycle smoke remains required
 before local enhancement becomes the default.
 

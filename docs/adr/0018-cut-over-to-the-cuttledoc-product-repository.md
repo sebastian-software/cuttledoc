@@ -85,6 +85,27 @@ the `-rs` suffix.
 Revisit the history strategy only if a concrete legal, provenance, or
 maintenance requirement needs the two commit graphs to share ancestry.
 
+## Validation evidence
+
+This section records cutover evidence and may be extended without changing the
+decision:
+
+- On 2026-07-28, `sebastian-software/cuttledoc/main` was moved from
+  `e0c587883f1fdf67d521f8e0b3c216b22d91fda6` to the reviewed Rust cutover
+  commit `8aba802f48c02c84f70c4e2e1c0a4e9fd14a27fa` with an exact
+  `--force-with-lease` expectation.
+- `archive/typescript-v2` resolves to the previous `main` commit
+  `e0c587883f1fdf67d521f8e0b3c216b22d91fda6`.
+- Tags `v1.0.0` and `v2.0.0` remain in the product repository.
+- Active incubator issues moved from `cuttledoc-rs#13`, `#25`, and `#28` to
+  product issues
+  [#179](https://github.com/sebastian-software/cuttledoc/issues/179),
+  [#180](https://github.com/sebastian-software/cuttledoc/issues/180), and
+  [#181](https://github.com/sebastian-software/cuttledoc/issues/181).
+- Open TypeScript v2 pull requests closed when their base history was
+  replaced, and v2 implementation issues #147 through #171 were closed as not
+  planned.
+
 ## References
 
 - [ADR-0002](0002-incubator-and-product-repository.md)

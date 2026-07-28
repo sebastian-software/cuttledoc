@@ -310,7 +310,8 @@ bash scripts/test-cuttledoc-node-package.sh
 Separate cloud-only CLI and experimental Node artifacts have also passed packed
 install and load tests on Linux x64 and Windows x64. The Node evidence remains
 a regression harness, not part of the initial release matrix. Final CLI release
-publication remains tracked by issue #28.
+publication remains tracked by
+[issue #181](https://github.com/sebastian-software/cuttledoc/issues/181).
 
 ## First proof
 

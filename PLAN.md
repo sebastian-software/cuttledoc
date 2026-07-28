@@ -91,7 +91,7 @@ Evidence snapshot: 2026-07-24.
 | Direct Qwen3-ASR over official MLX (#17) | Complete | The owned adapter reaches exact fixed-fixture parity, completes the 15-fixture multilingual audiobook pilot, and proves reusable Rust lifecycle plus stable invalid, busy, and cancelled states. Held-out target-domain data, common-engine integration, and release pruning are follow-ups. |
 | Held-out target-domain corpus (#18) | Complete | Three CC-BY-4.0 German podcast episodes are frozen as exact ten-minute validation/test passages with five speakers and digest-pinned source, publisher-draft, and PCM artifacts. The validation review bundle and five complete-coverage, unscored Apple/Whisper/Qwen/Parakeet/Voxtral drafts are committed. Independent review remains available for later release-quality claims but is no longer an implementation-selection gate. |
 | Voxtral Realtime live streaming (#19) | Complete | The repository-owned official-MLX session retains incremental mel, causal-convolution, 32-layer encoder, downsampler, 26-layer decoder, token, and text state behind the bounded Rust/C ABI. Real-time 480/2,400 ms runs reproduce the pinned 177-token streaming text exactly with append-only deltas; a ten-run DE/EN/ES/FR/PT control preserves language/delay cells and confirms 320 ms input as the stable path. The pure-C/MPS control proves a tiny binary but a larger BF16 model/working set, missing lifecycle semantics, and an ADR-0005 failure; ADR-0012 selects the owned official-MLX boundary. Held-out data moves to #18; common-engine, long-audio, and clean-host delivery are focused productization follow-ups. |
-| Synthetic TTS roundtrip (#13) | Deferred, non-blocking | The required Apple, Qwen VoiceDesign, and Voxtral BF16 factorial evidence is complete. A public synthesis contract and product backend remain later work and do not block Phase 1 or the first transcription release. |
+| Synthetic TTS roundtrip ([#179](https://github.com/sebastian-software/cuttledoc/issues/179)) | Deferred, non-blocking | The required Apple, Qwen VoiceDesign, and Voxtral BF16 factorial evidence is complete. A public synthesis contract and product backend remain later work and do not block Phase 1 or the first transcription release. |
 | Thin Node/npm boundary (#9) | Complete | Node 22/24 CI builds, packs, compiler-free installs, and tests the same macOS arm64 tarball through ESM and CommonJS, including streaming fields, background work, progress, errors, cancellation, and missing-artifact diagnostics. |
 | Local text-generation runtime (#7) | Complete | The pinned Qwen3 0.6B MLX reference proves load, deterministic streaming, cancellation, and external lexical rejection. It is explicitly a runtime/negative control, not quality selection. |
 | Transcript-enhancement model/runtime bakeoff (#20) | Complete | ADR-0014 selects Gemma 4 26B-A4B 4-bit as the local-first model and Gemini 3.6 Flash as the explicit OpenRouter quality option. The raw transcript remains available, smaller local models are rejected, 32 GB unified memory is recommended, and official MLX is the first embedded implementation path. |
@@ -303,7 +303,8 @@ errors, and credential redaction. `auto` remains strictly local.
 
 The fixture-pinned, credentialed live smoke passed on Linux x64 without
 retaining its audio, transcript, request, response, diagnostics, or credential.
-Issue #26 is complete; release publication remains #28.
+Historical issue #26 is complete; release publication remains
+[#181](https://github.com/sebastian-software/cuttledoc/issues/181).
 
 Scope:
 
@@ -322,7 +323,7 @@ Exit criteria:
 - Linux and Windows can build the non-CoreML product and use OpenAI.
 - Credentials never appear in command lines, logs, or persisted configuration.
 
-## Phase 5 — Text generation and speech synthesis decisions (#13)
+## Phase 5 — Text generation and speech synthesis decisions ([#179](https://github.com/sebastian-software/cuttledoc/issues/179))
 
 **Purpose:** prevent the existing `@cuttledoc/llm` implementation from silently defining the Rust architecture and evaluate the strategic STT → LLM → TTS direction without making it a blocker for the first v3 release (ADR-0009).
 
@@ -345,7 +346,9 @@ Gate:
 
 - Issue #7 proves the runtime and safety-gate foundation. Issue #20 and
   ADR-0014 select Gemma 4 26B-A4B 4-bit as the local model and Gemini 3.6 Flash
-  as the explicit hosted option. Issue #25 owns their product implementation:
+  as the explicit hosted option.
+  [Issue #180](https://github.com/sebastian-software/cuttledoc/issues/180)
+  owns their product implementation:
   implement Gemma first through a narrow owned adapter over official MLX after
   the common text-generation and enhancement contracts exist. A Core ML
   conversion is triggered only by a material MLX memory, parity, energy,
@@ -360,7 +363,8 @@ Gate:
 
 **Purpose:** prove that the final delivery mechanisms work, not just source checkouts.
 
-Issue #28 owns the reproducible release-candidate artifact set after the
+[Issue #181](https://github.com/sebastian-software/cuttledoc/issues/181) owns
+the reproducible release-candidate artifact set after the
 backend, hosted-provider, and CLI compatibility gates are complete.
 The executable implementation and evidence plan is
 [`docs/plans/reproducible-v3-release-artifacts.md`](docs/plans/reproducible-v3-release-artifacts.md).
@@ -451,10 +455,14 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 Evidence snapshot: 2026-07-28 at implementation checkpoint `71516fc`.
 
-1. Complete #28: build, sign, notarize, attest, and clean-machine-test the
-   reproducible v3 release artifacts.
+1. Complete [#181](https://github.com/sebastian-software/cuttledoc/issues/181):
+   build, sign, notarize, attest, and clean-machine-test the reproducible v3
+   release artifacts.
 2. Run the remaining physical 32 GB Apple Silicon packaged Gemma smoke from
-   #25 opportunistically; the implementation and conservative disabled default
-   are already complete.
-3. Run the TTS vertical slice in #13 after the transcription release gates; it
-   remains a strategic but non-blocking product direction.
+   [#180](https://github.com/sebastian-software/cuttledoc/issues/180)
+   opportunistically; the implementation and conservative disabled default are
+   already complete.
+3. Run the TTS vertical slice in
+   [#179](https://github.com/sebastian-software/cuttledoc/issues/179) after the
+   transcription release gates; it remains a strategic but non-blocking product
+   direction.

@@ -14,7 +14,7 @@ Speech synthesis is not yet represented by a selected runtime, model candidate, 
 
 - Keep independently usable speech synthesis and the complete voice pipeline as an explicit product direction.
 - Do not make TTS implementation or a stable `SpeechSynthesisEngine` contract part of Phase 0 or the first v3 definition of done.
-- Evaluate TTS runtimes and models in Phase 5 through issue #13. Build one narrow vertical slice before accepting the public contract.
+- Evaluate TTS runtimes and models in Phase 5 through [issue #179](https://github.com/sebastian-software/cuttledoc/issues/179). Build one narrow vertical slice before accepting the public contract.
 - The vertical slice must validate audio format negotiation, chunk ownership and timing, streaming/backpressure, cancellation, voice and language selection, lifecycle, model delivery, and Rust/Node mapping.
 - Speech synthesis remains a separate task. It must not be folded into `SpeechRecognitionEngine`, `TextGenerationEngine`, or a generic tensor/runtime API.
 - A later accepted ADR may promote TTS into a specific release gate after implementation evidence exists.
@@ -44,4 +44,4 @@ Rejected because speech synthesis and the voice pipeline are explicit product di
 
 ## Validation
 
-Issue #13 records candidate runtimes/models, implements a narrow end-to-end synthesis path, and proposes the concrete contract plus release timing in a follow-up ADR.
+[Issue #179](https://github.com/sebastian-software/cuttledoc/issues/179) records candidate runtimes/models, implements a narrow end-to-end synthesis path, and proposes the concrete contract plus release timing in a follow-up ADR.

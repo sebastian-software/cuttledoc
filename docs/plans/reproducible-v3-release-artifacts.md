@@ -5,7 +5,7 @@
 - Priority: P1
 - Effort: XL
 - Risk: HIGH
-- Issue: #28
+- Issue: [#181](https://github.com/sebastian-software/cuttledoc/issues/181)
 - Depends on: #24, #26, and #27, all complete
 - Planned at: `251c140`, 2026-07-28
 - Working state at planning time: clean `main`, synchronized with `origin/main`
@@ -18,7 +18,8 @@ harnesses prove compiler-free installation. They do not yet form a release:
 there is no tag, release manifest, checksum set, signature, notarization,
 SBOM, provenance attestation, Homebrew formula, or rollback exercise.
 
-Issue #28 converts the existing package evidence into a CLI release-candidate
+[Issue #181](https://github.com/sebastian-software/cuttledoc/issues/181)
+converts the existing package evidence into a CLI release-candidate
 set whose identity starts at one source revision and remains verifiable through
 download and installation. ADR-0018 moved the Rust implementation into the
 permanent Cuttledoc product repository before release automation is finalized.
@@ -248,9 +249,9 @@ From a clean commit:
    clean installs, Homebrew, capabilities, and rollback;
 6. publish the GitHub prerelease only after the downloaded-artifact gate;
 7. record run URLs, artifact digests, Apple submission evidence, and residual
-   limitations in this plan, `PLAN.md`, the compatibility matrix, and #28.
+   limitations in this plan, `PLAN.md`, the compatibility matrix, and #181.
 
-Do not close #28 on workflow configuration alone. Close it only after the
+Do not close #181 on workflow configuration alone. Close it only after the
 actual tagged rehearsal has passed.
 
 ## Stop and escalation conditions
