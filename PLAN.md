@@ -352,6 +352,8 @@ Gate:
 
 Issue #28 owns the reproducible release-candidate artifact set after the
 backend, hosted-provider, and CLI compatibility gates are complete.
+The executable implementation and evidence plan is
+[`docs/plans/reproducible-v3-release-artifacts.md`](docs/plans/reproducible-v3-release-artifacts.md).
 
 Deliverables:
 
