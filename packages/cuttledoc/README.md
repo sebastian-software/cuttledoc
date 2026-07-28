@@ -63,7 +63,7 @@ back. `textGenerationBackends()` reports the current local and hosted
 capability gates. Recognition resources are released before either
 enhancement runtime is acquired.
 
-This is an implementation-incubator artifact and is not yet the production
-Cuttledoc v3 release. See the
-[repository](https://github.com/sebastian-software/cuttledoc-rs) for status and
-the native CLI.
+This is an experimental adapter and is not part of the initial Cuttledoc v3
+release contract. See the
+[repository](https://github.com/sebastian-software/cuttledoc) for the supported
+native CLI.

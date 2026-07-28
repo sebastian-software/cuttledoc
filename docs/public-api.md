@@ -547,9 +547,24 @@ mechanically checks its TypeScript declarations from the Rust binding surface
 in CI. The shared vectors check behavior; JavaScript does not implement a
 second reducer.
 
-## Node.js API
+## Process API
 
-The Node API mirrors domain concepts while remaining idiomatic TypeScript:
+The native CLI is the initial stable integration surface outside Rust. Process
+callers use `--format json`, keep standard output reserved for the
+schema-versioned result, and consume optional typed progress from standard
+error. Stable exit codes distinguish usage, refused output replacement, and
+runtime failures. Callers configure the executable path explicitly or resolve
+`cuttledoc` from `PATH`.
+
+Offcourse is the first external validator of this contract. If multi-file
+measurements show material repeated-startup cost, the contract will grow a
+long-lived batch/worker mode before a language-specific binding is promoted
+(ADR-0019).
+
+## Experimental Node.js API
+
+The repository retains a non-published Node adapter that mirrors domain
+concepts while remaining idiomatic TypeScript:
 
 ```ts
 import { Cuttledoc, transcribe } from "cuttledoc";
@@ -581,7 +596,7 @@ await engine.close();
 await cuttledoc.close();
 ```
 
-The currently implemented one-shot Node surface exposes explicit hosted
+The currently implemented one-shot experimental surface exposes explicit hosted
 transcription without persisting the credential:
 
 ```ts
@@ -730,7 +745,7 @@ If an advanced capability cannot be expressed without exposing implementation de
 ## Compatibility policy
 
 - Rust follows semantic versioning once the crate is published.
-- Node follows semantic versioning and documents Cuttledoc 2 migration differences.
+- The experimental Node adapter has no public compatibility commitment.
 - CLI output intended for humans may evolve; `--format json` receives a versioned schema.
 - Model manifests are versioned independently of package releases but pinned by release metadata.
 - Stable error codes outlive exact error messages.

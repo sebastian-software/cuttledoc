@@ -16,7 +16,7 @@ The target makes Rust the product center while preserving proven native inferenc
 ```text
                          ┌─────────────────────────────┐
                          │ User applications           │
-                         │ Rust │ CLI │ Node/TypeScript│
+                         │ Rust │ CLI/process callers  │
                          └──────────────┬──────────────┘
                                         │
                          ┌──────────────▼──────────────┐
@@ -49,7 +49,7 @@ Dependencies point inward toward domain types and contracts:
 
 ```text
 cuttledoc-cli ─────┐
-cuttledoc-node ────┼──▶ cuttledoc ───▶ backend/audio/model abstractions
+cuttledoc-node* ───┼──▶ cuttledoc ───▶ backend/audio/model abstractions
                    │                         ▲
                    └─────────────────────────┘
 
@@ -59,7 +59,10 @@ cuttledoc-audio ─────────────────▶ domain au
 cuttledoc-models ────────────────▶ provisioning and storage contracts
 ```
 
-The public `cuttledoc` crate must not depend on Node.js. `cuttledoc-node` depends on the Rust API and contains only conversion, callback bridging, and Node-specific lifecycle handling.
+The public `cuttledoc` crate must not depend on Node.js. The experimental
+`cuttledoc-node` adapter depends on the Rust API and contains only conversion,
+callback bridging, and Node-specific lifecycle handling. It is not an initial
+release surface (ADR-0019).
 
 ## Task scope
 
@@ -187,7 +190,7 @@ Owns command parsing and terminal presentation only. Commands call the same Rust
 
 ### `cuttledoc-node`
 
-Owns:
+Experimental adapter. Owns:
 
 - `napi-rs` annotations and generated TypeScript declarations;
 - conversion between JS objects, buffers/typed arrays, and Rust types;
@@ -197,7 +200,8 @@ Owns:
 Rust domain types are authoritative. CI regenerates or mechanically checks the
 TypeScript surface and runs the same reducer contract vectors through Rust and
 Node. The binding must not select backends, manage model paths independently,
-or implement transcription behavior.
+or implement transcription behavior. Passing these checks does not make the
+adapter a published product artifact.
 
 ## Runtime model
 
@@ -362,17 +366,23 @@ Node errors include `code`, backend/model context, and the native cause when saf
 
 ## Distribution architecture
 
-The user-facing npm contract is one package named `cuttledoc`. Implementation-only packages such as `@cuttledoc/darwin-arm64` may carry prebuilt artifacts if npm distribution requires them, but they expose no product API and are versioned automatically with the facade.
+The initial user-facing distribution is the native `cuttledoc` CLI. Each
+supported target receives a separate archive with a schema-versioned
+machine-output contract. Process consumers locate the executable through
+explicit configuration or `PATH`, read results from standard output, and keep
+progress and diagnostics on standard error.
+
+The Node adapter remains a regression-tested experiment. A public npm contract
+requires a later decision with concrete consumer and performance evidence
+(ADR-0019).
 
 Every release tests:
 
 1. Rust workspace from source.
 2. Final native CLI archive.
-3. Final npm tarball installed in an empty project.
-4. ESM import.
-5. CommonJS require.
-6. Native addon load.
-7. At least one real transcription on supported Apple Silicon infrastructure.
+3. Schema-versioned JSON and stable exit behavior from the installed CLI.
+4. At least one real transcription on supported Apple Silicon infrastructure.
+5. Hosted-only CLI behavior on supported non-Apple targets.
 
 ## Observability
 

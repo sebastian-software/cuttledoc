@@ -4,7 +4,7 @@ set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 source_dir=${CUTTLEDOC_MLX_SOURCE_DIR:?set CUTTLEDOC_MLX_SOURCE_DIR to MLX v0.31.2 or v0.32.0}
-model_dir=${CUTTLEDOC_MLX_MODEL_DIR:-"$HOME/.cache/cuttledoc-rs/mlx-whisper-tiny"}
+model_dir=${CUTTLEDOC_MLX_MODEL_DIR:-"$HOME/.cache/cuttledoc/mlx-whisper-tiny"}
 source_fixture=${CUTTLEDOC_MLX_FIXTURE:-"$root/../cuttledoc/packages/cuttledoc/fixtures/fleurs-en-000.ogg"}
 language=${CUTTLEDOC_MLX_LANGUAGE:-en}
 lifecycle_count=${CUTTLEDOC_MLX_LIFECYCLES:-3}

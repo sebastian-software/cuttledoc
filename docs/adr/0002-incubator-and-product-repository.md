@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0018](0018-cut-over-to-the-cuttledoc-product-repository.md)
 
 ## Context
 

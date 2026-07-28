@@ -2,31 +2,36 @@
 
 ## Objective
 
-Deliver Cuttledoc v3 as a Rust library with a native CLI and thin Node.js bindings while preserving the useful behavior of Cuttledoc 2, `parakeet-coreml`, and `whisper-coreml`.
+Deliver Cuttledoc v3 as a Rust-owned local-first transcription product with a
+native CLI, while preserving or deliberately replacing the useful behavior of
+Cuttledoc 2, `parakeet-coreml`, and `whisper-coreml`.
 
 This is a staged migration, not a line-by-line rewrite. Each phase must produce evidence that lowers a specific risk.
 
 ## Definition of done
 
-The incubator is ready to become Cuttledoc v3 when all of the following are true:
+The first Cuttledoc v3 release is complete when all of the following are true:
 
 - The Rust API and native CLI transcribe supported audio/video inputs through at least one selected Apple-local ASR path and OpenAI on the macOS 26+ Apple Silicon baseline (ADR-0007).
-- Ordered, range-addressed transcription updates with replace/revoke and volatile/final semantics (ADR-0008) are available through Rust, CLI, and Node for backends that support them; batch results are derived from the same stream model.
-- The Node API covers the stable Cuttledoc 2 use cases without owning product logic.
+- Ordered, range-addressed transcription updates with replace/revoke and volatile/final semantics (ADR-0008) are available through Rust and the CLI for backends that support them; batch results are derived from the same stream model.
+- Process consumers can rely on schema-versioned JSON, typed standard-error
+  progress, stable exit codes, and an explicitly configurable binary path
+  (ADR-0019).
 - Public domain contracts cover speech-to-text and text generation as separate composable tasks. Speech synthesis remains an explicit product direction, but is not release-blocking until a Phase 5 vertical slice validates its contract (ADR-0009).
 - Existing Parakeet and Whisper behavior has measured compatibility evidence; each capability is preserved, deliberately replaced, or explicitly deprecated with a migration path.
 - Selected runtimes and bindings pass ADR-0005 rather than entering the product only because a technical spike works.
 - Model downloads are resumable or atomic, validated, observable, configurable, and compatible with existing caches or an explicit migration command.
 - Apple Silicon accuracy and performance stay within the agreed tolerances in `docs/compatibility-matrix.md`.
-- The npm tarball installs on a clean supported machine without compiling native code.
-- ESM and CommonJS can load the same prebuilt Node-API artifact.
-- Rust CLI releases and npm releases are reproducible and smoke-tested from their final artifacts.
-- The existing production repository has a documented upgrade, rollback, and deprecation path.
+- Native CLI releases are reproducible and smoke-tested from their final
+  artifacts without compiling on the installation machine.
+- `sebastian-software/cuttledoc` is the canonical source and release repository,
+  with the previous TypeScript state preserved explicitly (ADR-0018).
 
 ## Non-goals for the first release
 
 - Reimplementing CoreML, whisper.cpp, or FFmpeg in pure Rust.
-- Supporting Intel macOS or macOS releases before 26 at all; Cuttledoc 2 remains the product for those systems (ADR-0007).
+- Supporting Intel macOS or macOS releases before 26. The v2 artifacts remain
+  historical downloads, not a maintained fallback (ADR-0018).
 - Capturing microphone or system audio inside the library; callers provide files or PCM feeds and own capture permissions (ADR-0008).
 - Shipping every model or runtime evaluated during the Apple Silicon bakeoff.
 - Supporting embeddings, vision, image generation, or arbitrary tensor execution in the initial architecture.
@@ -34,6 +39,9 @@ The incubator is ready to become Cuttledoc v3 when all of the following are true
 - Porting embedded GGUF post-processing before its product value and distribution cost are revalidated.
 - Publishing every workspace crate independently.
 - Maintaining the old low-level `parakeet-coreml` and `whisper-coreml` Node APIs indefinitely.
+- Publishing a public npm/Node-API package in the initial v3 release. The
+  existing adapter remains experimental until concrete consumers justify its
+  platform and release cost (ADR-0019).
 
 ## Phase 0 — Architecture and feasibility
 
@@ -121,7 +129,8 @@ Exit criteria:
 
 - The empty vertical architecture builds locally and in CI.
 - Platform-specific code does not prevent non-macOS crates from compiling.
-- Rust and Node APIs are generated or checked from one set of domain types.
+- Rust, CLI, and experimental adapter APIs are checked against one set of domain
+  types.
 
 ## Phase 2 — Selected local ASR vertical slice
 
@@ -202,13 +211,14 @@ Scope:
 - Structured segments and combined text.
 - Engine reuse and deterministic cleanup.
 - Model download, validation, force refresh, and progress.
-- Rust, CLI, and Node surfaces.
+- Rust and CLI surfaces, with the Node surface retained as non-release
+  compatibility evidence.
 
 Exit criteria:
 
 - Existing fixtures pass agreed quality and timestamp tolerances against the Phase 0 baseline.
 - Long audio is handled without exposing internal model constraints.
-- A packed npm artifact performs a real transcription on Apple Silicon.
+- A packed CLI artifact performs a real transcription on Apple Silicon.
 - Repeated engine creation and disposal does not leak materially.
 
 ## Phase 3 — Compatibility backend and coverage
@@ -346,7 +356,7 @@ Gate:
 - Keep speech synthesis independently usable rather than coupling it to one LLM or voice-assistant flow.
 - Do not treat speech synthesis as part of the first v3 definition of done unless a later accepted ADR explicitly promotes it.
 
-## Phase 6 — Distribution and compatibility
+## Phase 6 — CLI distribution and compatibility
 
 **Purpose:** prove that the final delivery mechanisms work, not just source checkouts.
 
@@ -357,41 +367,35 @@ The executable implementation and evidence plan is
 
 Deliverables:
 
-- Rust crate publication plan.
 - Native CLI archives, checksums, signatures, Apple notarization, and Homebrew path.
-- One user-facing `cuttledoc` npm package.
-- Platform-specific npm binary packages only if required as hidden distribution details.
-- Node 22/24 test matrix for ESM and CommonJS.
 - macOS deployment-target and Apple Silicon test matrix.
-- Linux/Windows cloud-only artifact tests.
+- Linux/Windows cloud-only CLI artifact tests.
 - SBOM, license inventory, provenance, and release attestations.
 - Clean-machine install tests from packed/published artifacts.
 
 Exit criteria:
 
-- Installation never invokes Rust, CMake, Xcode, or `node-gyp` on a supported target.
-- Unsupported targets fail with a deliberate capability message, not npm platform-resolution noise.
+- Installation never invokes Rust, CMake, or Xcode on a supported target.
+- Unsupported targets fail with a deliberate Cuttledoc capability message.
 - A release can be reproduced from a tag.
 
-## Phase 7 — Product migration
+## Phase 7 — Product repository cutover (completed early)
 
-**Purpose:** make the Rust implementation Cuttledoc rather than a permanent side project.
+**Purpose:** make the Rust implementation Cuttledoc rather than a permanent
+side project before release automation is tied to a temporary repository.
 
-Deliverables:
+Completed deliverables:
 
-- Final compatibility report and benchmark comparison.
-- Cuttledoc 2 → 3 migration guide.
-- Cache migration or reuse behavior.
-- Deprecation notices for `parakeet-coreml` and `whisper-coreml`.
-- Plan for `@cuttledoc/ffmpeg` and `@cuttledoc/llm`.
-- Import or merge strategy into `sebastian-software/cuttledoc`.
-- Release candidate, rollback plan, and support window.
+- `sebastian-software/cuttledoc` is the canonical repository.
+- The Rust history is the product default branch.
+- The previous TypeScript tip is retained as `archive/typescript-v2`, alongside
+  the unchanged v1/v2 tags and releases.
+- Active Rust delivery issues move to the product repository.
+- `cuttledoc-rs` remains historical evidence rather than a second product.
 
-Exit criteria:
-
-- Cuttledoc v3 is released from the product repository.
-- Legacy repositories clearly point to their replacements.
-- No model or package is archived before users have a working migration path.
+Release publication, rollback evidence, and legacy-repository notices remain
+Phase 6 deliverables. No compatibility population requires the previous
+unreleased TypeScript implementation to stay supported in parallel.
 
 ## Cross-cutting workstreams
 
@@ -401,7 +405,8 @@ Exit criteria:
 - Contract tests shared across backends.
 - Real-model integration tests on self-hosted Apple Silicon runners.
 - FLEURS-based regression fixtures already used by Cuttledoc.
-- Packed npm tests, installed CLI tests, and crate consumer tests.
+- Installed CLI tests and crate consumer tests. Experimental packed Node tests
+  remain useful regression evidence but are not release gates.
 - Failure injection for partial downloads, corrupted caches, cancellations, and unavailable hardware.
 
 ### Performance
@@ -414,7 +419,7 @@ Track separately:
 - inference real-time factor;
 - peak/resident memory;
 - first-result latency;
-- native binary and npm install size.
+- native binary and archive size.
 
 Performance comparisons must use the same machines, fixtures, model versions, and power conditions.
 
@@ -434,13 +439,13 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 | CoreML ownership or thread affinity is incompatible with generic async executors | Crashes or nondeterministic behavior | Phase 0 single-thread executor spike                    |
 | Direct Rust CoreML coverage is incomplete                                        | Large unsafe surface or stalled port | Stage through a narrow C ABI and replace incrementally  |
 | whisper.cpp build and linking dominate complexity                                | Fragile releases                     | Isolated sys crate, pinned upstream, artifact test      |
-| npm platform packaging recreates current install failures                        | Users cannot install                 | Pack/install matrix before backend porting expands      |
+| Platform packaging or signing breaks the native CLI                              | Users cannot install                 | Final-archive matrix before publication                 |
 | Model downloads are huge and currently weakly verified                           | Corruption and poor UX               | Versioned manifests, hashes, atomic/resumable downloads |
 | “One package” grows too large through embedded LLM inference                     | Slow installs and maintenance burden | Decide enhancement separately in Phase 5                |
 | Rewrite changes recognition quality unnoticed                                    | Product regression                   | Golden fixtures and benchmark gates from Phase 1        |
-| Incubator and production diverge                                                 | Duplicate maintenance                | Time-box phases and migrate into product repo at parity |
+| Historical incubator links are mistaken for current product state                | Contributor confusion                | ADR-0018 and canonical repository metadata              |
 | A promising but weakly maintained wrapper becomes critical infrastructure       | Forced fork or blocked upgrades      | ADR-0005 disposition before adoption                    |
-| macOS 26+ baseline excludes users on older macOS                                 | Lost or stranded users               | Keep Cuttledoc 2 supported with an explicit window (ADR-0007) |
+| macOS 26+ baseline excludes older Apple systems                                  | Smaller addressable install base     | State the platform requirement before download (ADR-0007) |
 
 ## Immediate next actions
 

@@ -4,8 +4,8 @@
 
 - Work: “Un enregistrement calme”
 - Exact source digest: `03703f7c33e12ea120df1844383194f8231593e35212b4306e947f76a370c70b`
-- Revision: [permanent link](https://github.com/sebastian-software/cuttledoc-rs/blob/main/benchmarks/fixtures/text/synthetic-fr-dialogue.txt)
-- Source history: [history](https://github.com/sebastian-software/cuttledoc-rs/commits/main/benchmarks/fixtures/text/synthetic-fr-dialogue.txt)
+- Revision: [permanent link](https://github.com/sebastian-software/cuttledoc/blob/main/benchmarks/fixtures/text/synthetic-fr-dialogue.txt)
+- Source history: [history](https://github.com/sebastian-software/cuttledoc/commits/main/benchmarks/fixtures/text/synthetic-fr-dialogue.txt)
 - Source license: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 - Passage selector and digest: `synthetic-fr-dialogue` in
   `benchmarks/fixtures/synthetic-roundtrip-selection.json`

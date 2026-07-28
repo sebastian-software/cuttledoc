@@ -5,7 +5,7 @@
 - Work: “A quiet recording”, Cuttledoc benchmark dialogue
 - Exact source digest:
   `51bb13dc91460c0d653d792042f8aa5b5b148fc9894e43a6c6d0e6cf23088203`
-- Source history: [repository history](https://github.com/sebastian-software/cuttledoc-rs/commits/main/benchmarks/fixtures/text/synthetic-de-dialogue.txt)
+- Source history: [repository history](https://github.com/sebastian-software/cuttledoc/commits/main/benchmarks/fixtures/text/synthetic-de-dialogue.txt)
 - Source license: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 - Passage selector and digest: `synthetic-de-dialogue` in
   `benchmarks/fixtures/synthetic-roundtrip-selection.json`

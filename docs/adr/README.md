@@ -4,13 +4,13 @@ ADRs capture decisions that materially constrain the implementation. Proposed AD
 
 | ADR                                                                    | Title                                              | Status   |
 | ---------------------------------------------------------------------- | -------------------------------------------------- | -------- |
-| [0001](0001-rust-core-and-single-product-api.md)                       | Rust core and a single product API                 | Accepted |
-| [0002](0002-incubator-and-product-repository.md)                       | Incubator and product repository strategy          | Accepted |
+| [0001](0001-rust-core-and-single-product-api.md)                       | Rust core and a single product API                 | Superseded |
+| [0002](0002-incubator-and-product-repository.md)                       | Incubator and product repository strategy          | Superseded |
 | [0003](0003-staged-native-interop.md)                                  | Staged, runtime-neutral native interop              | Accepted |
 | [0004](0004-task-oriented-engines-and-runtime-adapters.md)             | Task-oriented engines and internal runtime adapters | Accepted |
 | [0005](0005-third-party-dependency-policy.md)                          | Strict third-party dependency acceptance policy    | Accepted |
 | [0006](0006-apple-runtime-and-model-selection-by-bakeoff.md)           | Apple runtime and model selection by bakeoff        | Accepted |
-| [0007](0007-apple-silicon-macos-26-baseline.md)                        | Apple Silicon and macOS 26 baseline for v3          | Accepted |
+| [0007](0007-apple-silicon-macos-26-baseline.md)                        | Apple Silicon and macOS 26 baseline for v3          | Accepted; support clause superseded |
 | [0008](0008-streaming-first-transcription-results.md)                  | Streaming-first transcription results               | Accepted |
 | [0009](0009-voice-pipeline-direction-and-staged-speech-synthesis.md)   | Voice-pipeline direction and staged speech synthesis | Accepted |
 | [0010](0010-capability-oriented-engine-ownership.md)                   | Capability-oriented engine ownership and backend identity | Accepted |
@@ -21,6 +21,8 @@ ADRs capture decisions that materially constrain the implementation. Proposed AD
 | [0015](0015-apple-speech-first-local-asr-backend.md)                   | Apple Speech as the first local ASR backend           | Accepted |
 | [0016](0016-external-ffmpeg-process-boundary-for-media-decoding.md)     | External FFmpeg process boundary for initial media decoding | Accepted |
 | [0017](0017-source-integrated-whisper-cpp-compatibility-backend.md)     | Source-integrated whisper.cpp compatibility backend   | Accepted |
+| [0018](0018-cut-over-to-the-cuttledoc-product-repository.md)           | Cut over to the Cuttledoc product repository          | Accepted |
+| [0019](0019-cli-first-product-distribution.md)                          | Use CLI-first product distribution                    | Accepted |
 
 Status values: proposed, accepted, superseded, rejected.
 

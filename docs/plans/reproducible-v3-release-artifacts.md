@@ -18,27 +18,26 @@ harnesses prove compiler-free installation. They do not yet form a release:
 there is no tag, release manifest, checksum set, signature, notarization,
 SBOM, provenance attestation, Homebrew formula, or rollback exercise.
 
-Issue #28 converts the existing package evidence into a release-candidate set
-whose identity starts at one source revision and remains verifiable through
-download and installation. This is an incubator release rehearsal. Moving the
-artifacts into the existing Cuttledoc product repository and deprecating
-Cuttledoc 2 remain Phase 7 work.
+Issue #28 converts the existing package evidence into a CLI release-candidate
+set whose identity starts at one source revision and remains verifiable through
+download and installation. ADR-0018 moved the Rust implementation into the
+permanent Cuttledoc product repository before release automation is finalized.
+ADR-0019 removes public Node/npm artifacts from the initial release gate.
 
 ## Audited starting point
 
 - `scripts/pack-cuttledoc-cli.sh` builds the complete macOS 26 arm64 CLI,
   including the Gemma/MLX runtime library and Metal library.
-- `scripts/pack-cuttledoc-node.sh` builds the complete macOS 26 arm64 npm
-  package and rejects native build inputs and lifecycle scripts.
 - `scripts/pack-cloud-artifacts.mjs` builds cloud-only CLI and Node artifacts
   on macOS arm64, Linux x64, and Windows x64.
 - The packed-artifact harnesses have passed on macOS arm64, Linux x64, and
   Windows x64. They block compiler invocation during installation.
-- The JavaScript loader already has deliberate mappings and diagnostics for
-  `darwin-arm64`, `linux-x64`, and `win32-x64`.
+- The Node artifacts remain useful experimental regression evidence, but are
+  not initial release payloads.
 - All Rust crates currently set `publish = false`. No crates.io release is
   required for the v3 user installation path.
-- The repository has no release tags or GitHub releases.
+- The product repository retains the previous v1/v2 tags and releases. The Rust
+  history has no v3 release tag.
 - The only configured repository Actions secret at planning time is the
   unrelated hosted-transcription smoke credential. Apple Developer ID and
   notarization credentials are not configured.
@@ -51,15 +50,13 @@ evidence. Every release claim below is based on final downloaded artifacts.
 
 ## Decisions fixed for this issue
 
-1. **One release identity.** The workspace version, npm version, tag, archive
-   names, release manifest, and Homebrew formula version must agree. A release
+1. **One release identity.** The workspace version, tag, archive names, release
+   manifest, and Homebrew formula version must agree. A release
    candidate uses a SemVer prerelease tag such as `v0.1.0-rc.1`; final tag
    selection happens only after a clean rehearsal.
-2. **One user-facing npm package.** Users install `cuttledoc`. Platform-native
-   files may be assembled from separate CI jobs, but platform packages are not
-   a second public API. The simplest validated final assembly wins; hidden
-   platform packages are introduced only if npm size or installation evidence
-   requires them.
+2. **CLI-first publication.** The initial supported distribution consists of
+   native CLI archives. The existing Node adapter remains experimental and is
+   not published or assembled into the release (ADR-0019).
 3. **FFmpeg remains a prerequisite.** ADR-0016 is the exact Phase 6 decision:
    release artifacts do not bundle or download FFmpeg. File transcription
    resolves an explicit path, `FFMPEG_PATH`, or `ffmpeg` on `PATH`; PCM input
@@ -86,7 +83,6 @@ evidence. Every release claim below is based on final downloaded artifacts.
 In scope:
 
 - deterministic native and cloud-only CLI archives;
-- one assembled cross-platform npm package with no lifecycle build/download;
 - a schema-versioned release manifest and checksum file;
 - source, upstream runtime, and model digest inventory;
 - machine-readable SBOM and license inventory;
@@ -96,13 +92,13 @@ In scope:
 - unsupported-platform diagnostics;
 - a Homebrew formula generated from the published macOS CLI archive;
 - a documented and exercised release rollback;
-- an incubator release-candidate tag and GitHub prerelease.
+- a product-repository release-candidate tag and GitHub prerelease.
 
 Out of scope:
 
-- moving publication to `sebastian-software/cuttledoc`;
 - Cuttledoc 2 deprecation or cache migration;
 - publishing the internal Rust crates to crates.io;
+- publishing the experimental Node adapter to npm;
 - bundling or downloading FFmpeg;
 - bundling model weights;
 - making transcript enhancement mandatory;
@@ -118,7 +114,6 @@ The final candidate contains:
 | `cuttledoc-VERSION-darwin-arm64.tar.gz` | Complete signed/notarized local-first CLI |
 | `cuttledoc-VERSION-linux-x64.tar.gz` | Cloud-only CLI |
 | `cuttledoc-VERSION-windows-x64.zip` | Cloud-only CLI |
-| `cuttledoc-VERSION.tgz` | One npm package containing the supported native Node artifacts |
 | `SHA256SUMS` | Stable sorted checksums for every published payload and metadata file |
 | `release-manifest.json` | Source/tag/toolchain/target/artifact identity and digests |
 | `sbom.cdx.json` | CycloneDX software bill of materials |
@@ -136,18 +131,15 @@ FFmpeg prerequisite, model manifests, installation checks, and rollback.
 | Release contract | `node scripts/validate-release-artifacts.mjs --self-test` | Invalid names, versions, digests, ordering, and missing evidence are rejected |
 | Deterministic CLI archive | package the unchanged payload twice | Both SHA-256 digests match |
 | macOS full CLI | final archive smoke on `macos-26` arm64 | Compiler-free install and local capability checks pass |
-| macOS full npm | final tarball through Node 22 and 24 | ESM and CommonJS load the same signed native payload |
-| Linux cloud-only | final CLI and npm artifacts on Linux x64 | Hosted capability works and local capabilities are deliberately absent |
-| Windows cloud-only | final CLI and npm artifacts on Windows x64 | Hosted capability works and local capabilities are deliberately absent |
-| Unsupported Node target | loader smoke with an unsupported platform fixture | Stable Cuttledoc capability message, no npm resolver noise |
+| Linux cloud-only | final CLI archive on Linux x64 | Hosted capability works and local capabilities are deliberately absent |
+| Windows cloud-only | final CLI archive on Windows x64 | Hosted capability works and local capabilities are deliberately absent |
 | Dependency policy | `bash scripts/check-dependency-policy.sh` | Release inputs remain admitted |
 | Workspace | `cargo test --workspace --locked` | Rust behavior remains green |
 | Apple signature | `codesign --verify --deep --strict --verbose=2 PATH` | Every shipped Mach-O validates |
 | Apple policy | `spctl --assess --type execute --verbose PATH` | Extracted CLI is accepted |
 | Apple notarization | `xcrun notarytool` result and stapler/Gatekeeper verification | Accepted submission and verifiable ticket |
 | Checksums | platform-native SHA-256 verification after download | Every published file matches `SHA256SUMS` |
-| Provenance | `gh attestation verify ARTIFACT -R sebastian-software/cuttledoc-rs` | Subject digest and workflow identity verify |
-| npm install | clean Node 22/24 applications install the exact tarball with compiler guards | No lifecycle script, compiler, or download runs |
+| Provenance | `gh attestation verify ARTIFACT -R sebastian-software/cuttledoc` | Subject digest and workflow identity verify |
 | Homebrew | install generated formula into a clean prefix | Formula downloads the exact release archive and runs `cuttledoc --version` |
 | Rollback | install candidate, install preceding fixture release, restore candidate | Version and checksum checks pass at every transition |
 
@@ -163,11 +155,11 @@ platform convention.
 
 Add a release metadata generator/validator that binds:
 
-- workspace and npm versions;
+- workspace version;
 - source commit and expected tag;
 - target IDs and capability flavor;
 - artifact filename, size, and SHA-256;
-- exact Rust, Node, Xcode, MLX, whisper.cpp, and adapter revisions;
+- exact Rust, Xcode, MLX, whisper.cpp, and adapter revisions;
 - references to model manifests without copying model weights.
 
 Verify the helper on the development host and in the existing package
@@ -177,29 +169,24 @@ Implementation checkpoint (2026-07-28): a dependency-free Node USTAR/Gzip
 writer now fixes entry ordering, ownership, file modes, gzip metadata, and
 `SOURCE_DATE_EPOCH`. Both the complete macOS CLI harness and the portable
 cloud-only harness package twice and require byte-identical output. The local
-cloud-only macOS diagnostic now reproduces both its 1,644,146-byte CLI archive
-and 1,580,776-byte npm tarball exactly. Release metadata and the deterministic
-Windows ZIP convention remain open within this step.
+cloud-only macOS diagnostic now reproduces its 1,644,146-byte CLI archive.
+Release metadata and the deterministic Windows ZIP convention remain open
+within this step. The measured npm artifact remains non-release evidence.
 
-### 2. Assemble the final npm package and CLI matrix
+### 2. Complete the final CLI matrix
 
-Change platform jobs to upload native payloads, not independently publishable
-copies of `cuttledoc`. An assembly job combines the complete macOS artifact
-with Linux and Windows cloud-only Node artifacts into one `cuttledoc` tarball.
-The public package has no `os`/`cpu` restriction because its loader owns the
-capability message.
-
-Run Node 22 and 24 ESM/CommonJS smokes against that exact assembled tarball on
-all supported targets. Confirm that macOS gets local and hosted capabilities
-while Linux/Windows get only the explicit hosted path.
+Change platform jobs to upload one final native CLI archive for each supported
+target. Run downloaded-archive smokes against the complete macOS local/hosted
+artifact and the Linux/Windows cloud-only artifacts. Confirm that macOS gets
+local and hosted capabilities while Linux and Windows expose only the explicit
+hosted path.
 
 ### 3. Generate supply-chain inventories
 
 Select and pin the SBOM generator, generate CycloneDX JSON from the locked Rust
-and npm graphs, and validate it in CI. Generate a separate license inventory
-covering Cargo packages, Node package contents, official MLX, whisper.cpp,
-repository-owned native adapters, Apple system frameworks, and model
-manifests.
+graph, and validate it in CI. Generate a separate license inventory covering
+Cargo packages, official MLX, whisper.cpp, repository-owned native adapters,
+Apple system frameworks, and model manifests.
 
 The inventory explicitly records that FFmpeg is an external prerequisite and
 is not part of the distributed payload. Fail the build for missing licenses,
@@ -211,8 +198,7 @@ manifest.
 Create scripts that can:
 
 1. sign nested MLX/adapter dynamic libraries;
-2. sign the CLI and Node native addon with hardened runtime and secure
-   timestamps;
+2. sign the CLI with hardened runtime and secure timestamps;
 3. verify every signature before packaging;
 4. submit the supported distribution container with `xcrun notarytool`;
 5. record the accepted submission identifier without retaining credentials;
@@ -236,17 +222,16 @@ passes.
 
 Use pinned action revisions and least-privilege permissions:
 `contents: write`, `id-token: write`, and `attestations: write` only in the
-jobs that require them. npm publication remains a separately authorized Phase
-7 concern; the incubator workflow proves the exact tarball without claiming
-the production package identity.
+jobs that require them. npm and crates.io publication remain separate future
+decisions; this workflow publishes only the reviewed native CLI artifacts.
 
 ### 6. Add Homebrew and rollback evidence
 
 Generate a formula from the published macOS archive version, URL, and digest.
 Exercise it from a clean temporary tap/prefix. Document release withdrawal,
-GitHub prerelease deletion/recreation rules, Homebrew formula reversal, npm
-deprecation for future production publication, model-manifest rollback, and
-the rule that tags and already published versions are never mutated.
+GitHub prerelease deletion/recreation rules, Homebrew formula reversal,
+model-manifest rollback, and the rule that tags and already published versions
+are never mutated.
 
 Exercise rollback using two immutable local fixture releases until a real
 preceding v3 candidate exists.
@@ -274,17 +259,14 @@ actual tagged rehearsal has passed.
   a payload digest changes between assembly and verification.
 - Stop rather than downgrade Apple signing if credentials are absent, expired,
   or rejected.
-- Stop if final npm assembly requires a lifecycle script or install-time
-  download; choose hidden platform packages in a reviewed follow-up change.
 - Stop if signing changes runtime loading, entitlements, rpaths, or transcript
   behavior.
 - Stop if SBOM or license generation cannot account for a shipped native or
   model-related component.
 - Stop before bundling FFmpeg; that requires the review explicitly reserved by
   ADR-0016.
-- Stop before publishing to npm, crates.io, the production Cuttledoc
-  repository, or a permanent Homebrew tap; those are external publication or
-  Phase 7 actions.
+- Stop before publishing to npm, crates.io, or a permanent Homebrew tap; those
+  are separate publication decisions.
 
 ## Drift log
 
@@ -295,3 +277,5 @@ actual tagged rehearsal has passed.
   notarization credentials. Credential-independent work proceeds first.
 - 2026-07-28: deterministic USTAR/Gzip generation and two-run package gates
   close the observed CLI archive metadata gap on the local cloud-only path.
+- 2026-07-28: ADR-0018 moves the work to the permanent product repository and
+  ADR-0019 narrows the first release to native CLI artifacts.

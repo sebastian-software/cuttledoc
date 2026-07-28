@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sebastian-software/cuttledoc-rs/blob/main/spikes/tts-calibration/model-manifest.schema.json",
+  "$id": "https://github.com/sebastian-software/cuttledoc/blob/main/spikes/tts-calibration/model-manifest.schema.json",
   "title": "Pinned TTS calibration model manifest",
   "type": "object",
   "required": [

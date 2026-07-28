@@ -4,8 +4,8 @@
 
 - Work: “Una grabación tranquila”
 - Exact source digest: `1a1f35ebd4ecedb1e0123402f88ff310006f831f916c03676e37708a783d435e`
-- Revision: [permanent link](https://github.com/sebastian-software/cuttledoc-rs/blob/main/benchmarks/fixtures/text/synthetic-es-dialogue.txt)
-- Source history: [history](https://github.com/sebastian-software/cuttledoc-rs/commits/main/benchmarks/fixtures/text/synthetic-es-dialogue.txt)
+- Revision: [permanent link](https://github.com/sebastian-software/cuttledoc/blob/main/benchmarks/fixtures/text/synthetic-es-dialogue.txt)
+- Source history: [history](https://github.com/sebastian-software/cuttledoc/commits/main/benchmarks/fixtures/text/synthetic-es-dialogue.txt)
 - Source license: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 - Passage selector and digest: `synthetic-es-dialogue` in
   `benchmarks/fixtures/synthetic-roundtrip-selection.json`

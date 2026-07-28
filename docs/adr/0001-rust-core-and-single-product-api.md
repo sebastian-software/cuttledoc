@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0019](0019-cli-first-product-distribution.md)
 
 ## Context
 

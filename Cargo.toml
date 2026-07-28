@@ -23,7 +23,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
-repository = "https://github.com/sebastian-software/cuttledoc-rs"
+repository = "https://github.com/sebastian-software/cuttledoc"
 
 [workspace.lints.rust]
 unsafe_code = "deny"

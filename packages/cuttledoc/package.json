@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sebastian-software/cuttledoc-rs.git",
+    "url": "git+https://github.com/sebastian-software/cuttledoc.git",
     "directory": "packages/cuttledoc"
   },
   "bugs": {
-    "url": "https://github.com/sebastian-software/cuttledoc-rs/issues"
+    "url": "https://github.com/sebastian-software/cuttledoc/issues"
   },
   "type": "module",
   "main": "./index.cjs",

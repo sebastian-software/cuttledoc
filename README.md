@@ -1,36 +1,39 @@
-# cuttledoc-rs
+# Cuttledoc
 
-The Rust-first future of [Cuttledoc](https://github.com/sebastian-software/cuttledoc): one transcription engine, one CLI, and one user-facing Node.js package.
-
-> [!IMPORTANT]
-> This repository is an architecture and implementation incubator. The production implementation remains in `sebastian-software/cuttledoc` until the compatibility gates in [PLAN.md](PLAN.md) are met.
+Local-first speech transcription with a Rust core and native CLI, plus explicit
+hosted escape hatches.
 
 ## Vision
 
-Cuttledoc should be a reusable Rust library rather than a Node.js application that happens to call native addons. The Rust core will own backend selection, model management, audio processing, transcription, timestamps, errors, and lifecycle management. Thin adapters will expose that core as:
+Cuttledoc is a reusable Rust library rather than a Node.js application that
+happens to call native addons. The Rust core owns backend selection, model
+management, audio processing, transcription, timestamps, errors, and lifecycle
+management. The supported initial product surface is:
 
 - a native `cuttledoc` CLI;
-- the `cuttledoc` Rust crate;
-- an ergonomic Node.js/TypeScript API through `napi-rs`;
-- potentially other bindings later, without duplicating product logic.
+- the reusable `cuttledoc` Rust crate inside the workspace;
+- a stable process contract for callers such as Offcourse.
 
-The migration consolidates three current repositories:
+The implementation consolidates the useful behavior and evidence from:
 
 - [cuttledoc](https://github.com/sebastian-software/cuttledoc)
 - [parakeet-coreml](https://github.com/sebastian-software/parakeet-coreml)
 - [whisper-coreml](https://github.com/sebastian-software/whisper-coreml)
 
-The existing repositories remain the sources of truth while this incubator is incomplete.
+The existing `cuttledoc-node`/`napi-rs` adapter remains experimental. It is
+tested as implementation evidence but is not published and does not block the
+initial v3 release. See
+[ADR-0019](docs/adr/0019-cli-first-product-distribution.md).
 
 ## Design principles
 
 1. **One product API.** Parakeet, Whisper, OpenAI, model management, and audio decoding are capabilities of Cuttledoc, not separate user-facing products.
-2. **Rust owns behavior.** Node.js bindings convert values and surface errors; they do not reimplement orchestration.
+2. **Rust owns behavior.** Process or language bindings convert values and surface errors; they do not reimplement orchestration.
 3. **Internal modularity, minimal publishing surface.** Rust workspace crates preserve boundaries without forcing users to coordinate package versions.
 4. **Offline-first on Apple Silicon.** Local Apple backends (CoreML, system Speech, accepted MLX/Metal paths) remain first-class and private. The v3 macOS baseline is Apple Silicon with macOS 26 (ADR-0007).
 5. **Compatibility is measured.** Existing fixtures, timestamps, backend selection, CLI behavior, and benchmarks become migration gates.
-6. **Prebuilt artifacts only.** End users must never need Xcode, Rust, CMake, or `node-gyp` to install the Node package.
-7. **Packed artifacts are the test unit.** CI must test crates, binaries, npm tarballs, ESM, CommonJS, and clean-machine installation.
+6. **Prebuilt artifacts only.** CLI users must never need Xcode, Rust, CMake, or `node-gyp`.
+7. **Packed artifacts are the test unit.** CI must test crates, final binaries, archives, and clean-machine installation.
 
 ## Transcript enhancement direction
 
@@ -86,7 +89,7 @@ crates/
 ├── cuttledoc/           # public Rust contracts and orchestration
 ├── cuttledoc-models/    # model identity and provisioning
 ├── cuttledoc-cli/       # native CLI
-└── cuttledoc-node/      # thin napi-rs adapter
+└── cuttledoc-node/      # experimental thin napi-rs adapter
 ```
 
 Runtime adapters are split by foreign toolchain and ownership boundary rather
@@ -95,8 +98,7 @@ only after the bakeoff accepts their production role. Apple Speech is the
 first-choice local backend. The opt-in Whisper `large-v3-turbo` compatibility
 backend adds broader language coverage through a source-integrated,
 repository-owned boundary over pinned whisper.cpp v1.8.2. General media
-decoding, local/hosted transcript enhancement, and the npm facade are already
-Rust-owned.
+decoding and local/hosted transcript enhancement are already Rust-owned.
 
 The workspace uses the pinned Rust 1.88 toolchain. Its local verification gate
 is:
@@ -191,9 +193,9 @@ before deleting it. `models list --format json` also reports Apple Speech as
 the system-managed `apple-speech-assets` entry; file operations remain
 unsupported for those macOS-owned assets.
 
-Cargo, npm installation, and ordinary transcription never download source or
-models implicitly. Only an explicit `models install` command accesses the
-model hosts.
+Cargo builds, CLI installation, and ordinary transcription never download
+source or models implicitly. Only an explicit `models install` command accesses
+the model hosts.
 
 Results default to text on standard output. Markdown and schema-versioned JSON
 can be written to stdout or an explicit file:
@@ -249,10 +251,11 @@ and failure paths with compiler commands blocked. The archive contains the
 CLI, the repository-owned Gemma adapter, the pinned MLX Metal library, and the
 license, but no model weights.
 
-## Development Node API
+## Experimental Node API
 
-The Node.js surface accepts media files through the same Rust-owned decoder and
-returns the structured Rust result without a second orchestration layer:
+The repository retains a non-published Node.js adapter that accepts media files
+through the same Rust-owned decoder and returns the structured Rust result
+without a second orchestration layer:
 
 ```js
 import { transcribeFile } from 'cuttledoc';
@@ -304,11 +307,10 @@ Build and exercise the exact npm tarball through both ESM and CommonJS with:
 bash scripts/test-cuttledoc-node-package.sh
 ```
 
-Separate cloud-only CLI and Node artifacts have also passed packed install and
-load tests on Linux x64 and Windows x64. They contain the portable hosted
-boundary but no Apple frameworks, Whisper, Gemma/MLX, FFmpeg, model weights, or
-install-time compiler lifecycle. Final release publication remains tracked by
-issue #28.
+Separate cloud-only CLI and experimental Node artifacts have also passed packed
+install and load tests on Linux x64 and Windows x64. The Node evidence remains
+a regression harness, not part of the initial release matrix. Final CLI release
+publication remains tracked by issue #28.
 
 ## First proof
 
@@ -340,7 +342,11 @@ This slice must load a model, transcribe a real fixture, release resources, and 
 
 ## Repository strategy
 
-This repository is intentionally not a GitHub fork. It combines three codebases and changes their architectural center. Once the Rust implementation reaches the release gates, the result should become Cuttledoc v3 in the existing `sebastian-software/cuttledoc` product repository so its history, users, issues, releases, and package identity remain intact.
+This Rust history is the implementation of Cuttledoc v3 in
+`sebastian-software/cuttledoc`. The previous TypeScript default branch is
+preserved as `archive/typescript-v2`; v1/v2 tags and releases remain intact.
+The former `cuttledoc-rs` repository is historical incubation evidence. See
+[ADR-0018](docs/adr/0018-cut-over-to-the-cuttledoc-product-repository.md).
 
 ## License
 

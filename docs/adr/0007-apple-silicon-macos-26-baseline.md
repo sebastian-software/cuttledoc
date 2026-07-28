@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted; the Cuttledoc 2 support-window clauses are superseded by
+[ADR-0018](0018-cut-over-to-the-cuttledoc-product-repository.md)
 
 ## Context
 

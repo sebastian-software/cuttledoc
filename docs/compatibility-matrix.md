@@ -21,7 +21,10 @@ Status values:
 | Windows x64                     |        No |    Yes |      Yes |      Yes | Cloud-only artifacts implemented |
 | Windows arm64                   |        No |    Yes |      Yes |      Yes | Cloud-only artifact required |
 
-Local ASR covers the selected Apple-local backends (Parakeet, Whisper, system Speech per the bakeoff). Cuttledoc 2 remains the product for Intel Macs and macOS releases before 26.
+Local ASR covers the selected Apple-local backends (Parakeet, Whisper, system
+Speech per the bakeoff). Intel Macs and macOS releases before 26 are outside
+the supported product matrix; Cuttledoc 2 remains historical rather than a
+maintained fallback (ADR-0018).
 
 Unsupported local inference must be represented as capability absence. Installing the general product on Linux/Windows must not fail merely because Apple-only binaries are unavailable.
 

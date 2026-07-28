@@ -4,7 +4,7 @@ set -euo pipefail
 
 model_revision=78c52ab98ca87f570bc57ad852e15ef7060f9f76
 examples_revision=796f5b53cab69a3d48a44233ce21aae889e94a08
-model_dir=${1:-"${CUTTLEDOC_MLX_MODEL_DIR:-$HOME/.cache/cuttledoc-rs/mlx-whisper-tiny}"}
+model_dir=${1:-"${CUTTLEDOC_MLX_MODEL_DIR:-$HOME/.cache/cuttledoc/mlx-whisper-tiny}"}
 downloads="$model_dir/downloads"
 
 mkdir -p "$downloads"
