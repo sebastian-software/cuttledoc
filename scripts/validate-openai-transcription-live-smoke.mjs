@@ -57,6 +57,27 @@ function safeEvidence(expectedModel, elapsedSeconds) {
   };
 }
 
+function safeFailureEvidence(expectedModel, elapsedSeconds, diagnosticsText) {
+  if (!SUPPORTED_MODELS.has(expectedModel)) {
+    throw new Error(`unsupported live-smoke model: ${expectedModel}`);
+  }
+  if (!Number.isInteger(elapsedSeconds) || elapsedSeconds < 0 || elapsedSeconds > 600) {
+    throw new Error('live-smoke elapsed time is outside the bounded workflow window');
+  }
+  const errorCode = diagnosticsText.match(/error\[([A-Z_]+)\]/)?.[1];
+  if (!errorCode) {
+    throw new Error('live-smoke diagnostics contain no stable error code');
+  }
+  return {
+    model: expectedModel,
+    fixture_sha256: EXPECTED_FIXTURE_SHA256,
+    platform: `${process.platform}-${process.arch}`,
+    success: false,
+    error_code: errorCode,
+    elapsed_seconds: elapsedSeconds,
+  };
+}
+
 function selfTest() {
   const credential = 'test-openai-secret';
   const validResult = JSON.stringify({
@@ -92,11 +113,52 @@ function selfTest() {
     () => validateResult(validResult, 'whisper-1'),
     /wrong backend or model/,
   );
+  assert.deepEqual(
+    safeFailureEvidence(
+      'gpt-4o-transcribe',
+      1,
+      'error[AUTHENTICATION_FAILED]: redacted provider failure',
+    ),
+    {
+      model: 'gpt-4o-transcribe',
+      fixture_sha256: EXPECTED_FIXTURE_SHA256,
+      platform: `${process.platform}-${process.arch}`,
+      success: false,
+      error_code: 'AUTHENTICATION_FAILED',
+      elapsed_seconds: 1,
+    },
+  );
+  assert.throws(
+    () => safeFailureEvidence('gpt-4o-transcribe', 1, 'unstructured failure'),
+    /no stable error code/,
+  );
   process.stdout.write('OpenAI transcription live-smoke validator self-test passed\n');
 }
 
 if (process.argv[2] === '--self-test') {
   selfTest();
+} else if (process.argv[2] === '--failure') {
+  const diagnosticsPath = process.argv[3];
+  const expectedModel = process.env.CUTTLEDOC_LIVE_SMOKE_MODEL;
+  const credential = process.env.OPENAI_API_KEY;
+  const elapsedSeconds = Number.parseInt(
+    process.env.CUTTLEDOC_LIVE_SMOKE_ELAPSED_SECONDS ?? '',
+    10,
+  );
+
+  if (!diagnosticsPath || !expectedModel) {
+    throw new Error(
+      'usage: validate-openai-transcription-live-smoke.mjs --failure <diagnostics>',
+    );
+  }
+
+  const diagnosticsText = readFileSync(diagnosticsPath, 'utf8');
+  validateNoCredential([diagnosticsText], credential);
+  process.stdout.write(
+    `${JSON.stringify(
+      safeFailureEvidence(expectedModel, elapsedSeconds, diagnosticsText),
+    )}\n`,
+  );
 } else {
   const [resultPath, diagnosticsPath] = process.argv.slice(2);
   const expectedModel = process.env.CUTTLEDOC_LIVE_SMOKE_MODEL;

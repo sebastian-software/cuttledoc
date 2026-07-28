@@ -72,15 +72,18 @@ jobs:
             exit 1
           fi
 
-          fixture="benchmarks/assets/synthetic/en-US/qwen3-tts-1.7b-voicedesign-warm/synthetic-en-native/audio.opus"
+          source_fixture="benchmarks/assets/synthetic/en-US/qwen3-tts-1.7b-voicedesign-warm/synthetic-en-native/audio.opus"
+          fixture="$RUNNER_TEMP/cuttledoc-openai-live-smoke.ogg"
           result="$RUNNER_TEMP/openai-transcription-result.json"
           diagnostics="$RUNNER_TEMP/openai-transcription-diagnostics.log"
           cleanup() {
-            rm -f "$result" "$diagnostics"
+            rm -f "$fixture" "$result" "$diagnostics"
           }
           trap cleanup EXIT
 
+          cp "$source_fixture" "$fixture"
           started="$(date +%s)"
+          status=0
           target/release/cuttledoc transcribe "$fixture" \
             --language en-US \
             --backend openai-transcription \
@@ -88,9 +91,16 @@ jobs:
             --timeout-seconds 120 \
             --format json \
             --output "$result" \
-            2>"$diagnostics"
+            2>"$diagnostics" || status="$?"
           finished="$(date +%s)"
           export CUTTLEDOC_LIVE_SMOKE_ELAPSED_SECONDS="$((finished - started))"
+
+          if [[ "$status" -ne 0 ]]; then
+            node scripts/validate-openai-transcription-live-smoke.mjs \
+              --failure \
+              "$diagnostics"
+            exit "$status"
+          fi
 
           node scripts/validate-openai-transcription-live-smoke.mjs \
             "$result" \
