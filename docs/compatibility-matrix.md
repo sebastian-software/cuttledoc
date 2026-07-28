@@ -217,6 +217,12 @@ provider-reported duration and segments. Hermetic contract tests cover request
 shape, response mapping, provider errors, timeout, active cancellation, body
 bounds, and credential redaction.
 
+The credentialed `gpt-4o-transcribe` smoke passed on Linux x64 at `71516fc` in
+[CI run 30336214120](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30336214120).
+It used the committed 400,967-byte English Ogg/Opus fixture, retained no input
+or output artifact, and emitted only model, fixture digest, platform, success,
+and a three-second elapsed time.
+
 ## Transcript enhancement
 
 | Capability              | Baseline                | v3 decision                                                   |

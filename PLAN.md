@@ -291,10 +291,9 @@ on Linux x64 and Windows x64. The repository-owned portable HTTP boundary
 enforces model/file/body bounds, timeout and active cancellation, stable
 errors, and credential redaction. `auto` remains strictly local.
 
-The manual live-smoke harness is fixture-pinned and validated, but its provider
-dispatch remains pending because the repository has no `OPENAI_API_KEY` secret.
-That single external gate is tracked in
-`docs/plans/hosted-openai-transcription.md`; release publication remains #28.
+The fixture-pinned, credentialed live smoke passed on Linux x64 without
+retaining its audio, transcript, request, response, diagnostics, or credential.
+Issue #26 is complete; release publication remains #28.
 
 Scope:
 
@@ -443,14 +442,12 @@ Performance comparisons must use the same machines, fixtures, model versions, an
 
 ## Immediate next actions
 
-Evidence snapshot: 2026-07-27 at implementation checkpoint `c7b7cc7`.
+Evidence snapshot: 2026-07-28 at implementation checkpoint `71516fc`.
 
-1. Configure the repository `OPENAI_API_KEY`, dispatch the bounded live smoke,
-   record its non-content evidence, and close #26.
-2. Complete #28: build, sign, notarize, attest, and clean-machine-test the
+1. Complete #28: build, sign, notarize, attest, and clean-machine-test the
    reproducible v3 release artifacts.
-3. Run the remaining physical 32 GB Apple Silicon packaged Gemma smoke from
+2. Run the remaining physical 32 GB Apple Silicon packaged Gemma smoke from
    #25 opportunistically; the implementation and conservative disabled default
    are already complete.
-4. Run the TTS vertical slice in #13 after the transcription release gates; it
+3. Run the TTS vertical slice in #13 after the transcription release gates; it
    remains a strategic but non-blocking product direction.

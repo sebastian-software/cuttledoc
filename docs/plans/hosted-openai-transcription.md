@@ -8,8 +8,8 @@
 - Issue: #26
 - Depends on: #23 and #27, both complete
 - Planned at: `24754cb`, 2026-07-27
-- Implementation checkpoint: `c7b7cc7`, 2026-07-27
-- Working state: live provider dispatch pending a repository secret
+- Implementation checkpoint: `71516fc`, 2026-07-28
+- Working state: complete
 
 ## Why this matters
 
@@ -216,15 +216,22 @@ fixture digest, platform, success state, and bounded timing evidence.
 Reconcile `PLAN.md`, `docs/compatibility-matrix.md`, public/package docs, and
 issue #26. Do not claim #28 release completion.
 
-Harness checkpoint: `c7b7cc7` adds a manual workflow around the committed
+Harness checkpoint: `71516fc` provides a manual workflow around the committed
 400,967-byte English Opus fixture with SHA-256
 `646f5351df3b2e169ee8ab95d1c740c572c530439b26448fb79d7b5c74665f71`.
-Its validator self-test passed locally and in
-[CI run 30276405034](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30276405034).
-The workflow retains no audio, result, or diagnostics artifact and emits only
-bounded non-content evidence. The repository does not currently have an
-`OPENAI_API_KEY` secret, so the live provider dispatch remains deliberately
-unexecuted under the stop condition below.
+It copies the same digest-pinned Ogg/Opus bytes to a temporary `.ogg` name
+because `.opus` is not an admitted provider filename extension. The workflow
+retains no audio, result, or diagnostics artifact and emits only bounded
+non-content evidence. Its validator covers both success and stable redacted
+failure evidence.
+
+The live provider dispatch passed at `71516fc` in
+[CI run 30336214120](https://github.com/sebastian-software/cuttledoc-rs/actions/runs/30336214120).
+The retained evidence is `gpt-4o-transcribe`, fixture SHA-256
+`646f5351df3b2e169ee8ab95d1c740c572c530439b26448fb79d7b5c74665f71`,
+`linux-x64`, success, and three elapsed seconds. Neither the transcript nor
+request, response, diagnostics, credential, or audio was logged or retained as
+an artifact.
 
 ## Done criteria
 
@@ -240,10 +247,10 @@ unexecuted under the stop condition below.
       persisted configuration.
 - [x] Linux and Windows final CLI/Node artifacts install, load, and exercise
       hosted transcription without Apple/local-model artifacts or compilers.
-- [ ] The live smoke is opt-in, fixture-pinned, secret-safe, and retains no
+- [x] The live smoke is opt-in, fixture-pinned, secret-safe, and retains no
       credential or audio.
 - [x] Workspace format, lint, tests, dependency policy, and platform CI pass.
-- [ ] Documentation reflects verified artifact evidence and issue #26 is
+- [x] Documentation reflects verified artifact evidence and issue #26 is
       closed after the live dispatch.
 
 ## Stop conditions

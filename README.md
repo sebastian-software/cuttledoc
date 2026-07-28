@@ -147,6 +147,10 @@ The CLI deliberately has no API-key argument. The initial model set is
 Uploads are limited to 25 MB. GPT transcription results contain text without
 invented timestamps; `whisper-1` maps provider-reported duration and segments.
 Configuring `OPENAI_API_KEY` never changes local-only `auto` selection.
+A credentialed Linux x64 smoke of this exact path passed with
+`gpt-4o-transcribe`; it retained neither audio nor transcript. See the
+[hosted-transcription plan](docs/plans/hosted-openai-transcription.md) for the
+bounded evidence.
 
 Whisper is an explicit quality/language-coverage fallback. Development builds
 prepare the pinned upstream source before enabling the adapter:
