@@ -147,7 +147,8 @@ Transcript enhancement is orchestration above this engine. It selects and
 hashes prompts, supplies language/domain context, compares generated output
 with raw input, applies protected-span and lexical guards, and retains both raw
 and accepted text. The first implementation processes one bounded multi-page
-document; batching hours-long transcripts remains a separate product slice.
+document; long-document enhancement batching remains a separate product slice
+from the implemented directory recognition batch.
 Consequently local Gemma/official MLX, explicit Gemini/OpenRouter, and future
 providers implement the same engine without moving prompt policy into a
 runtime adapter. STT output is never overwritten in place.
@@ -678,6 +679,20 @@ cuttledoc transcribe <input>
                      [--format text|markdown|json]
                      [--output <path>] [--force] [--progress]
 
+cuttledoc transcribe-batch <directory>
+                           [--recursive]
+                           [--backend auto|apple-speech|whisper|openai-transcription]
+                           [--model <id>]
+                           [--model-path <path>]
+                           [--cache-root <path>]
+                           [--language <code|auto>]
+                           [--ffmpeg-path <path>]
+                           [--timeout-seconds <seconds>]
+                           [--enhance off|gemini]
+                           [--format text|markdown|json]
+                           [--skip-existing|--force]
+                           [--report <path>] [--progress]
+
 cuttledoc transcribe-pcm <input>
                          --sample-rate <hz>
                          [--backend auto|apple-speech|whisper]
@@ -711,6 +726,23 @@ uploads the original supported file, and never invokes FFmpeg. `auto` is
 strictly local, including in cloud-only builds where it reports that no local
 recognition backend is available.
 
+`transcribe-batch` discovers supported media in stable path order and enters
+subdirectories only with `--recursive`. Its default `--language auto` selects
+the managed local Whisper model and uses Whisper language detection; hosted
+transcription is never selected implicitly. One recognition session is reused
+sequentially for all pending files so the model is not reloaded for every
+video and concurrent model copies do not multiply peak memory.
+
+Text sidecars replace the media extension with `.txt`. Markdown and JSON use
+`.transcript.md` and `.transcript.json` respectively to avoid overwriting
+same-stem course notes. Existing sidecars are skipped by default; `--force`
+atomically replaces them. Per-file failures do not stop later work. The
+schema-versioned report defaults to `.cuttledoc-batch-report.json` below the
+input directory and records the current invocation's completed input/output
+paths, detected languages, skipped paths, and failures. Local enhancement is
+excluded until recognition and Gemma can run as a bounded two-phase batch;
+explicit Gemini enhancement remains available.
+
 Text is the default stdout format. `--output` writes through a sibling
 temporary file, refuses an existing destination before recognition, and
 requires `--force` for atomic replacement. JSON transcription and model-list
@@ -720,11 +752,12 @@ stream so stdout remains machine-readable.
 
 Diagnostics use `error[CODE]` plus separate remediation. CLI syntax exits with
 status 2, refused overwrites with status 3, and runtime/model failures with
-status 1. Exact human messages may evolve while the code and exit-category
-contract remains stable.
+status 1. A batch with one or more per-file failures writes its report before
+returning status 1. Exact human messages may evolve while the code and
+exit-category contract remains stable.
 
-Directory batching, `doctor`, reference benchmarking, and a GUI remain future
-commands rather than incomplete parts of the Phase 4 contract.
+`doctor`, reference benchmarking, and a GUI remain future commands rather than
+incomplete parts of the Phase 4 contract.
 
 Compatibility aliases from Cuttledoc 2 should be retained where they do not
 compromise the new model.

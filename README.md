@@ -183,6 +183,30 @@ cuttledoc transcribe input.ogg \
   --language auto
 ```
 
+For course archives, one batch command reuses the recognition runtime and
+writes a transcript beside every media file:
+
+```sh
+cuttledoc transcribe-batch ~/Downloads/offcourse \
+  --recursive \
+  --backend whisper \
+  --model whisper-large-v3-turbo \
+  --language auto \
+  --progress
+```
+
+Text output maps `lesson.mp4` to `lesson.txt`. Existing sidecars are skipped by
+default, so the same command safely resumes an interrupted archive; `--force`
+opts into atomic replacement. `--format markdown` and `--format json` use
+`lesson.transcript.md` and `lesson.transcript.json` to avoid colliding with
+course notes. For each invocation, the schema-versioned
+`.cuttledoc-batch-report.json` records completed outputs and Whisper's detected
+language, skipped paths, and any per-file failures.
+Use an explicit language such as `--language de` when the whole archive is
+known to use one language. Batch enhancement defaults to off; explicit hosted
+`--enhance gemini` is available, while local enhancement awaits a reusable
+two-phase runtime.
+
 The default cache root is `~/.cache/cuttledoc`; override it with
 `CUTTLEDOC_CACHE_ROOT` or `--cache-root`. `models install all` installs both
 the 2.90 GB Whisper snapshot and the 15.37 GB Gemma snapshot. Every file is

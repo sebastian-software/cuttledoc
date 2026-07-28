@@ -187,6 +187,8 @@ does not pretend to support file install, verification, or removal.
 Implemented Phase 4 workflows:
 
 - transcribe a single media path;
+- transcribe a directory into resumable text, Markdown, or JSON sidecars while
+  reusing one recognition runtime;
 - choose backend and language;
 - choose a managed model or an explicit artifact path;
 - explicitly select hosted OpenAI file transcription and its model/timeout;
@@ -200,10 +202,10 @@ Implemented Phase 4 workflows:
 - stable nonzero errors with remediation for invalid input and unsupported
   operations.
 
-Reference benchmarking, directory batching, and `doctor` are separate future
-work, not hidden dependencies of the single-file replacement. Human-readable
-output may change. Machine-readable JSON has schema version `1.0.0` and
-snapshot tests; raw and enhanced/fallback text remain distinct.
+Reference benchmarking and `doctor` are separate future work, not hidden
+dependencies of the single-file or directory replacement. Human-readable
+output may change. Machine-readable transcription and batch-report JSON have
+schema version `1.0.0`; raw and enhanced/fallback text remain distinct.
 
 ## Hosted transcription
 

@@ -54,13 +54,30 @@ pub struct BatchFailure {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BatchCompletion {
+    pub input_path: PathBuf,
+    pub output_path: PathBuf,
+    pub language: Option<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BatchSummary {
     pub discovered: usize,
-    pub completed: usize,
-    pub skipped: usize,
+    pub completions: Vec<BatchCompletion>,
+    pub skipped: Vec<BatchItem>,
     pub failures: Vec<BatchFailure>,
     pub elapsed: Duration,
     pub report_path: PathBuf,
+}
+
+impl BatchSummary {
+    pub fn completed(&self) -> usize {
+        self.completions.len()
+    }
+
+    pub fn skipped(&self) -> usize {
+        self.skipped.len()
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -145,7 +162,7 @@ pub fn execute_batch(
     mut on_event: impl FnMut(BatchEvent),
 ) -> CliResult<BatchSummary> {
     let total = plan.pending.len();
-    let mut completed = 0;
+    let mut completions = Vec::new();
     let mut failures = Vec::new();
 
     for (position, item) in plan.pending.iter().enumerate() {
@@ -168,7 +185,11 @@ pub fn execute_batch(
         });
         match outcome {
             Ok(language) => {
-                completed += 1;
+                completions.push(BatchCompletion {
+                    input_path: item.input_path.clone(),
+                    output_path: item.output_path.clone(),
+                    language: language.clone(),
+                });
                 on_event(BatchEvent::Completed {
                     index,
                     total,
@@ -195,8 +216,8 @@ pub fn execute_batch(
 
     let summary = BatchSummary {
         discovered: plan.discovered(),
-        completed,
-        skipped: plan.skipped.len(),
+        completions,
+        skipped: plan.skipped,
         failures,
         elapsed: started_at.elapsed(),
         report_path: plan.report_path,
@@ -272,6 +293,27 @@ fn sidecar_path(input: &Path, format: OutputFormat) -> CliResult<PathBuf> {
 }
 
 fn write_report(summary: &BatchSummary) -> CliResult<()> {
+    let completions = summary
+        .completions
+        .iter()
+        .map(|completion| {
+            json!({
+                "input": completion.input_path.to_string_lossy(),
+                "output": completion.output_path.to_string_lossy(),
+                "language": completion.language,
+            })
+        })
+        .collect::<Vec<_>>();
+    let skipped = summary
+        .skipped
+        .iter()
+        .map(|item| {
+            json!({
+                "input": item.input_path.to_string_lossy(),
+                "output": item.output_path.to_string_lossy(),
+            })
+        })
+        .collect::<Vec<_>>();
     let failures = summary
         .failures
         .iter()
@@ -292,10 +334,12 @@ fn write_report(summary: &BatchSummary) -> CliResult<()> {
             .unwrap_or_default()
             .as_millis(),
         "discovered": summary.discovered,
-        "completed": summary.completed,
-        "skipped": summary.skipped,
+        "completed": summary.completed(),
+        "skipped": summary.skipped(),
         "failed": summary.failures.len(),
         "elapsed_ms": summary.elapsed.as_secs_f64() * 1_000.0,
+        "results": completions,
+        "skipped_results": skipped,
         "failures": failures,
     });
     let mut encoded = serde_json::to_vec_pretty(&report).map_err(|error| {
@@ -400,6 +444,22 @@ mod tests {
         let skipped = plan_batch(options.clone()).expect("skipped plan");
         assert_eq!(skipped.skipped.len(), 1);
         assert!(skipped.pending.is_empty());
+        let summary = execute_batch(
+            skipped,
+            Instant::now(),
+            |_| panic!("a skipped item must not be transcribed"),
+            |_| {},
+        )
+        .expect("resume summary");
+        assert_eq!(summary.skipped(), 1);
+        let report: serde_json::Value =
+            serde_json::from_slice(&fs::read(root.join(".report.json")).expect("resume report"))
+                .expect("valid resume report");
+        assert_eq!(report["skipped"], 1);
+        assert_eq!(
+            report["skipped_results"][0]["output"],
+            root.join("lesson.txt").to_string_lossy().as_ref()
+        );
 
         let forced = plan_batch(BatchOptions {
             overwrite: true,
@@ -458,7 +518,9 @@ mod tests {
         )
         .expect("batch summary");
 
-        assert_eq!(summary.completed, 1);
+        assert_eq!(summary.completed(), 1);
+        assert_eq!(summary.completions[0].language.as_deref(), Some("en"));
+        assert_eq!(summary.skipped(), 0);
         assert_eq!(summary.failures.len(), 1);
         assert_eq!(
             fs::read_to_string(root.join("good.txt")).expect("sidecar"),

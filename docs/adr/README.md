@@ -23,6 +23,7 @@ ADRs capture decisions that materially constrain the implementation. Proposed AD
 | [0017](0017-source-integrated-whisper-cpp-compatibility-backend.md)     | Source-integrated whisper.cpp compatibility backend   | Accepted |
 | [0018](0018-cut-over-to-the-cuttledoc-product-repository.md)           | Cut over to the Cuttledoc product repository          | Accepted |
 | [0019](0019-cli-first-product-distribution.md)                          | Use CLI-first product distribution                    | Accepted |
+| [0020](0020-resumable-directory-transcription.md)                       | Use resumable directory transcription                 | Accepted |
 
 Status values: proposed, accepted, superseded, rejected.
 

@@ -923,7 +923,7 @@ fn run(command: Command) -> CliResult<()> {
                     format!(
                         "{} of {} pending transcription(s) failed; details: {}",
                         summary.failures.len(),
-                        summary.completed + summary.failures.len(),
+                        summary.completed() + summary.failures.len(),
                         summary.report_path.display()
                     ),
                     1,
@@ -1142,8 +1142,8 @@ fn render_batch_event(event: BatchEvent) {
 fn render_batch_summary(summary: &batch::BatchSummary) {
     eprintln!(
         "batch\tsummary\tcompleted={}\tskipped={}\tfailed={}\telapsed_ms={:.3}\treport={}",
-        summary.completed,
-        summary.skipped,
+        summary.completed(),
+        summary.skipped(),
         summary.failures.len(),
         summary.elapsed.as_secs_f64() * 1_000.0,
         summary.report_path.display()
