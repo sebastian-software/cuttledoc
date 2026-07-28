@@ -25,6 +25,145 @@ const INPUT_CHUNK_DURATION_MS: u32 = 200;
 const BACKPRESSURE_RETRY_DELAY: Duration = Duration::from_millis(2);
 const WHISPER_MODEL_ID: &str = "whisper-large-v3-turbo";
 
+pub(crate) struct RecognitionSession {
+    options: TranscribeOptions,
+    backend: BackendId,
+    kind: RecognitionSessionKind,
+}
+
+enum RecognitionSessionKind {
+    AppleSpeech,
+    #[cfg(feature = "local-runtimes")]
+    Whisper {
+        engine: cuttledoc_whisper::WhisperEngine,
+        model: ModelId,
+    },
+    OpenAi {
+        engine: Box<cuttledoc_openai_transcription::OpenAiTranscriptionEngine>,
+        model: ModelId,
+    },
+}
+
+impl RecognitionSession {
+    pub(crate) fn create(
+        options: &TranscribeOptions,
+        on_progress: &mut dyn FnMut(ProgressEvent),
+    ) -> Result<Self> {
+        let backend = select_backend(options)?;
+        let kind = if backend == BackendId::apple_speech() {
+            RecognitionSessionKind::AppleSpeech
+        } else if backend == BackendId::whisper() {
+            create_whisper_session(options, &backend, on_progress)?
+        } else if backend == BackendId::openai_transcription() {
+            create_openai_session(options, &backend)?
+        } else {
+            return Err(CuttledocError::new(
+                ErrorCode::BackendUnavailable,
+                format!("recognition backend {backend} is not implemented"),
+            )
+            .with_backend(backend));
+        };
+        Ok(Self {
+            options: options.clone(),
+            backend,
+            kind,
+        })
+    }
+
+    pub(crate) fn accepts_original_file(&self) -> bool {
+        matches!(self.kind, RecognitionSessionKind::OpenAi { .. })
+    }
+
+    pub(crate) fn transcribe_pcm_with_progress(
+        &mut self,
+        input: &PcmBuffer,
+        cancellation: &CancellationToken,
+        on_progress: &mut dyn FnMut(ProgressEvent),
+    ) -> Result<TranscriptionResult> {
+        ensure_not_cancelled(cancellation, &self.backend)?;
+        match &mut self.kind {
+            RecognitionSessionKind::AppleSpeech => transcribe_apple_speech(
+                input,
+                &self.options,
+                cancellation,
+                self.backend.clone(),
+                on_progress,
+            ),
+            #[cfg(feature = "local-runtimes")]
+            RecognitionSessionKind::Whisper { engine, model } => transcribe_whisper_with_engine(
+                engine,
+                model,
+                input,
+                &self.options,
+                cancellation,
+                self.backend.clone(),
+                on_progress,
+            ),
+            RecognitionSessionKind::OpenAi { .. } => Err(CuttledocError::new(
+                ErrorCode::InvalidInput,
+                "OpenAI transcription accepts original media files, not decoded PCM input",
+            )
+            .with_backend(self.backend.clone())),
+        }
+    }
+
+    pub(crate) fn transcribe_original_file_with_progress(
+        &self,
+        path: &Path,
+        cancellation: &CancellationToken,
+        on_progress: &mut dyn FnMut(ProgressEvent),
+    ) -> Result<TranscriptionResult> {
+        ensure_not_cancelled(cancellation, &self.backend)?;
+        let RecognitionSessionKind::OpenAi { engine, model } = &self.kind else {
+            return Err(CuttledocError::new(
+                ErrorCode::InvalidInput,
+                "the selected recognition backend requires decoded PCM input",
+            )
+            .with_backend(self.backend.clone()));
+        };
+        cuttledoc_openai_transcription::OpenAiTranscriptionEngine::validate_file(path)
+            .map_err(CuttledocError::from)
+            .map_err(|error| error.with_model(model.clone()))?;
+        let request = cuttledoc_openai_transcription::TranscriptionRequest {
+            model: model.as_str().to_owned(),
+            language: self.options.language.clone(),
+        };
+
+        let started_at = Instant::now();
+        on_progress(progress(ProgressPhase::Transcribing, 0, Some(1)));
+        let result = engine
+            .transcribe_file(path, &request, || cancellation.is_cancelled())
+            .map_err(CuttledocError::from)
+            .map_err(|error| error.with_model(model.clone()))?;
+        on_progress(progress(ProgressPhase::Transcribing, 1, Some(1)));
+        on_progress(progress(ProgressPhase::Finalizing, 0, Some(1)));
+        let segments = result
+            .segments
+            .into_iter()
+            .map(|segment| TranscriptionSegment {
+                range: TimeRange::new(segment.start, segment.end),
+                text: segment.text,
+                confidence: None,
+                words: Vec::new(),
+            })
+            .collect();
+        let text = result.text;
+        let transcription = TranscriptionResult {
+            raw_text: text.clone(),
+            text,
+            language: result.language,
+            backend: self.backend.clone(),
+            model: Some(model.clone()),
+            media_duration: result.duration.unwrap_or(Duration::ZERO),
+            processing_duration: started_at.elapsed(),
+            segments,
+            enhancement: None,
+        };
+        on_progress(progress(ProgressPhase::Finalizing, 1, Some(1)));
+        Ok(transcription)
+    }
+}
+
 pub fn transcribe_pcm(
     input: &PcmBuffer,
     options: &TranscribeOptions,
@@ -48,13 +187,6 @@ pub fn transcribe_pcm_with_progress(
 ) -> Result<TranscriptionResult> {
     let backend = select_backend(options)?;
     ensure_not_cancelled(cancellation, &backend)?;
-
-    if backend == BackendId::apple_speech() {
-        return transcribe_apple_speech(input, options, cancellation, backend, &mut on_progress);
-    }
-    if backend == BackendId::whisper() {
-        return transcribe_whisper(input, options, cancellation, backend, &mut on_progress);
-    }
     if backend == BackendId::openai_transcription() {
         return Err(CuttledocError::new(
             ErrorCode::InvalidInput,
@@ -62,11 +194,8 @@ pub fn transcribe_pcm_with_progress(
         )
         .with_backend(backend));
     }
-    Err(CuttledocError::new(
-        ErrorCode::BackendUnavailable,
-        format!("recognition backend {backend} is not implemented"),
-    )
-    .with_backend(backend))
+    let mut session = RecognitionSession::create(options, &mut on_progress)?;
+    session.transcribe_pcm_with_progress(input, cancellation, &mut on_progress)
 }
 
 pub(crate) fn is_explicit_hosted_file_request(options: &TranscribeOptions) -> bool {
@@ -260,14 +389,11 @@ fn transcribe_apple_speech(
 }
 
 #[cfg(feature = "local-runtimes")]
-fn transcribe_whisper(
-    input: &PcmBuffer,
+fn create_whisper_session(
     options: &TranscribeOptions,
-    cancellation: &CancellationToken,
-    backend: BackendId,
+    backend: &BackendId,
     on_progress: &mut dyn FnMut(ProgressEvent),
-) -> Result<TranscriptionResult> {
-    validate_whisper_request(input, options, &backend)?;
+) -> Result<RecognitionSessionKind> {
     let model =
         ModelId::new(cuttledoc_whisper::MODEL_ID).expect("the built-in Whisper model ID is valid");
     let model_path = options
@@ -285,17 +411,81 @@ fn transcribe_whisper(
             .with_backend(backend.clone())
             .with_model(model.clone())
         })?;
-    let language = whisper_language(options.language.as_deref(), &backend)?;
-
-    let started_at = Instant::now();
+    let language = whisper_language(options.language.as_deref(), backend)?;
     on_progress(progress(ProgressPhase::Loading, 0, Some(1)));
-    let mut engine = cuttledoc_whisper::WhisperEngine::create(&cuttledoc_whisper::EngineOptions {
+    let engine = cuttledoc_whisper::WhisperEngine::create(&cuttledoc_whisper::EngineOptions {
         model_path,
         language,
         threads: 4,
     })
     .map_err(CuttledocError::from)?;
     on_progress(progress(ProgressPhase::Loading, 1, Some(1)));
+    Ok(RecognitionSessionKind::Whisper { engine, model })
+}
+
+#[cfg(not(feature = "local-runtimes"))]
+fn create_whisper_session(
+    _options: &TranscribeOptions,
+    backend: &BackendId,
+    _on_progress: &mut dyn FnMut(ProgressEvent),
+) -> Result<RecognitionSessionKind> {
+    Err(CuttledocError::new(
+        ErrorCode::BackendUnavailable,
+        "Whisper is not included in this cloud-only build",
+    )
+    .with_backend(backend.clone()))
+}
+
+fn create_openai_session(
+    options: &TranscribeOptions,
+    backend: &BackendId,
+) -> Result<RecognitionSessionKind> {
+    if options.model_path.is_some() {
+        return Err(CuttledocError::new(
+            ErrorCode::InvalidInput,
+            "OpenAI transcription does not accept a local model path",
+        )
+        .with_backend(backend.clone()));
+    }
+    let model = options.model.clone().unwrap_or_else(|| {
+        ModelId::new(cuttledoc_openai_transcription::DEFAULT_MODEL_ID)
+            .expect("the built-in OpenAI transcription model ID is valid")
+    });
+    let credential = match &options.hosted.credential {
+        Some(credential) => {
+            cuttledoc_openai_transcription::Credential::new(credential.expose().to_owned())
+        }
+        None => cuttledoc_openai_transcription::Credential::from_environment(),
+    }
+    .map_err(CuttledocError::from)
+    .map_err(|error| error.with_model(model.clone()))?;
+    let engine = cuttledoc_openai_transcription::OpenAiTranscriptionEngine::create(
+        cuttledoc_openai_transcription::EngineOptions {
+            credential,
+            timeout: options.hosted.timeout,
+        },
+    )
+    .map_err(CuttledocError::from)
+    .map_err(|error| error.with_model(model.clone()))?;
+    Ok(RecognitionSessionKind::OpenAi {
+        engine: Box::new(engine),
+        model,
+    })
+}
+
+#[cfg(feature = "local-runtimes")]
+fn transcribe_whisper_with_engine(
+    engine: &mut cuttledoc_whisper::WhisperEngine,
+    model: &ModelId,
+    input: &PcmBuffer,
+    options: &TranscribeOptions,
+    cancellation: &CancellationToken,
+    backend: BackendId,
+    on_progress: &mut dyn FnMut(ProgressEvent),
+) -> Result<TranscriptionResult> {
+    validate_whisper_request(input, options, &backend)?;
+
+    let started_at = Instant::now();
     let total_samples = u64::try_from(input.samples.len()).unwrap_or(u64::MAX);
     on_progress(progress(
         ProgressPhase::Transcribing,
@@ -347,27 +537,12 @@ fn transcribe_whisper(
         text,
         language: native.language,
         backend,
-        model: Some(model),
+        model: Some(model.clone()),
         media_duration,
         processing_duration: started_at.elapsed(),
         segments,
         enhancement: None,
     })
-}
-
-#[cfg(not(feature = "local-runtimes"))]
-fn transcribe_whisper(
-    _input: &PcmBuffer,
-    _options: &TranscribeOptions,
-    _cancellation: &CancellationToken,
-    backend: BackendId,
-    _on_progress: &mut dyn FnMut(ProgressEvent),
-) -> Result<TranscriptionResult> {
-    Err(CuttledocError::new(
-        ErrorCode::BackendUnavailable,
-        "Whisper is not included in this cloud-only build",
-    )
-    .with_backend(backend))
 }
 
 fn progress(phase: ProgressPhase, completed: u64, total: Option<u64>) -> ProgressEvent {

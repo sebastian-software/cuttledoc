@@ -2,21 +2,23 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use cuttledoc::{
     AudioFormat, Availability, BackendId, BackendSelection, CancellationToken, EnhancementOutcome,
-    HostedTranscriptionOptions, MediaDecodeOptions, ModelId, ModelManager, PcmBuffer,
-    ProgressEvent, TranscribeOptions, TranscriptEnhancementContext, TranscriptEnhancementMode,
-    TranscriptionResult, apply_transcript_enhancement, recognition_asset_inventory,
-    recognition_capabilities, text_generation_capabilities, transcribe_file,
-    transcribe_file_with_progress, transcribe_pcm, transcribe_pcm_with_progress,
+    FileTranscriptionSession, HostedTranscriptionOptions, MediaDecodeOptions, ModelId,
+    ModelManager, PcmBuffer, ProgressEvent, TranscribeOptions, TranscriptEnhancementContext,
+    TranscriptEnhancementMode, TranscriptionResult, apply_transcript_enhancement,
+    recognition_asset_inventory, recognition_capabilities, text_generation_capabilities,
+    transcribe_file, transcribe_file_with_progress, transcribe_pcm, transcribe_pcm_with_progress,
 };
 
+mod batch;
 mod cli_error;
 mod model_commands;
 mod output;
 
+use batch::{BatchEvent, BatchOptions, execute_batch, plan_batch};
 use cli_error::{CliError, CliResult};
 use model_commands::ModelCommand;
 use output::{OutputFormat, OutputOptions, emit_result, validate_output};
@@ -34,11 +36,14 @@ Usage:
   cuttledoc models remove <model> [--cache-root <path>]
   cuttledoc models cache-root [--cache-root <path>]
   cuttledoc transcribe <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
+  cuttledoc transcribe-batch <directory> [--recursive] [--language <tag|auto>] [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--ffmpeg-path <path>] [--timeout-seconds <seconds>] [--enhance <off|gemini>] [--format <text|markdown|json>] [--skip-existing|--force] [--report <path>] [--progress]
   cuttledoc transcribe-pcm <path> --language <tag|auto> [--backend <id|auto>] [--model <id>] [--model-path <path>] [--cache-root <path>] [--sample-rate <hz>] [--enhance <off|local|gemini>] [--enhancement-model-path <path>] [--format <text|markdown|json>] [--output <path>] [--force] [--progress]
 
 transcribe accepts media supported by the configured or system FFmpeg and
 decodes it conservatively to mono 16000 Hz PCM. transcribe-pcm bypasses media
-decoding and accepts mono little-endian f32 PCM. Enhancement defaults to off
+decoding and accepts mono little-endian f32 PCM. transcribe-batch writes atomic
+sidecars, skips existing outputs by default, and reuses one recognition runtime.
+Its language defaults to auto, which uses Whisper language detection. Enhancement defaults to off
 until the ADR-0014 32 GB host gate is complete. Gemini reads OPENROUTER_API_KEY
 only after transcription has released its recognition runtime. Explicit
 openai-transcription file requests upload the original supported media file,
@@ -96,6 +101,22 @@ enum Command {
         output: OutputOptions,
         progress: bool,
     },
+    TranscribeBatch {
+        root: PathBuf,
+        recursive: bool,
+        language: String,
+        backend: BackendSelection,
+        model: Option<ModelId>,
+        model_path: Option<PathBuf>,
+        cache_root: Option<PathBuf>,
+        ffmpeg_path: Option<PathBuf>,
+        timeout_seconds: Option<u64>,
+        enhancement: EnhancementSelection,
+        output_format: OutputFormat,
+        overwrite: bool,
+        report_path: PathBuf,
+        progress: bool,
+    },
     TranscribePcm {
         path: PathBuf,
         language: String,
@@ -137,6 +158,7 @@ fn parse(arguments: impl IntoIterator<Item = String>) -> Result<Command, String>
         [group, action] if group == "backends" && action == "list" => Ok(Command::ListBackends),
         [group, rest @ ..] if group == "models" => model_commands::parse(rest).map(Command::Models),
         [command, rest @ ..] if command == "transcribe" => parse_transcribe(rest),
+        [command, rest @ ..] if command == "transcribe-batch" => parse_transcribe_batch(rest),
         [command, rest @ ..] if command == "transcribe-pcm" => parse_transcribe_pcm(rest),
         _ => Err(format!("unsupported arguments: {}", arguments.join(" "))),
     }
@@ -238,6 +260,213 @@ fn parse_transcribe(arguments: &[String]) -> Result<Command, String> {
         enhancement_model_path: shared.enhancement_model_path,
         output: shared.output,
         progress: shared.progress,
+    })
+}
+
+fn parse_transcribe_batch(arguments: &[String]) -> Result<Command, String> {
+    let Some(root) = arguments.first().filter(|value| !value.starts_with('-')) else {
+        return Err("transcribe-batch requires an input directory".to_owned());
+    };
+    let root = PathBuf::from(root);
+    let mut language = None;
+    let mut backend = None;
+    let mut model = None;
+    let mut model_path = None;
+    let mut cache_root = None;
+    let mut ffmpeg_path = None;
+    let mut timeout_seconds = None;
+    let mut enhancement = None;
+    let mut output_format = None;
+    let mut report_path = None;
+    let mut recursive = false;
+    let mut recursive_seen = false;
+    let mut skip_existing = false;
+    let mut overwrite = false;
+    let mut progress = false;
+    let mut index = 1;
+
+    while index < arguments.len() {
+        match arguments[index].as_str() {
+            "--language" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--language requires a BCP 47 language tag or auto")?;
+                if language.replace(value.clone()).is_some() {
+                    return Err("--language may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--backend" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--backend requires auto or a backend identifier")?;
+                if backend.replace(parse_backend(value)?).is_some() {
+                    return Err("--backend may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--model" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--model requires a model identifier")?;
+                let parsed = ModelId::new(value.clone()).map_err(|error| error.to_string())?;
+                if model.replace(parsed).is_some() {
+                    return Err("--model may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--model-path" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--model-path requires a model path")?;
+                if model_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--model-path may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--cache-root" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--cache-root requires a directory path")?;
+                if cache_root.replace(PathBuf::from(value)).is_some() {
+                    return Err("--cache-root may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--ffmpeg-path" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--ffmpeg-path requires an executable path")?;
+                if ffmpeg_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--ffmpeg-path may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--timeout-seconds" => {
+                let value = arguments
+                    .get(index + 1)
+                    .and_then(|value| value.parse::<u64>().ok())
+                    .filter(|value| *value > 0)
+                    .ok_or("--timeout-seconds requires a positive integer")?;
+                if timeout_seconds.replace(value).is_some() {
+                    return Err("--timeout-seconds may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--enhance" => {
+                let value = arguments
+                    .get(index + 1)
+                    .ok_or("--enhance requires off or gemini")?;
+                let selection = parse_enhancement(value)?;
+                if selection == EnhancementSelection::Local {
+                    return Err(
+                        "transcribe-batch does not yet support local enhancement runtime reuse; use off or gemini"
+                            .to_owned(),
+                    );
+                }
+                if enhancement.replace(selection).is_some() {
+                    return Err("--enhance may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--format" => {
+                let value = arguments
+                    .get(index + 1)
+                    .ok_or("--format requires text, markdown, or json")?;
+                if output_format.replace(OutputFormat::parse(value)?).is_some() {
+                    return Err("--format may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--json" => {
+                if output_format.replace(OutputFormat::Json).is_some() {
+                    return Err("--json conflicts with another output format".to_owned());
+                }
+                index += 1;
+            }
+            "--recursive" => {
+                if recursive_seen {
+                    return Err("--recursive may only be specified once".to_owned());
+                }
+                recursive = true;
+                recursive_seen = true;
+                index += 1;
+            }
+            "--skip-existing" => {
+                if skip_existing {
+                    return Err("--skip-existing may only be specified once".to_owned());
+                }
+                skip_existing = true;
+                index += 1;
+            }
+            "--force" => {
+                if overwrite {
+                    return Err("--force may only be specified once".to_owned());
+                }
+                overwrite = true;
+                index += 1;
+            }
+            "--report" => {
+                let value = arguments
+                    .get(index + 1)
+                    .filter(|value| !value.is_empty())
+                    .ok_or("--report requires a file path")?;
+                if report_path.replace(PathBuf::from(value)).is_some() {
+                    return Err("--report may only be specified once".to_owned());
+                }
+                index += 2;
+            }
+            "--progress" => {
+                if progress {
+                    return Err("--progress may only be specified once".to_owned());
+                }
+                progress = true;
+                index += 1;
+            }
+            "--enhancement-model-path" => {
+                return Err(
+                    "--enhancement-model-path is unavailable because transcribe-batch does not yet support local enhancement"
+                        .to_owned(),
+                );
+            }
+            option => return Err(format!("unsupported transcribe-batch option: {option}")),
+        }
+    }
+
+    if overwrite && skip_existing {
+        return Err("--force conflicts with --skip-existing".to_owned());
+    }
+    let backend = backend.unwrap_or_default();
+    if timeout_seconds.is_some()
+        && !matches!(
+            &backend,
+            BackendSelection::Id(backend) if backend == &BackendId::openai_transcription()
+        )
+    {
+        return Err("--timeout-seconds requires --backend openai-transcription".to_owned());
+    }
+    let report_path = report_path.unwrap_or_else(|| root.join(".cuttledoc-batch-report.json"));
+    Ok(Command::TranscribeBatch {
+        root,
+        recursive,
+        language: language.unwrap_or_else(|| "auto".to_owned()),
+        backend,
+        model,
+        model_path,
+        cache_root,
+        ffmpeg_path,
+        timeout_seconds,
+        enhancement: enhancement.unwrap_or_default(),
+        output_format: output_format.unwrap_or_default(),
+        overwrite,
+        report_path,
+        progress,
     })
 }
 
@@ -580,6 +809,130 @@ fn run(command: Command) -> CliResult<()> {
             )?;
             emit_result(&result, &output)?;
         }
+        Command::TranscribeBatch {
+            root,
+            recursive,
+            language,
+            backend,
+            model,
+            model_path,
+            cache_root,
+            ffmpeg_path,
+            timeout_seconds,
+            enhancement,
+            output_format,
+            overwrite,
+            report_path,
+            progress,
+        } => {
+            let batch_started_at = Instant::now();
+            let plan = plan_batch(BatchOptions {
+                root,
+                recursive,
+                format: output_format,
+                overwrite,
+                report_path,
+            })?;
+            eprintln!(
+                "batch\tdiscovered\t{}\tpending={}\tskipped={}",
+                plan.discovered(),
+                plan.pending.len(),
+                plan.skipped.len()
+            );
+
+            let summary = if plan.pending.is_empty() {
+                execute_batch(
+                    plan,
+                    batch_started_at,
+                    |_| unreachable!("an empty batch does not invoke its processor"),
+                    render_batch_event,
+                )?
+            } else {
+                let model =
+                    if model.is_none() && backend == BackendSelection::Auto && language == "auto" {
+                        Some(
+                            ModelId::new("whisper-large-v3-turbo")
+                                .expect("the managed Whisper model ID is valid"),
+                        )
+                    } else {
+                        model
+                    };
+                let model_path = resolve_recognition_model_path(
+                    &backend,
+                    model.as_ref(),
+                    model_path,
+                    cache_root.as_ref(),
+                )?;
+                let enhancement_model_path =
+                    resolve_enhancement_model_path(enhancement, None, cache_root.as_ref())?;
+                let options = TranscribeOptions {
+                    backend,
+                    model,
+                    language: Some(language.clone()),
+                    model_path,
+                    hosted: HostedTranscriptionOptions {
+                        timeout: timeout_seconds
+                            .map(Duration::from_secs)
+                            .unwrap_or_else(|| HostedTranscriptionOptions::default().timeout),
+                        ..HostedTranscriptionOptions::default()
+                    },
+                };
+                let decode_options = MediaDecodeOptions { ffmpeg_path };
+                eprintln!("batch\tloading\t0\t1\trecognition-runtime");
+                let mut session = FileTranscriptionSession::create_with_progress(
+                    &options,
+                    &decode_options,
+                    |event| {
+                        if progress {
+                            render_transcription_progress(event);
+                        }
+                    },
+                )
+                .map_err(CliError::from)?;
+                eprintln!("batch\tloading\t1\t1\trecognition-runtime");
+
+                execute_batch(
+                    plan,
+                    batch_started_at,
+                    |path| {
+                        let result = if progress {
+                            session.transcribe_file_with_progress(
+                                path,
+                                &CancellationToken::new(),
+                                render_transcription_progress,
+                            )
+                        } else {
+                            session.transcribe_file(path)
+                        }
+                        .map_err(CliError::from)?;
+                        enhance_result(
+                            result,
+                            &language,
+                            enhancement,
+                            enhancement_model_path.clone(),
+                            progress,
+                        )
+                    },
+                    render_batch_event,
+                )?
+            };
+            render_batch_summary(&summary);
+            if !summary.failures.is_empty() {
+                return Err(CliError::new(
+                    "BATCH_PARTIAL_FAILURE",
+                    format!(
+                        "{} of {} pending transcription(s) failed; details: {}",
+                        summary.failures.len(),
+                        summary.completed + summary.failures.len(),
+                        summary.report_path.display()
+                    ),
+                    1,
+                )
+                .with_remediation(
+                    "fix the reported failures and rerun; completed sidecars will be skipped",
+                ));
+            }
+        }
         Command::TranscribePcm {
             path,
             language,
@@ -754,6 +1107,46 @@ fn render_transcription_progress(progress: ProgressEvent) {
             .total
             .map_or_else(|| "-".to_owned(), |total| total.to_string()),
         progress.message.as_deref().unwrap_or("-")
+    );
+}
+
+fn render_batch_event(event: BatchEvent) {
+    match event {
+        BatchEvent::Starting { index, total, item } => eprintln!(
+            "batch\ttranscribing\t{index}\t{total}\t{}",
+            item.input_path.display()
+        ),
+        BatchEvent::Completed {
+            index,
+            total,
+            item,
+            language,
+        } => eprintln!(
+            "batch\tcompleted\t{index}\t{total}\t{}\tlanguage={}",
+            item.output_path.display(),
+            language.as_deref().unwrap_or("und")
+        ),
+        BatchEvent::Failed {
+            index,
+            total,
+            failure,
+        } => eprintln!(
+            "batch\tfailed\t{index}\t{total}\t{}\tcode={}\t{}",
+            failure.input_path.display(),
+            failure.code,
+            failure.message.replace(['\r', '\n', '\t'], " ")
+        ),
+    }
+}
+
+fn render_batch_summary(summary: &batch::BatchSummary) {
+    eprintln!(
+        "batch\tsummary\tcompleted={}\tskipped={}\tfailed={}\telapsed_ms={:.3}\treport={}",
+        summary.completed,
+        summary.skipped,
+        summary.failures.len(),
+        summary.elapsed.as_secs_f64() * 1_000.0,
+        summary.report_path.display()
     );
 }
 
@@ -941,6 +1334,39 @@ mod tests {
         );
         assert_eq!(
             parse(arguments(&[
+                "transcribe-batch",
+                "/courses",
+                "--recursive",
+                "--backend",
+                "whisper",
+                "--model",
+                "whisper-large-v3-turbo",
+                "--format",
+                "text",
+                "--skip-existing",
+                "--report",
+                "/courses/report.json",
+                "--progress"
+            ])),
+            Ok(Command::TranscribeBatch {
+                root: PathBuf::from("/courses"),
+                recursive: true,
+                language: "auto".to_owned(),
+                backend: BackendSelection::Id(BackendId::whisper()),
+                model: Some(ModelId::new("whisper-large-v3-turbo").expect("model ID")),
+                model_path: None,
+                cache_root: None,
+                ffmpeg_path: None,
+                timeout_seconds: None,
+                enhancement: EnhancementSelection::Off,
+                output_format: OutputFormat::Text,
+                overwrite: false,
+                report_path: PathBuf::from("/courses/report.json"),
+                progress: true,
+            })
+        );
+        assert_eq!(
+            parse(arguments(&[
                 "transcribe",
                 "speech.webm",
                 "--language",
@@ -1025,6 +1451,25 @@ mod tests {
             .is_err()
         );
         assert!(parse(arguments(&["transcribe-pcm", "speech.f32le"])).is_err());
+        assert!(parse(arguments(&["transcribe-batch"])).is_err());
+        assert!(
+            parse(arguments(&[
+                "transcribe-batch",
+                "/courses",
+                "--enhance",
+                "local"
+            ]))
+            .is_err()
+        );
+        assert!(
+            parse(arguments(&[
+                "transcribe-batch",
+                "/courses",
+                "--skip-existing",
+                "--force"
+            ]))
+            .is_err()
+        );
         assert!(
             parse(arguments(&[
                 "transcribe-pcm",

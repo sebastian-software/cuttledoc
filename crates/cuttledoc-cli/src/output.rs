@@ -39,7 +39,7 @@ pub fn emit_result(result: &TranscriptionResult, options: &OutputOptions) -> Cli
     validate_output(options)?;
     let rendered = render_result(result, options.format)?;
     match &options.path {
-        Some(path) => write_file(path, rendered.as_bytes(), options.overwrite),
+        Some(path) => write_atomic_file(path, rendered.as_bytes(), options.overwrite),
         None => {
             let mut stdout = io::stdout().lock();
             stdout
@@ -150,7 +150,7 @@ fn terminal_newline(value: &str) -> String {
     value
 }
 
-fn write_file(path: &Path, contents: &[u8], overwrite: bool) -> CliResult<()> {
+pub(crate) fn write_atomic_file(path: &Path, contents: &[u8], overwrite: bool) -> CliResult<()> {
     validate_output(&OutputOptions {
         format: OutputFormat::Text,
         path: Some(path.to_path_buf()),
@@ -297,8 +297,9 @@ mod tests {
         fs::create_dir_all(&root).expect("test directory");
         let output = root.join("transcript.txt");
 
-        write_file(&output, b"first\n", false).expect("initial output");
-        let error = write_file(&output, b"second\n", false).expect_err("overwrite must fail");
+        write_atomic_file(&output, b"first\n", false).expect("initial output");
+        let error =
+            write_atomic_file(&output, b"second\n", false).expect_err("overwrite must fail");
         assert_eq!(error.code, "OUTPUT_EXISTS");
         assert!(
             error
@@ -308,7 +309,7 @@ mod tests {
         );
         assert_eq!(fs::read(&output).expect("original output"), b"first\n");
 
-        write_file(&output, b"second\n", true).expect("explicit overwrite");
+        write_atomic_file(&output, b"second\n", true).expect("explicit overwrite");
         assert_eq!(fs::read(&output).expect("replaced output"), b"second\n");
         assert!(fs::read_dir(&root).expect("directory").all(|entry| {
             !entry

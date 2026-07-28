@@ -43,8 +43,8 @@ pub use generation::{
 pub use generation::{GemmaGenerationEngine, GemmaGenerationOptions};
 pub use lifecycle::{EngineState, QueuePolicy};
 pub use media::{
-    MediaDecodeOptions, transcribe_file, transcribe_file_with_cancellation,
-    transcribe_file_with_progress,
+    FileTranscriptionSession, MediaDecodeOptions, transcribe_file,
+    transcribe_file_with_cancellation, transcribe_file_with_progress,
 };
 pub use pipeline::{
     TranscriptEnhancementContext, TranscriptEnhancementMode, apply_transcript_enhancement,

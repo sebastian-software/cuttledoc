@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use crate::recognition::{is_explicit_hosted_file_request, transcribe_openai_file_with_progress};
+use crate::recognition::{
+    RecognitionSession, is_explicit_hosted_file_request, transcribe_openai_file_with_progress,
+};
 use crate::{
     AudioFormat, CancellationToken, PcmBuffer, ProgressEvent, ProgressPhase, Result,
     TranscribeOptions, TranscriptionResult, transcribe_pcm_with_progress,
@@ -10,6 +12,113 @@ use crate::{
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct MediaDecodeOptions {
     pub ffmpeg_path: Option<PathBuf>,
+}
+
+/// Reuses an acquired recognition runtime across sequential media files.
+///
+/// The session is intentionally single-threaded. Callers can process a large
+/// directory without reloading Whisper for every file while preserving the
+/// same decoding and result contracts as one-shot transcription.
+pub struct FileTranscriptionSession {
+    recognition: RecognitionSession,
+    decode_options: MediaDecodeOptions,
+}
+
+impl FileTranscriptionSession {
+    pub fn create(
+        options: &TranscribeOptions,
+        decode_options: &MediaDecodeOptions,
+    ) -> Result<Self> {
+        Self::create_with_progress(options, decode_options, |_| {})
+    }
+
+    pub fn create_with_progress(
+        options: &TranscribeOptions,
+        decode_options: &MediaDecodeOptions,
+        mut on_progress: impl FnMut(ProgressEvent),
+    ) -> Result<Self> {
+        Ok(Self {
+            recognition: RecognitionSession::create(options, &mut on_progress)?,
+            decode_options: decode_options.clone(),
+        })
+    }
+
+    pub fn transcribe_file(&mut self, path: impl AsRef<Path>) -> Result<TranscriptionResult> {
+        self.transcribe_file_with_cancellation(path, &CancellationToken::new())
+    }
+
+    pub fn transcribe_file_with_cancellation(
+        &mut self,
+        path: impl AsRef<Path>,
+        cancellation: &CancellationToken,
+    ) -> Result<TranscriptionResult> {
+        self.transcribe_file_with_progress(path, cancellation, |_| {})
+    }
+
+    pub fn transcribe_file_with_progress(
+        &mut self,
+        path: impl AsRef<Path>,
+        cancellation: &CancellationToken,
+        mut on_progress: impl FnMut(ProgressEvent),
+    ) -> Result<TranscriptionResult> {
+        let started_at = Instant::now();
+        on_progress(ProgressEvent {
+            phase: ProgressPhase::Preparing,
+            completed: 0,
+            total: Some(1),
+            message: None,
+        });
+        if self.recognition.accepts_original_file() {
+            on_progress(ProgressEvent {
+                phase: ProgressPhase::Preparing,
+                completed: 1,
+                total: Some(1),
+                message: None,
+            });
+            let mut result = self.recognition.transcribe_original_file_with_progress(
+                path.as_ref(),
+                cancellation,
+                &mut on_progress,
+            )?;
+            result.processing_duration = started_at.elapsed();
+            return Ok(result);
+        }
+
+        on_progress(ProgressEvent {
+            phase: ProgressPhase::Decoding,
+            completed: 0,
+            total: Some(1),
+            message: None,
+        });
+        let decoded = cuttledoc_audio::decode_file(
+            path.as_ref(),
+            &cuttledoc_audio::DecodeOptions {
+                ffmpeg_path: self.decode_options.ffmpeg_path.clone(),
+            },
+            || cancellation.is_cancelled(),
+        )?;
+        on_progress(ProgressEvent {
+            phase: ProgressPhase::Decoding,
+            completed: 1,
+            total: Some(1),
+            message: None,
+        });
+        let format = AudioFormat::new(decoded.sample_rate, decoded.channels)?;
+        let input = PcmBuffer::new(format, decoded.samples)?;
+        on_progress(ProgressEvent {
+            phase: ProgressPhase::Preparing,
+            completed: 1,
+            total: Some(1),
+            message: None,
+        });
+        let mut result = self.recognition.transcribe_pcm_with_progress(
+            &input,
+            cancellation,
+            &mut on_progress,
+        )?;
+        result.processing_duration = started_at.elapsed();
+        Ok(result)
+    }
 }
 
 pub fn transcribe_file(
